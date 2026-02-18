@@ -482,6 +482,120 @@
     padding: 8px 16px; border-radius: 10px; margin-bottom: 20px;
   }
 
+  /* OTLP card */
+  .otlp-card {
+    background: var(--white); border-radius: var(--radius);
+    border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+    margin-bottom: 28px; overflow: hidden;
+  }
+  .otlp-card-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 16px 22px;
+  }
+  .otlp-card-header.has-body { border-bottom: 1px solid var(--border); }
+  .otlp-icon {
+    width: 32px; height: 32px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .otlp-card.connected .otlp-icon { background: linear-gradient(135deg, #D1FAE5, #A7F3D0); }
+  .otlp-card.error .otlp-icon { background: linear-gradient(135deg, #FFE4E6, #FECDD3); }
+  .otlp-card.setup .otlp-icon { background: linear-gradient(135deg, #E0E7FF, #C7D2FE); }
+  .otlp-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .otlp-card.connected .otlp-dot { background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.2); }
+  .otlp-card.error .otlp-dot { background: #F43F5E; box-shadow: 0 0 0 3px rgba(244,63,94,0.2); }
+  .otlp-header-text { flex: 1; min-width: 0; }
+  .otlp-title {
+    font-size: 14px; font-weight: 700; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .otlp-subtitle {
+    font-size: 13px; color: var(--text-tertiary); font-weight: 500; margin-top: 2px;
+  }
+  .otlp-badge {
+    font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+  }
+  .otlp-card.connected .otlp-badge { background: #D1FAE5; color: #065F46; }
+  .otlp-card.error .otlp-badge { background: #FFE4E6; color: #991B1B; }
+  .otlp-endpoint-label {
+    font-family: var(--mono); font-size: 12px; font-weight: 500;
+    color: var(--text-tertiary); margin-top: 2px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .otlp-header-actions {
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  }
+  .otlp-header-meta { text-align: right; flex-shrink: 0; }
+  .otlp-header-meta .time { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  .otlp-header-meta .count { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+  .otlp-error-msg {
+    padding: 10px 22px; font-size: 13px; color: #991B1B;
+    background: #FFF1F2; border-bottom: 1px solid var(--border);
+    font-family: var(--mono); font-weight: 500;
+  }
+  .otlp-metrics-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+  @media (max-width: 780px) { .otlp-metrics-grid { grid-template-columns: repeat(2, 1fr); } }
+  .otlp-metric {
+    padding: 14px 22px;
+    border-right: 1px solid var(--border);
+  }
+  .otlp-metric:last-child { border-right: none; }
+  @media (max-width: 780px) {
+    .otlp-metric:nth-child(2) { border-right: none; }
+    .otlp-metric:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
+  }
+  .otlp-metric-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-tertiary); margin-bottom: 4px;
+  }
+  .otlp-metric-value {
+    font-size: 20px; font-weight: 800; letter-spacing: -0.5px;
+    color: var(--text); line-height: 1.2;
+  }
+  .otlp-metric-sub {
+    font-size: 11px; color: var(--text-tertiary); font-weight: 500; margin-top: 2px;
+  }
+
+  /* OTLP config form */
+  .otlp-form {
+    padding: 18px 22px; display: flex; gap: 10px; align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .otlp-form-group { display: flex; flex-direction: column; gap: 4px; }
+  .otlp-form-group.grow { flex: 1; min-width: 200px; }
+  .otlp-form-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-tertiary);
+  }
+  .otlp-input {
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); padding: 9px 14px; border-radius: var(--radius-xs);
+    font-size: 13px; font-weight: 500; font-family: var(--mono);
+    outline: none; transition: all 0.2s; width: 100%;
+  }
+  .otlp-input::placeholder { color: var(--text-tertiary); }
+  .otlp-input:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+  .otlp-btn {
+    padding: 9px 20px; border-radius: var(--radius-xs);
+    font-size: 13px; font-weight: 600; font-family: var(--font);
+    cursor: pointer; transition: all 0.2s; border: 1px solid transparent;
+    white-space: nowrap; align-self: flex-end;
+  }
+  .otlp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .otlp-btn-primary {
+    background: var(--gradient-main); color: white; border: none;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.25);
+  }
+  .otlp-btn-primary:hover:not(:disabled) { box-shadow: 0 4px 12px rgba(99,102,241,0.35); transform: translateY(-1px); }
+  .otlp-btn-ghost {
+    background: transparent; color: var(--text-tertiary);
+    border: 1px solid var(--border);
+  }
+  .otlp-btn-ghost:hover:not(:disabled) { border-color: var(--rose); color: var(--rose); }
+  .otlp-btn-sm { padding: 5px 14px; font-size: 12px; }
+
   /* Hero / value prop */
   .hero-section {
     text-align: center; margin-bottom: 36px; padding: 0 20px;
@@ -508,9 +622,12 @@
 <div id="app" class="container" style="display:none">
 
   <!-- Privacy notice -->
-  <div class="privacy-notice animate">
+  <div class="privacy-notice animate" id="privacyNotice">
     &#128274; All data stays on your machine. Nothing is sent anywhere.
   </div>
+
+  <!-- OTLP status -->
+  <div id="otlpStatus" class="otlp-card animate" style="display:none"></div>
 
   <!-- Header -->
   <div class="header animate">
@@ -680,12 +797,172 @@ async function refreshData() {
 function render() {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('app').style.display = 'block';
+  renderOTLP();
   renderStats();
   renderInsights();
   renderDailyChart();
   renderModelChart();
   renderTopPrompts();
   renderSessions();
+}
+
+// OTLP status + config
+function renderOTLP() {
+  const el = document.getElementById('otlpStatus');
+  const otlp = DATA.otlp;
+  el.style.display = 'block';
+
+  if (!otlp || !otlp.enabled) {
+    // Show setup form
+    el.className = 'otlp-card animate setup';
+    document.getElementById('privacyNotice').innerHTML =
+      '&#128274; All data stays on your machine. Nothing is sent anywhere.';
+
+    el.innerHTML = `
+      <div class="otlp-card-header">
+        <div class="otlp-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="otlp-header-text">
+          <div class="otlp-title">OpenTelemetry Export</div>
+          <div class="otlp-subtitle">Send your token usage metrics to any OTLP-compatible backend</div>
+        </div>
+      </div>
+      <div class="otlp-form" id="otlpForm">
+        <div class="otlp-form-group grow">
+          <label class="otlp-form-label">Endpoint</label>
+          <input type="text" class="otlp-input" id="otlpEndpointInput"
+            placeholder="http://localhost:4318" autocomplete="off">
+        </div>
+        <div class="otlp-form-group grow">
+          <label class="otlp-form-label">Headers <span style="opacity:0.5;text-transform:none;letter-spacing:0">(optional, comma-separated key=value)</span></label>
+          <input type="text" class="otlp-input" id="otlpHeadersInput"
+            placeholder="Authorization: Basic dXNlcjpwYXNz, X-Org: my-org" autocomplete="off">
+        </div>
+        <button class="otlp-btn otlp-btn-primary" onclick="connectOTLP()">Connect</button>
+      </div>`;
+    return;
+  }
+
+  // Update privacy notice when OTLP is active
+  document.getElementById('privacyNotice').innerHTML =
+    '&#128274; All data stays on your machine. Metrics are exported only to your configured OTLP endpoint.';
+
+  const hasError = !!otlp.lastError;
+  el.className = 'otlp-card animate ' + (hasError ? 'error' : 'connected');
+
+  const t = DATA.totals;
+  const models = DATA.modelBreakdown?.length || 0;
+  const days = DATA.dailyUsage?.length || 0;
+  const sessions = t.totalSessions || 0;
+
+  // Time ago
+  let timeHtml = '';
+  if (hasError) {
+    timeHtml = '<span style="color:#991B1B;font-size:12px;font-weight:600">Export failed</span>';
+  } else if (otlp.lastExport) {
+    const ago = Math.round((Date.now() - new Date(otlp.lastExport).getTime()) / 1000);
+    const agoText = ago < 60 ? `${ago}s ago` : `${Math.round(ago / 60)}m ago`;
+    const intervalNote = otlp.intervalSec ? ` &middot; every ${otlp.intervalSec}s` : '';
+    timeHtml = `<div class="time">${agoText}</div><div class="count">${otlp.exports} export${otlp.exports !== 1 ? 's' : ''}${intervalNote}</div>`;
+  }
+
+  let html = '';
+
+  // Header row
+  html += `<div class="otlp-card-header has-body">
+    <div class="otlp-icon"><span class="otlp-dot"></span></div>
+    <div class="otlp-header-text">
+      <div class="otlp-title">OpenTelemetry Export <span class="otlp-badge">${hasError ? 'Error' : 'Active'}</span></div>
+      <div class="otlp-endpoint-label">${escapeHtml(otlp.endpoint)}</div>
+    </div>
+    <div class="otlp-header-actions">
+      <div class="otlp-header-meta">${timeHtml}</div>
+      <button class="otlp-btn otlp-btn-ghost otlp-btn-sm" onclick="disconnectOTLP()">Disconnect</button>
+    </div>
+  </div>`;
+
+  // Error message
+  if (hasError) {
+    html += `<div class="otlp-error-msg">${escapeHtml(otlp.lastError)}</div>`;
+  }
+
+  // Metrics summary grid
+  html += `<div class="otlp-metrics-grid">
+    <div class="otlp-metric">
+      <div class="otlp-metric-label">Metrics Exported</div>
+      <div class="otlp-metric-value">12</div>
+      <div class="otlp-metric-sub">counters, histograms, gauges</div>
+    </div>
+    <div class="otlp-metric">
+      <div class="otlp-metric-label">Sessions Tracked</div>
+      <div class="otlp-metric-value">${sessions}</div>
+      <div class="otlp-metric-sub">across ${models} model${models !== 1 ? 's' : ''}</div>
+    </div>
+    <div class="otlp-metric">
+      <div class="otlp-metric-label">Data Points</div>
+      <div class="otlp-metric-value">${sessions + days + models}</div>
+      <div class="otlp-metric-sub">sessions + daily + models</div>
+    </div>
+    <div class="otlp-metric">
+      <div class="otlp-metric-label">Time Range</div>
+      <div class="otlp-metric-value">${days}d</div>
+      <div class="otlp-metric-sub">${t.dateRange ? formatDate(t.dateRange.from) + ' \u2013 ' + formatDate(t.dateRange.to) : 'no data'}</div>
+    </div>
+  </div>`;
+
+  el.innerHTML = html;
+}
+
+async function connectOTLP() {
+  const endpoint = document.getElementById('otlpEndpointInput').value.trim();
+  if (!endpoint) {
+    document.getElementById('otlpEndpointInput').focus();
+    return;
+  }
+  const headers = document.getElementById('otlpHeadersInput').value.trim();
+
+  // Clear previous error
+  const errEl = document.getElementById('otlpFormError');
+  if (errEl) errEl.remove();
+
+  const btn = document.querySelector('#otlpForm .otlp-btn-primary');
+  btn.disabled = true;
+  btn.textContent = 'Testing endpoint...';
+
+  try {
+    const res = await fetch('/api/otlp/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint, headers: headers || undefined }),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Connection failed');
+
+    DATA.otlp = result.otlp;
+    renderOTLP();
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Connect';
+    // Show inline error below the form
+    const form = document.getElementById('otlpForm');
+    const errorDiv = document.createElement('div');
+    errorDiv.id = 'otlpFormError';
+    errorDiv.style.cssText = 'padding:10px 22px;font-size:13px;color:#991B1B;background:#FFF1F2;border-top:1px solid rgba(244,63,94,0.15);font-weight:500;';
+    errorDiv.textContent = err.message;
+    form.parentElement.appendChild(errorDiv);
+  }
+}
+
+async function disconnectOTLP() {
+  try {
+    const res = await fetch('/api/otlp/disconnect', { method: 'POST' });
+    const result = await res.json();
+    DATA.otlp = result.otlp;
+    renderOTLP();
+  } catch (err) {
+    alert('Failed to disconnect: ' + err.message);
+  }
 }
 
 // Stats
