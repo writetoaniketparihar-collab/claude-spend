@@ -1,0 +1,32 @@
+{
+  "name": "claude-spend",
+  "version": "1.0.0",
+  "description": "See where your Claude Code tokens go. One command, zero setup.",
+  "main": "src/index.js",
+  "bin": {
+    "claude-spend": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "tokens",
+    "usage",
+    "analytics",
+    "dashboard",
+    "spend",
+    "cost"
+  ],
+  "author": "Aniket Parihar",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/writetoaniketparihar-collab/claude-spend.git"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "open": "^10.1.0"
+  }
+}
