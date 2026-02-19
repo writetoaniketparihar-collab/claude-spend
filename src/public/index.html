@@ -3,498 +3,1054 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Claude Spend</title>
+<title>Coding Agent Usage — AI Token Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #F8F9FC;
-    --bg-mesh-1: #EEF0FF;
-    --bg-mesh-2: #F0FDFA;
-    --white: #FFFFFF;
-    --text: #0F172A;
-    --text-secondary: #475569;
-    --text-tertiary: #94A3B8;
-    --border: rgba(0,0,0,0.06);
-    --border-strong: rgba(0,0,0,0.1);
+    --bg-deep: #06080f;
+    --bg-base: #0b0f1a;
+    --bg-raised: #111827;
+    --bg-card: rgba(17, 24, 39, 0.65);
+    --bg-card-hover: rgba(23, 32, 52, 0.75);
+    --bg-card-solid: #151d2e;
+    --bg-input: rgba(15, 23, 42, 0.8);
 
-    --indigo: #6366F1;
-    --violet: #8B5CF6;
-    --purple: #A855F7;
-    --teal: #14B8A6;
-    --cyan: #06B6D4;
-    --emerald: #10B981;
-    --amber: #F59E0B;
-    --orange: #F97316;
-    --rose: #F43F5E;
-    --blue: #3B82F6;
+    --glass-border: rgba(148, 163, 184, 0.08);
+    --glass-border-hover: rgba(148, 163, 184, 0.15);
+    --glass-shine: rgba(255, 255, 255, 0.03);
 
-    --gradient-main: linear-gradient(135deg, #6366F1, #8B5CF6, #A855F7);
-    --gradient-teal: linear-gradient(135deg, #14B8A6, #06B6D4);
-    --gradient-warm: linear-gradient(135deg, #F59E0B, #F97316);
-    --gradient-rose: linear-gradient(135deg, #F43F5E, #EC4899);
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-tertiary: #64748b;
+    --text-muted: #475569;
 
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-    --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
-    --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
-    --shadow-glow: 0 0 40px rgba(99,102,241,0.15);
+    --accent-violet: #8b5cf6;
+    --accent-indigo: #6366f1;
+    --accent-cyan: #22d3ee;
+    --accent-teal: #2dd4bf;
+    --accent-emerald: #34d399;
+    --accent-amber: #fbbf24;
+    --accent-orange: #fb923c;
+    --accent-rose: #fb7185;
+
+    --gradient-primary: linear-gradient(135deg, #6366f1, #8b5cf6, #a78bfa);
+    --gradient-cyan: linear-gradient(135deg, #06b6d4, #22d3ee);
+    --gradient-warm: linear-gradient(135deg, #f59e0b, #fb923c);
+    --gradient-rose: linear-gradient(135deg, #f43f5e, #fb7185);
+    --gradient-emerald: linear-gradient(135deg, #10b981, #34d399);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
+    --shadow-glow-violet: 0 0 30px rgba(99, 102, 241, 0.15);
+    --shadow-glow-cyan: 0 0 30px rgba(34, 211, 238, 0.1);
 
     --radius: 16px;
     --radius-sm: 10px;
     --radius-xs: 6px;
-    --font: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
+
+    --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', monospace;
+
+    --glass-shine-line: rgba(255, 255, 255, 0.06);
+    --chart-grid: rgba(148, 163, 184, 0.06);
+    --chart-label: #475569;
+    --chart-bar-in-0: #4f46e5;
+    --chart-bar-in-1: #818cf8;
+    --chart-bar-out-0: #0d9488;
+    --chart-bar-out-1: #2dd4bf;
+    --donut-gap: #0b0f1a;
+    --donut-center-text: #f1f5f9;
+    --donut-center-sub: #64748b;
+    --table-header-bg: rgba(15, 23, 42, 0.4);
+    --hover-row-bg: rgba(99, 102, 241, 0.04);
+    --otlp-input-focus-bg: rgba(15, 23, 42, 0.95);
+  }
+
+  /* ====== LIGHT THEME ====== */
+  [data-theme="light"] {
+    --bg-deep: #f5f7fb;
+    --bg-base: #f0f2f8;
+    --bg-raised: #ffffff;
+    --bg-card: rgba(255, 255, 255, 0.75);
+    --bg-card-hover: rgba(255, 255, 255, 0.9);
+    --bg-card-solid: #ffffff;
+    --bg-input: rgba(255, 255, 255, 0.9);
+
+    --glass-border: rgba(0, 0, 0, 0.07);
+    --glass-border-hover: rgba(0, 0, 0, 0.12);
+    --glass-shine: rgba(255, 255, 255, 0.5);
+    --glass-shine-line: rgba(0, 0, 0, 0.03);
+
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-tertiary: #64748b;
+    --text-muted: #94a3b8;
+
+    --accent-violet: #7c3aed;
+    --accent-indigo: #4f46e5;
+    --accent-cyan: #0891b2;
+    --accent-teal: #0d9488;
+    --accent-emerald: #059669;
+    --accent-amber: #d97706;
+    --accent-orange: #ea580c;
+    --accent-rose: #e11d48;
+
+    --gradient-primary: linear-gradient(135deg, #4f46e5, #7c3aed, #8b5cf6);
+    --gradient-cyan: linear-gradient(135deg, #0891b2, #06b6d4);
+    --gradient-warm: linear-gradient(135deg, #d97706, #ea580c);
+    --gradient-rose: linear-gradient(135deg, #e11d48, #f43f5e);
+    --gradient-emerald: linear-gradient(135deg, #059669, #10b981);
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+    --shadow-glow-violet: 0 0 30px rgba(79, 70, 229, 0.08);
+    --shadow-glow-cyan: 0 0 30px rgba(8, 145, 178, 0.06);
+
+    --chart-grid: rgba(0, 0, 0, 0.05);
+    --chart-label: #94a3b8;
+    --chart-bar-in-0: #818cf8;
+    --chart-bar-in-1: #6366f1;
+    --chart-bar-out-0: #2dd4bf;
+    --chart-bar-out-1: #14b8a6;
+    --donut-gap: #ffffff;
+    --donut-center-text: #0f172a;
+    --donut-center-sub: #94a3b8;
+    --table-header-bg: rgba(241, 245, 249, 0.8);
+    --hover-row-bg: rgba(99, 102, 241, 0.04);
+    --otlp-input-focus-bg: #ffffff;
   }
 
   body {
-    font-family: var(--font);
-    background: var(--bg);
-    color: var(--text);
+    font-family: var(--font-body);
+    background: var(--bg-deep);
+    color: var(--text-primary);
     line-height: 1.6;
     min-height: 100vh;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Mesh gradient background */
+  /* ====== AMBIENT BACKGROUND ====== */
   body::before {
     content: '';
-    position: fixed; top: 0; left: 0; right: 0; height: 600px;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
     background:
-      radial-gradient(ellipse 80% 60% at 10% 0%, rgba(99,102,241,0.12) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 90% 10%, rgba(139,92,246,0.08) 0%, transparent 50%),
-      radial-gradient(ellipse 50% 40% at 50% 20%, rgba(20,184,166,0.06) 0%, transparent 50%);
-    pointer-events: none; z-index: 0;
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(99, 102, 241, 0.15) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 0%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 50% at 50% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+    transition: background 0.4s;
+  }
+  [data-theme="light"] body::before {
+    background:
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(99, 102, 241, 0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 0%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 50% at 50% 80%, rgba(6, 182, 212, 0.04) 0%, transparent 50%);
   }
 
-  /* Loading */
+  /* Noise overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+  [data-theme="light"] body::after {
+    opacity: 0.012;
+  }
+
+  /* ====== LOADING ====== */
   .loading {
     display: flex; align-items: center; justify-content: center;
-    min-height: 100vh; flex-direction: column; gap: 20px;
+    min-height: 100vh; flex-direction: column; gap: 24px;
+    position: relative; z-index: 1;
   }
   .spinner {
-    width: 36px; height: 36px;
-    border: 3px solid var(--border); border-top-color: var(--indigo);
-    border-radius: 50%; animation: spin 0.7s linear infinite;
+    width: 40px; height: 40px;
+    border: 2px solid rgba(99, 102, 241, 0.2);
+    border-top-color: var(--accent-violet);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { color: var(--text-secondary); font-size: 15px; font-weight: 500; }
+  .loading-text {
+    color: var(--text-secondary);
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: -0.2px;
+  }
 
-  /* Layout */
-  .container { max-width: 1200px; margin: 0 auto; padding: 40px 28px 60px; position: relative; z-index: 1; }
+  /* ====== LAYOUT ====== */
+  .container {
+    max-width: 1240px; margin: 0 auto;
+    padding: 32px 28px 60px;
+    position: relative; z-index: 1;
+  }
 
-  /* Fade-in animation */
+  /* ====== ANIMATIONS ====== */
   @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
+    from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  .animate { animation: fadeUp 0.5s ease-out both; }
-  .delay-1 { animation-delay: 0.05s; }
-  .delay-2 { animation-delay: 0.1s; }
-  .delay-3 { animation-delay: 0.15s; }
-  .delay-4 { animation-delay: 0.2s; }
-  .delay-5 { animation-delay: 0.25s; }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+    50% { box-shadow: 0 0 20px 2px rgba(99, 102, 241, 0.15); }
+  }
 
-  /* ---- HEADER ---- */
+  .animate { animation: fadeUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .delay-1 { animation-delay: 0.06s; }
+  .delay-2 { animation-delay: 0.12s; }
+  .delay-3 { animation-delay: 0.18s; }
+  .delay-4 { animation-delay: 0.24s; }
+  .delay-5 { animation-delay: 0.30s; }
+  .delay-6 { animation-delay: 0.36s; }
+
+  /* ====== GLASS CARD MIXIN ====== */
+  .glass {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px) saturate(1.2);
+    -webkit-backdrop-filter: blur(20px) saturate(1.2);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+  }
+  .glass:hover {
+    border-color: var(--glass-border-hover);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* ====== HEADER ====== */
   .header {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 40px; flex-wrap: wrap; gap: 16px;
+    margin-bottom: 36px; flex-wrap: wrap; gap: 16px;
   }
   .header-left { display: flex; align-items: center; gap: 14px; }
   .logo-mark {
-    width: 40px; height: 40px; border-radius: 12px;
-    background: var(--gradient-main);
+    width: 42px; height: 42px; border-radius: 12px;
+    background: var(--gradient-primary);
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+    position: relative;
   }
-  .logo-mark svg { width: 22px; height: 22px; }
-  .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
-  .header-right { display: flex; align-items: center; gap: 14px; }
+  .logo-mark::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+  }
+  .logo-mark svg { width: 22px; height: 22px; position: relative; z-index: 1; }
+  .header h1 {
+    font-family: var(--font-display);
+    font-size: 22px; font-weight: 700; letter-spacing: -0.5px;
+    color: var(--text-primary);
+  }
+  .header-right { display: flex; align-items: center; gap: 12px; }
   .date-range {
     color: var(--text-tertiary); font-size: 13px; font-weight: 500;
-    background: var(--white); padding: 6px 14px; border-radius: 20px;
-    border: 1px solid var(--border);
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    padding: 7px 16px; border-radius: 20px;
+    border: 1px solid var(--glass-border);
+    font-family: var(--font-mono); letter-spacing: -0.3px;
   }
   .refresh-btn {
-    background: var(--white); border: 1px solid var(--border);
-    color: var(--text-secondary); padding: 7px 16px; border-radius: 20px;
-    cursor: pointer; font-size: 13px; font-weight: 500; font-family: var(--font);
-    transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    padding: 7px 18px; border-radius: 20px;
+    cursor: pointer; font-size: 13px; font-weight: 500;
+    font-family: var(--font-body);
+    transition: all 0.25s; display: flex; align-items: center; gap: 7px;
   }
   .refresh-btn:hover {
-    border-color: var(--indigo); color: var(--indigo);
-    box-shadow: 0 2px 8px rgba(99,102,241,0.12);
+    border-color: var(--accent-violet);
+    color: var(--accent-violet);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+    background: rgba(99, 102, 241, 0.08);
   }
   .refresh-btn svg { width: 14px; height: 14px; }
 
-  /* ---- STAT CARDS ---- */
+  /* Theme toggle */
+  .theme-toggle {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    width: 36px; height: 36px; border-radius: 50%;
+    cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.25s;
+    padding: 0; line-height: 1;
+  }
+  .theme-toggle:hover {
+    border-color: var(--accent-violet);
+    color: var(--accent-violet);
+    box-shadow: 0 0 16px rgba(99, 102, 241, 0.15);
+    background: rgba(99, 102, 241, 0.08);
+  }
+  .theme-toggle .icon-sun { display: none; }
+  .theme-toggle .icon-moon { display: block; }
+  [data-theme="light"] .theme-toggle .icon-sun { display: block; }
+  [data-theme="light"] .theme-toggle .icon-moon { display: none; }
+
+  /* ====== HERO ====== */
+  .hero-section {
+    text-align: center; margin-bottom: 40px; padding: 0 20px;
+  }
+  .hero-title {
+    font-family: var(--font-display);
+    font-size: 44px; font-weight: 700; letter-spacing: -2px;
+    background: linear-gradient(135deg, #e0e7ff 0%, #c4b5fd 30%, #a78bfa 50%, #818cf8 70%, #67e8f9 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px; line-height: 1.2;
+  }
+  [data-theme="light"] .hero-title {
+    background: linear-gradient(135deg, #4338ca 0%, #6d28d9 30%, #7c3aed 50%, #4f46e5 70%, #0891b2 100%);
+    -webkit-background-clip: text; background-clip: text;
+  }
+  .hero-subtitle {
+    font-size: 16px; color: var(--text-secondary); font-weight: 400;
+    max-width: 500px; margin: 0 auto; line-height: 1.7;
+    letter-spacing: -0.2px;
+  }
+
+  /* ====== PRIVACY NOTICE ====== */
+  .privacy-notice {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-size: 13px; font-weight: 500; color: var(--text-secondary);
+    background: rgba(99, 102, 241, 0.06);
+    border: 1px solid rgba(99, 102, 241, 0.1);
+    padding: 9px 18px; border-radius: var(--radius-sm);
+    margin-bottom: 20px;
+    backdrop-filter: blur(8px);
+  }
+
+  /* ====== STAT CARDS ====== */
   .stats-row {
     display: grid; grid-template-columns: repeat(4, 1fr);
-    gap: 16px; margin-bottom: 32px;
+    gap: 14px; margin-bottom: 28px;
   }
   @media (max-width: 780px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
 
   .stat-card {
-    background: var(--white); border-radius: var(--radius);
-    padding: 24px; position: relative;
-    border: 1px solid var(--border);
+    background: var(--bg-card);
+    backdrop-filter: blur(20px) saturate(1.2);
+    -webkit-backdrop-filter: blur(20px) saturate(1.2);
+    border-radius: var(--radius);
+    padding: 22px 24px; position: relative;
+    border: 1px solid var(--glass-border);
+    border-top: 1px solid var(--glass-shine-line);
     box-shadow: var(--shadow-sm);
-    transition: box-shadow 0.2s, transform 0.2s;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .stat-card:hover { box-shadow: var(--shadow-md); }
-  .stat-card .accent-bar {
-    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  .stat-card:hover {
+    border-color: var(--glass-border-hover);
+    box-shadow: var(--shadow-md), var(--shadow-glow-violet);
+    transform: translateY(-2px);
   }
   .stat-label {
-    font-size: 12px; font-weight: 600; color: var(--text-tertiary);
-    text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px;
+    font-family: var(--font-mono);
+    font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+    text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;
   }
   .stat-value {
-    font-size: 34px; font-weight: 800; letter-spacing: -2px;
-    line-height: 1; margin-bottom: 6px;
-    color: var(--text);
+    font-family: var(--font-display);
+    font-size: 36px; font-weight: 700; letter-spacing: -2px;
+    line-height: 1; margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
-  .stat-sub { font-size: 13px; color: var(--text-tertiary); font-weight: 500; }
+  .stat-sub {
+    font-size: 12.5px; color: var(--text-tertiary); font-weight: 500;
+    line-height: 1.5;
+  }
 
-  /* Tooltips */
-  .has-tooltip {
-    position: relative;
-    cursor: help;
-  }
+  /* Accent line at top of cards */
+  .stat-card:nth-child(1) .stat-value { background: var(--gradient-primary); -webkit-background-clip: text; background-clip: text; }
+  .stat-card:nth-child(2) .stat-value { background: var(--gradient-cyan); -webkit-background-clip: text; background-clip: text; }
+  .stat-card:nth-child(3) .stat-value { background: var(--gradient-warm); -webkit-background-clip: text; background-clip: text; }
+  .stat-card:nth-child(4) .stat-value { background: var(--gradient-emerald); -webkit-background-clip: text; background-clip: text; }
+
+  /* ====== TOOLTIPS ====== */
+  .has-tooltip { position: relative; cursor: help; }
   .has-tooltip .tooltip {
     position: absolute;
-    bottom: calc(100% + 10px);
+    bottom: calc(100% + 12px);
     left: 50%;
-    transform: translateX(-50%);
-    background: var(--text);
-    color: #F8FAFC;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 1.5;
-    padding: 10px 14px;
-    border-radius: 10px;
+    transform: translateX(-50%) translateY(6px);
+    background: var(--bg-raised);
+    color: var(--text-secondary);
+    font-size: 12px; font-weight: 500; line-height: 1.6;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
     white-space: normal;
-    width: max-content;
-    max-width: 280px;
+    width: max-content; max-width: 300px;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.15s, transform 0.15s;
-    transform: translateX(-50%) translateY(4px);
+    transition: opacity 0.2s, transform 0.2s;
     z-index: 100;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    text-transform: none;
-    letter-spacing: 0;
-    text-align: left;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px);
+    text-transform: none; letter-spacing: 0; text-align: left;
+    font-family: var(--font-body);
   }
   .has-tooltip .tooltip::after {
     content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
+    position: absolute; top: 100%; left: 50%;
     transform: translateX(-50%);
     border: 6px solid transparent;
-    border-top-color: var(--text);
+    border-top-color: var(--bg-raised);
   }
   .has-tooltip:hover .tooltip {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
-  /* For table headers, tooltip goes below */
   .has-tooltip-below .tooltip {
-    bottom: auto;
-    top: calc(100% + 10px);
+    bottom: auto; top: calc(100% + 12px);
   }
   .has-tooltip-below .tooltip::after {
-    top: auto;
-    bottom: 100%;
+    top: auto; bottom: 100%;
     border-top-color: transparent;
-    border-bottom-color: var(--text);
+    border-bottom-color: var(--bg-raised);
   }
-  /* Help icon next to labels */
   .help-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    background: rgba(0,0,0,0.06);
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: rgba(148, 163, 184, 0.12);
     color: var(--text-tertiary);
-    font-size: 10px;
-    font-weight: 700;
-    margin-left: 5px;
-    vertical-align: middle;
-    flex-shrink: 0;
+    font-size: 10px; font-weight: 700;
+    margin-left: 5px; vertical-align: middle; flex-shrink: 0;
+    font-family: var(--font-body);
   }
 
   /* Token explainer */
   .token-explainer {
-    font-size: 13px; color: var(--text-tertiary); font-weight: 500;
-    text-align: center; padding: 10px 20px; margin: -16px 0 28px;
-    line-height: 1.5;
+    font-size: 13px; color: var(--text-tertiary); font-weight: 400;
+    text-align: center; padding: 8px 20px; margin: -12px 0 28px;
+    line-height: 1.6;
   }
 
-  /* ---- SECTION HEADINGS ---- */
+  /* ====== SECTION HEADINGS ====== */
   .section-header {
-    display: flex; align-items: center; gap: 10px;
+    display: flex; align-items: center; gap: 12px;
     margin-bottom: 16px;
   }
   .section-icon {
-    width: 28px; height: 28px; border-radius: 8px;
+    width: 30px; height: 30px; border-radius: 9px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
   }
   .section-icon svg { width: 16px; height: 16px; }
   .section-title {
-    font-size: 16px; font-weight: 700; letter-spacing: -0.3px;
+    font-family: var(--font-display);
+    font-size: 17px; font-weight: 700; letter-spacing: -0.3px;
+    color: var(--text-primary);
   }
 
-  /* ---- INSIGHTS ---- */
+  /* ====== INSIGHTS ====== */
   .insights-section { margin-bottom: 32px; }
   .insight-card {
-    background: var(--white); border-radius: var(--radius-sm);
-    padding: 14px 20px; margin-bottom: 8px;
-    border: 1px solid var(--border);
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px; margin-bottom: 8px;
+    border: 1px solid var(--glass-border);
     box-shadow: var(--shadow-sm);
-    cursor: pointer; transition: box-shadow 0.2s;
+    cursor: pointer;
+    transition: all 0.25s;
   }
-  .insight-card:hover { box-shadow: var(--shadow-md); }
-  .insight-top {
-    display: flex; align-items: center; gap: 12px;
+  .insight-card:hover {
+    border-color: var(--glass-border-hover);
+    box-shadow: var(--shadow-md);
+    background: var(--bg-card-hover);
   }
+  .insight-top { display: flex; align-items: center; gap: 12px; }
   .insight-arrow {
     margin-left: auto; flex-shrink: 0;
-    width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
-    color: var(--text-tertiary); transition: transform 0.25s ease;
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-tertiary);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .insight-card.expanded .insight-arrow { transform: rotate(180deg); }
   .insight-indicator {
-    width: 28px; height: 28px; border-radius: 8px;
+    width: 30px; height: 30px; border-radius: 9px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0; font-size: 14px;
   }
-  .insight-card.warning .insight-indicator { background: linear-gradient(135deg, #FEF3C7, #FDE68A); }
-  .insight-card.info .insight-indicator { background: linear-gradient(135deg, #E0E7FF, #C7D2FE); }
-  .insight-card.neutral .insight-indicator { background: linear-gradient(135deg, #F1F5F9, #E2E8F0); }
-  .insight-title { font-size: 14px; font-weight: 700; line-height: 1.4; }
-  .insight-oneliner { font-size: 13px; color: var(--text-secondary); margin-left: auto; white-space: nowrap; font-weight: 500; }
-  .insight-expand {
-    max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
+  .insight-card.warning .insight-indicator { background: rgba(251, 191, 36, 0.15); }
+  .insight-card.info .insight-indicator { background: rgba(99, 102, 241, 0.15); }
+  .insight-card.neutral .insight-indicator { background: rgba(148, 163, 184, 0.1); }
+  .insight-title {
+    font-family: var(--font-display);
+    font-size: 14px; font-weight: 600; line-height: 1.4;
+    color: var(--text-primary);
   }
+  .insight-oneliner {
+    font-size: 13px; color: var(--text-tertiary);
+    margin-left: auto; white-space: nowrap; font-weight: 500;
+  }
+  .insight-expand { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
   .insight-card.expanded .insight-expand { max-height: 300px; }
   .insight-detail {
-    font-size: 13px; color: var(--text-secondary); line-height: 1.65;
-    padding: 12px 0 4px 40px;
-    border-top: 1px solid var(--border); margin-top: 12px;
+    font-size: 13px; color: var(--text-secondary); line-height: 1.7;
+    padding: 14px 0 4px 42px;
+    border-top: 1px solid var(--glass-border); margin-top: 14px;
   }
   .insight-action-tip {
     font-size: 13px; line-height: 1.6;
-    padding: 8px 0 0 40px; color: var(--indigo); font-weight: 600;
+    padding: 8px 0 0 42px;
+    color: var(--accent-violet); font-weight: 600;
   }
 
-  /* ---- CHARTS ---- */
+  /* ====== CHARTS ====== */
   .charts-grid {
     display: grid; grid-template-columns: 5fr 2fr;
-    gap: 16px; margin-bottom: 32px;
+    gap: 14px; margin-bottom: 32px;
   }
   @media (max-width: 800px) { .charts-grid { grid-template-columns: 1fr; } }
 
   .chart-card {
-    background: var(--white); border-radius: var(--radius);
-    padding: 24px; border: 1px solid var(--border);
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius);
+    padding: 24px; border: 1px solid var(--glass-border);
     box-shadow: var(--shadow-sm);
+    transition: border-color 0.3s;
   }
+  .chart-card:hover { border-color: var(--glass-border-hover); }
   .chart-card h3 {
-    font-size: 13px; font-weight: 700; color: var(--text-tertiary);
-    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 20px;
+    font-family: var(--font-mono);
+    font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;
   }
   canvas { display: block; }
   .legend {
     display: flex; gap: 20px; margin-top: 16px;
-    font-size: 12px; font-weight: 500; color: var(--text-secondary);
+    font-size: 12px; font-weight: 500; color: var(--text-tertiary);
   }
   .legend-item { display: flex; align-items: center; gap: 7px; }
-  .legend-dot { width: 10px; height: 10px; border-radius: 4px; flex-shrink: 0; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 3px; flex-shrink: 0; }
 
-  /* ---- TOP PROMPTS ---- */
+  /* ====== TOP PROMPTS ====== */
   .top-prompts { margin-bottom: 32px; }
   .prompts-card {
-    background: var(--white); border-radius: var(--radius);
-    border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-sm);
     overflow: hidden;
   }
   .prompt-row {
-    display: grid; grid-template-columns: 36px 1fr auto;
+    display: grid; grid-template-columns: 40px 1fr auto;
     gap: 14px; padding: 16px 24px; align-items: start;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer; transition: background 0.15s;
+    border-bottom: 1px solid var(--glass-border);
+    cursor: pointer; transition: background 0.2s;
   }
   .prompt-row:last-child { border-bottom: none; }
-  .prompt-row:hover { background: #FAFBFF; }
+  .prompt-row:hover { background: rgba(99, 102, 241, 0.04); }
   .prompt-rank {
-    width: 28px; height: 28px; border-radius: 8px;
-    background: var(--bg); display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 700; color: var(--text-secondary);
+    width: 30px; height: 30px; border-radius: 8px;
+    background: rgba(148, 163, 184, 0.08);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 12px; font-weight: 700; color: var(--text-tertiary);
   }
-  .prompt-row:nth-child(1) .prompt-rank { background: var(--gradient-main); color: white; }
-  .prompt-row:nth-child(2) .prompt-rank { background: var(--gradient-teal); color: white; }
-  .prompt-row:nth-child(3) .prompt-rank { background: var(--gradient-warm); color: white; }
+  .prompt-row:nth-child(1) .prompt-rank {
+    background: var(--gradient-primary); color: white;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  }
+  .prompt-row:nth-child(2) .prompt-rank {
+    background: var(--gradient-cyan); color: #0b0f1a;
+    box-shadow: 0 2px 8px rgba(6, 182, 212, 0.2);
+  }
+  .prompt-row:nth-child(3) .prompt-rank {
+    background: var(--gradient-warm); color: #0b0f1a;
+    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.2);
+  }
   .prompt-text {
-    font-size: 14px; font-weight: 500; line-height: 1.5;
+    font-size: 14px; font-weight: 500; line-height: 1.55;
     display: -webkit-box; -webkit-line-clamp: 2;
     -webkit-box-orient: vertical; overflow: hidden;
+    color: var(--text-primary);
   }
-  .prompt-meta { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; font-weight: 500; }
+  .prompt-meta {
+    font-size: 12px; color: var(--text-tertiary); margin-top: 5px;
+    font-weight: 500; font-family: var(--font-mono); letter-spacing: -0.2px;
+  }
   .token-bar-wrap {
-    display: flex; gap: 1px; height: 4px; margin-top: 8px;
+    display: flex; gap: 1px; height: 3px; margin-top: 10px;
     border-radius: 4px; overflow: hidden;
+    background: rgba(148, 163, 184, 0.06);
   }
-  .token-bar-in { background: var(--indigo); height: 100%; border-radius: 4px 0 0 4px; }
-  .token-bar-out { background: var(--teal); height: 100%; border-radius: 0 4px 4px 0; }
+  .token-bar-in {
+    background: linear-gradient(90deg, var(--accent-indigo), var(--accent-violet));
+    height: 100%; border-radius: 4px 0 0 4px;
+  }
+  .token-bar-out {
+    background: linear-gradient(90deg, var(--accent-teal), var(--accent-cyan));
+    height: 100%; border-radius: 0 4px 4px 0;
+  }
   .prompt-tokens { text-align: right; white-space: nowrap; padding-top: 2px; }
   .prompt-tokens .value {
-    font-size: 16px; font-weight: 700; font-family: var(--mono);
-    letter-spacing: -0.5px;
+    font-family: var(--font-mono);
+    font-size: 16px; font-weight: 700; letter-spacing: -0.5px;
+    color: var(--text-primary);
   }
-  .prompt-tokens .sub { font-size: 11px; color: var(--text-tertiary); font-weight: 500; margin-top: 2px; }
+  .prompt-tokens .sub {
+    font-size: 11px; color: var(--text-tertiary); font-weight: 500; margin-top: 3px;
+    font-family: var(--font-mono);
+  }
 
-  /* ---- SESSIONS ---- */
+  /* ====== SESSIONS ====== */
   .sessions-section { margin-bottom: 40px; }
   .sessions-toolbar {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 14px; gap: 12px; flex-wrap: wrap;
   }
   .session-search {
-    background: var(--white); border: 1px solid var(--border);
-    color: var(--text); padding: 9px 16px; border-radius: 10px;
-    font-size: 14px; font-weight: 500; width: 300px; outline: none;
-    font-family: var(--font); transition: all 0.2s;
+    background: var(--bg-input);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    padding: 10px 18px; border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 500; width: 320px; outline: none;
+    font-family: var(--font-body);
+    transition: all 0.25s;
+    backdrop-filter: blur(8px);
   }
-  .session-search::placeholder { color: var(--text-tertiary); }
-  .session-search:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
-  .session-count { color: var(--text-tertiary); font-size: 13px; font-weight: 600; }
+  .session-search::placeholder { color: var(--text-muted); }
+  .session-search:focus {
+    border-color: var(--accent-violet);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12), 0 0 20px rgba(99, 102, 241, 0.08);
+    background: var(--bg-card-solid);
+  }
+  .session-count {
+    color: var(--text-tertiary); font-size: 13px; font-weight: 600;
+    font-family: var(--font-mono);
+  }
 
   .sessions-card {
-    background: var(--white); border-radius: var(--radius);
-    border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-sm);
     overflow: visible;
   }
   .sessions-table { width: 100%; border-collapse: collapse; font-size: 14px; }
   .sessions-table th {
-    text-align: left; padding: 12px 16px;
-    font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.6px; color: var(--text-tertiary);
-    border-bottom: 1px solid var(--border);
+    text-align: left; padding: 13px 16px;
+    font-family: var(--font-mono);
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--text-muted);
+    border-bottom: 1px solid var(--glass-border);
     cursor: pointer; user-select: none; white-space: nowrap;
-    background: #FAFBFC;
+    background: var(--table-header-bg, rgba(15, 23, 42, 0.4));
+    transition: color 0.2s;
   }
+  .sessions-table th:first-child { border-radius: var(--radius) 0 0 0; }
+  .sessions-table th:last-child { border-radius: 0 var(--radius) 0 0; }
   .sessions-table th:hover { color: var(--text-secondary); }
-  .sessions-table th.sorted { color: var(--indigo); }
+  .sessions-table th.sorted { color: var(--accent-violet); }
   .sessions-table td {
-    padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle;
+    padding: 13px 16px; border-bottom: 1px solid var(--glass-border);
+    vertical-align: middle;
   }
-  .sessions-table tbody tr { cursor: pointer; transition: background 0.1s; }
-  .sessions-table tbody tr:hover td { background: #FAFBFF; }
+  .sessions-table tbody tr {
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .sessions-table tbody tr:hover td {
+    background: rgba(99, 102, 241, 0.04);
+  }
   .sessions-table tbody tr:last-child td { border-bottom: none; }
   .prompt-preview {
     max-width: 340px; overflow: hidden; text-overflow: ellipsis;
-    white-space: nowrap; font-weight: 500;
+    white-space: nowrap; font-weight: 500; color: var(--text-primary);
   }
   .token-num {
-    font-family: var(--mono); font-size: 13px; font-weight: 600;
+    font-family: var(--font-mono); font-size: 13px; font-weight: 600;
     text-align: right; white-space: nowrap; letter-spacing: -0.3px;
+    color: var(--text-secondary);
   }
+
+  /* Model badges */
   .model-badge {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 3px 10px; border-radius: 20px;
     font-size: 12px; font-weight: 600;
+    font-family: var(--font-mono);
   }
-  .model-opus { background: #EEF2FF; color: #4F46E5; }
-  .model-sonnet { background: #ECFDF5; color: #059669; }
-  .model-haiku { background: #FFF7ED; color: #EA580C; }
-  .model-unknown { background: #F1F5F9; color: #64748B; }
+  .model-opus { background: rgba(99, 102, 241, 0.12); color: #a5b4fc; }
+  .model-sonnet { background: rgba(16, 185, 129, 0.12); color: #6ee7b7; }
+  .model-haiku { background: rgba(249, 115, 22, 0.12); color: #fdba74; }
+  .model-gemini { background: rgba(59, 130, 246, 0.12); color: #93c5fd; }
+  .model-gpt { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; }
+  .model-unknown { background: rgba(148, 163, 184, 0.1); color: var(--text-tertiary); }
+  [data-theme="light"] .model-opus { background: #eef2ff; color: #4338ca; }
+  [data-theme="light"] .model-sonnet { background: #ecfdf5; color: #047857; }
+  [data-theme="light"] .model-haiku { background: #fff7ed; color: #c2410c; }
+  [data-theme="light"] .model-gemini { background: #eff6ff; color: #1d4ed8; }
+  [data-theme="light"] .model-gpt { background: #ecfdf5; color: #047857; }
+  [data-theme="light"] .model-unknown { background: #f1f5f9; color: #64748b; }
   .model-dot { width: 6px; height: 6px; border-radius: 50%; }
-  .model-opus .model-dot { background: #6366F1; }
-  .model-sonnet .model-dot { background: #10B981; }
-  .model-haiku .model-dot { background: #F97316; }
+  .model-opus .model-dot { background: var(--accent-indigo); box-shadow: 0 0 6px rgba(99, 102, 241, 0.4); }
+  .model-sonnet .model-dot { background: var(--accent-emerald); box-shadow: 0 0 6px rgba(52, 211, 153, 0.4); }
+  .model-haiku .model-dot { background: var(--accent-orange); box-shadow: 0 0 6px rgba(249, 115, 22, 0.4); }
+  .model-gemini .model-dot { background: #3b82f6; box-shadow: 0 0 6px rgba(59, 130, 246, 0.4); }
+  .model-gpt .model-dot { background: #10b981; box-shadow: 0 0 6px rgba(16, 185, 129, 0.4); }
+
+  /* Source badges */
+  .source-badge {
+    font-family: var(--font-mono);
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 1px 6px; border-radius: 4px; margin-left: 6px;
+    vertical-align: middle;
+  }
+  .source-claude { background: rgba(99, 102, 241, 0.12); color: #818cf8; }
+  .source-gemini { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
+  .source-codex { background: rgba(16, 185, 129, 0.12); color: #34d399; }
+  [data-theme="light"] .source-claude { background: #eef2ff; color: #4f46e5; }
+  [data-theme="light"] .source-gemini { background: #eff6ff; color: #2563eb; }
+  [data-theme="light"] .source-codex { background: #ecfdf5; color: #059669; }
+
+  /* Source counts in stats */
+  .source-counts {
+    display: flex; gap: 10px; align-items: center; justify-content: center;
+    margin: -8px 0 24px; flex-wrap: wrap;
+  }
+  .source-count-item {
+    display: flex; align-items: center; gap: 5px;
+    font-family: var(--font-mono);
+    font-size: 12px; font-weight: 600; color: var(--text-tertiary);
+  }
+  .source-count-dot {
+    width: 8px; height: 8px; border-radius: 3px;
+  }
+
+  /* Provider filter chips */
+  .filter-chips {
+    display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+  }
+  .filter-chip {
+    font-family: var(--font-mono);
+    font-size: 12px; font-weight: 600;
+    padding: 5px 14px; border-radius: 20px;
+    cursor: pointer; border: 1px solid var(--glass-border);
+    background: transparent; color: var(--text-tertiary);
+    transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+    white-space: nowrap;
+  }
+  .filter-chip:hover {
+    border-color: var(--glass-border-hover);
+    color: var(--text-secondary);
+    background: var(--bg-card);
+  }
+  .filter-chip.active {
+    border-color: var(--accent-violet);
+    color: var(--accent-violet);
+    background: rgba(99, 102, 241, 0.08);
+  }
+  .filter-chip .chip-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+  .filter-chip .chip-count {
+    opacity: 0.6; font-weight: 500;
+  }
+  [data-theme="light"] .filter-chip.active {
+    border-color: var(--accent-indigo);
+    color: var(--accent-indigo);
+    background: rgba(79, 70, 229, 0.06);
+  }
   .date-cell { white-space: nowrap; color: var(--text-secondary); font-weight: 500; }
   .project-tag {
-    font-size: 11px; color: var(--text-tertiary); display: block;
-    margin-top: 1px; font-weight: 500;
+    font-family: var(--font-mono);
+    font-size: 11px; color: var(--text-muted); display: block;
+    margin-top: 2px; font-weight: 500;
     max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
 
-  /* ---- DRILLDOWN ---- */
+  /* ====== DRILLDOWN ====== */
   .drilldown {
-    background: var(--white); border-radius: var(--radius);
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius);
     padding: 28px; margin-bottom: 32px; display: none;
-    border: 1px solid var(--border); box-shadow: var(--shadow-lg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-lg), var(--shadow-glow-violet);
   }
-  .drilldown.open { display: block; animation: fadeUp 0.3s ease-out; }
+  .drilldown.open { display: block; animation: fadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
   .drilldown-header {
     display: flex; align-items: flex-start; justify-content: space-between;
     margin-bottom: 24px; gap: 16px;
   }
-  .drilldown-title { font-size: 16px; font-weight: 700; line-height: 1.4; }
-  .drilldown-meta { font-size: 13px; color: var(--text-tertiary); margin-top: 4px; font-weight: 500; }
-  .drilldown-close {
-    background: var(--bg); border: none; color: var(--text-secondary);
-    width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
-    font-size: 18px; display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; transition: all 0.15s;
+  .drilldown-title {
+    font-family: var(--font-display);
+    font-size: 17px; font-weight: 700; line-height: 1.4;
+    color: var(--text-primary);
   }
-  .drilldown-close:hover { background: #EEF2FF; color: var(--indigo); }
+  .drilldown-meta {
+    font-size: 13px; color: var(--text-tertiary); margin-top: 6px;
+    font-weight: 500; font-family: var(--font-mono); letter-spacing: -0.2px;
+  }
+  .drilldown-close {
+    background: rgba(148, 163, 184, 0.08);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    width: 34px; height: 34px; border-radius: 9px; cursor: pointer;
+    font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .drilldown-close:hover {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.2);
+    color: var(--accent-violet);
+  }
 
-  .query-list { display: flex; flex-direction: column; gap: 8px; }
+  .query-list { display: flex; flex-direction: column; gap: 6px; }
   .query-item {
     display: grid; grid-template-columns: 36px 1fr auto;
     gap: 14px; padding: 14px 16px; border-radius: var(--radius-sm);
-    background: var(--bg); align-items: start;
-    transition: background 0.1s;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid transparent;
+    align-items: start;
+    transition: all 0.2s;
   }
-  .query-item:hover { background: #EEF2FF; }
+  .query-item:hover {
+    background: rgba(99, 102, 241, 0.06);
+    border-color: var(--glass-border);
+  }
   .query-num {
-    width: 28px; height: 28px; border-radius: 8px; background: var(--white);
-    border: 1px solid var(--border);
-    font-size: 12px; font-weight: 700; color: var(--text-tertiary);
+    width: 28px; height: 28px; border-radius: 7px;
+    background: rgba(148, 163, 184, 0.06);
+    border: 1px solid var(--glass-border);
+    font-family: var(--font-mono);
+    font-size: 11px; font-weight: 700; color: var(--text-muted);
     display: flex; align-items: center; justify-content: center;
   }
-  .query-prompt { font-size: 14px; font-weight: 500; line-height: 1.5; word-break: break-word; }
-  .query-prompt.no-prompt { color: var(--text-tertiary); font-style: italic; font-weight: 400; }
-  .query-tokens-col { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; white-space: nowrap; }
-  .query-tokens-col .total { font-family: var(--mono); font-size: 14px; font-weight: 700; }
-  .query-tokens-col .detail { font-size: 12px; color: var(--text-tertiary); font-weight: 500; }
+  .query-prompt {
+    font-size: 14px; font-weight: 500; line-height: 1.55;
+    word-break: break-word; color: var(--text-primary);
+  }
+  .query-prompt.no-prompt { color: var(--text-muted); font-style: italic; font-weight: 400; }
+  .query-tokens-col { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; white-space: nowrap; }
+  .query-tokens-col .total {
+    font-family: var(--font-mono); font-size: 14px; font-weight: 700;
+    color: var(--text-primary);
+  }
+  .query-tokens-col .detail {
+    font-size: 12px; color: var(--text-tertiary); font-weight: 500;
+    font-family: var(--font-mono);
+  }
 
-  /* ---- FOOTER ---- */
+  /* ====== OTLP CARD ====== */
+  .otlp-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 28px; overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .otlp-card:hover { border-color: var(--glass-border-hover); }
+  .otlp-card-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 18px 24px;
+  }
+  .otlp-card-header.has-body { border-bottom: 1px solid var(--glass-border); }
+  .otlp-icon {
+    width: 34px; height: 34px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .otlp-card.connected .otlp-icon { background: rgba(52, 211, 153, 0.12); }
+  .otlp-card.error .otlp-icon { background: rgba(251, 113, 133, 0.12); }
+  .otlp-card.setup .otlp-icon { background: rgba(99, 102, 241, 0.12); }
+  .otlp-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .otlp-card.connected .otlp-dot {
+    background: var(--accent-emerald);
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.4);
+    animation: pulse-glow-green 2s ease-in-out infinite;
+  }
+  @keyframes pulse-glow-green {
+    0%, 100% { box-shadow: 0 0 4px rgba(52, 211, 153, 0.3); }
+    50% { box-shadow: 0 0 12px rgba(52, 211, 153, 0.6); }
+  }
+  .otlp-card.error .otlp-dot {
+    background: var(--accent-rose);
+    box-shadow: 0 0 8px rgba(251, 113, 133, 0.4);
+  }
+  .otlp-header-text { flex: 1; min-width: 0; }
+  .otlp-title {
+    font-family: var(--font-display);
+    font-size: 15px; font-weight: 700; color: var(--text-primary);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .otlp-subtitle { font-size: 13px; color: var(--text-tertiary); font-weight: 400; margin-top: 3px; }
+  .otlp-badge {
+    font-family: var(--font-mono);
+    font-size: 10px; font-weight: 600; padding: 2px 9px; border-radius: 20px;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+  .otlp-card.connected .otlp-badge { background: rgba(52, 211, 153, 0.12); color: var(--accent-emerald); }
+  .otlp-card.error .otlp-badge { background: rgba(251, 113, 133, 0.12); color: var(--accent-rose); }
+  .otlp-endpoint-label {
+    font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+    color: var(--text-muted); margin-top: 3px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .otlp-header-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .otlp-header-meta { text-align: right; flex-shrink: 0; }
+  .otlp-header-meta .time {
+    font-family: var(--font-mono);
+    font-size: 12px; font-weight: 600; color: var(--text-secondary);
+  }
+  .otlp-header-meta .count {
+    font-size: 11px; color: var(--text-muted); margin-top: 2px;
+    font-family: var(--font-mono);
+  }
+  .otlp-error-msg {
+    padding: 12px 24px; font-size: 13px; color: var(--accent-rose);
+    background: rgba(251, 113, 133, 0.06);
+    border-bottom: 1px solid var(--glass-border);
+    font-family: var(--font-mono); font-weight: 500;
+  }
+  .otlp-metrics-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+  }
+  @media (max-width: 780px) { .otlp-metrics-grid { grid-template-columns: repeat(2, 1fr); } }
+  .otlp-metric {
+    padding: 16px 24px;
+    border-right: 1px solid var(--glass-border);
+  }
+  .otlp-metric:last-child { border-right: none; }
+  @media (max-width: 780px) {
+    .otlp-metric:nth-child(2) { border-right: none; }
+    .otlp-metric:nth-child(-n+2) { border-bottom: 1px solid var(--glass-border); }
+  }
+  .otlp-metric-label {
+    font-family: var(--font-mono);
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 6px;
+  }
+  .otlp-metric-value {
+    font-family: var(--font-display);
+    font-size: 22px; font-weight: 700; letter-spacing: -0.5px;
+    color: var(--text-primary); line-height: 1.2;
+  }
+  .otlp-metric-sub {
+    font-size: 11px; color: var(--text-muted); font-weight: 500; margin-top: 3px;
+    font-family: var(--font-mono);
+  }
+
+  /* OTLP form */
+  .otlp-form {
+    padding: 20px 24px; display: flex; gap: 12px;
+    align-items: flex-start; flex-wrap: wrap;
+  }
+  .otlp-form-group { display: flex; flex-direction: column; gap: 6px; }
+  .otlp-form-group.grow { flex: 1; min-width: 200px; }
+  .otlp-form-label {
+    font-family: var(--font-mono);
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--text-muted);
+  }
+  .otlp-input {
+    background: var(--bg-input);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    padding: 10px 14px; border-radius: var(--radius-xs);
+    font-size: 13px; font-weight: 500; font-family: var(--font-mono);
+    outline: none; transition: all 0.25s; width: 100%;
+  }
+  .otlp-input::placeholder { color: var(--text-muted); }
+  .otlp-input:focus {
+    border-color: var(--accent-violet);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    background: var(--otlp-input-focus-bg);
+  }
+  .otlp-btn {
+    padding: 10px 22px; border-radius: var(--radius-xs);
+    font-size: 13px; font-weight: 600; font-family: var(--font-display);
+    cursor: pointer; transition: all 0.25s;
+    border: 1px solid transparent; white-space: nowrap;
+    align-self: flex-end; letter-spacing: -0.2px;
+  }
+  .otlp-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .otlp-btn-primary {
+    background: var(--gradient-primary); color: white; border: none;
+    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.3);
+  }
+  .otlp-btn-primary:hover:not(:disabled) {
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+    transform: translateY(-1px);
+  }
+  .otlp-btn-ghost {
+    background: transparent; color: var(--text-tertiary);
+    border: 1px solid var(--glass-border);
+  }
+  .otlp-btn-ghost:hover:not(:disabled) {
+    border-color: var(--accent-rose);
+    color: var(--accent-rose);
+    background: rgba(251, 113, 133, 0.06);
+  }
+  .otlp-btn-sm { padding: 6px 14px; font-size: 12px; }
+
+  /* ====== FOOTER ====== */
   .footer {
     text-align: center; padding: 24px;
-    color: var(--text-tertiary); font-size: 13px; font-weight: 500;
+    color: var(--text-muted); font-size: 13px; font-weight: 400;
   }
-  .footer a { color: var(--indigo); text-decoration: none; font-weight: 600; }
-  .footer a:hover { text-decoration: underline; }
+  .footer a {
+    color: var(--accent-violet); text-decoration: none; font-weight: 600;
+    transition: color 0.2s;
+  }
+  .footer a:hover { color: var(--accent-cyan); text-decoration: underline; }
 
-  /* Privacy notice */
-  .privacy-notice {
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-    font-size: 13px; font-weight: 500; color: var(--text-secondary);
-    background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.1);
-    padding: 8px 16px; border-radius: 10px; margin-bottom: 20px;
+  /* ====== SCROLLBAR ====== */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.15);
+    border-radius: 3px;
   }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.25); }
 
-  /* Hero / value prop */
-  .hero-section {
-    text-align: center; margin-bottom: 36px; padding: 0 20px;
-  }
-  .hero-title {
-    font-size: 38px; font-weight: 800; letter-spacing: -1.5px;
-    background: var(--gradient-main); -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent; background-clip: text;
-    margin-bottom: 10px; line-height: 1.3;
-  }
-  .hero-subtitle {
-    font-size: 15px; color: var(--text-secondary); font-weight: 500;
-    max-width: 600px; margin: 0 auto; line-height: 1.7;
+  /* ====== SELECTION ====== */
+  ::selection {
+    background: rgba(99, 102, 241, 0.3);
+    color: var(--text-primary);
   }
 </style>
 </head>
@@ -502,23 +1058,33 @@
 
 <div id="loading" class="loading">
   <div class="spinner"></div>
-  <div class="loading-text">Reading your Claude Code sessions...</div>
+  <div class="loading-text">Reading your AI coding sessions...</div>
 </div>
 
 <div id="app" class="container" style="display:none">
 
   <!-- Privacy notice -->
-  <div class="privacy-notice animate">
+  <div class="privacy-notice animate" id="privacyNotice">
     &#128274; All data stays on your machine. Nothing is sent anywhere.
   </div>
+
+  <!-- OTLP status -->
+  <div id="otlpStatus" class="otlp-card animate" style="display:none"></div>
 
   <!-- Header -->
   <div class="header animate">
     <div class="header-left">
       <div class="logo-mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="7" r="2.5" fill="rgba(255,255,255,0.9)" stroke="none"/>
+          <circle cx="7" cy="15" r="2.5" fill="rgba(255,255,255,0.9)" stroke="none"/>
+          <circle cx="17" cy="15" r="2.5" fill="rgba(255,255,255,0.9)" stroke="none"/>
+          <line x1="12" y1="9.5" x2="7" y2="12.5" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+          <line x1="12" y1="9.5" x2="17" y2="12.5" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+          <line x1="9.5" y1="15" x2="14.5" y2="15" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>
+        </svg>
       </div>
-      <h1>Claude Spend</h1>
+      <h1>Coding Agent Usage</h1>
     </div>
     <div class="header-right">
       <span id="dateRange" class="date-range"></span>
@@ -526,26 +1092,31 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
         Refresh
       </button>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark theme">
+        <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
     </div>
   </div>
 
   <!-- Value proposition -->
   <div class="hero-section animate delay-1">
-    <h2 class="hero-title">Your Claude Code usage, visualized.</h2>
-    <p class="hero-subtitle">See where your tokens actually go.</p>
+    <h2 class="hero-title">Your AI coding usage, visualized.</h2>
+    <p class="hero-subtitle">See where your tokens actually go — across Claude Code, Gemini CLI, and Codex CLI.</p>
   </div>
 
   <!-- Stats -->
   <div class="stats-row" id="statsRow"></div>
+  <div id="sourceCounts" class="source-counts animate delay-2" style="display:none"></div>
   <div id="tokenExplainer" class="token-explainer animate delay-2">
-    Tokens are how AI measures text -- roughly 1 token = 1 word. Hover over any label with a <span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:rgba(0,0,0,0.08);font-size:10px;font-weight:700;vertical-align:middle;">?</span> for an explanation.
+    Tokens are how AI measures text — roughly 1 token ≈ 1 word. Hover over any label with a <span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:rgba(148,163,184,0.12);font-size:10px;font-weight:700;vertical-align:middle;color:var(--text-tertiary);">?</span> for an explanation.
   </div>
 
   <!-- Insights -->
   <div id="insightsSection" class="insights-section" style="display:none">
     <div class="section-header animate">
-      <div class="section-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round"><path d="M12 2a7 7 0 0 1 4 12.75V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.25A7 7 0 0 1 12 2z"/><path d="M9 21h6"/></svg>
+      <div class="section-icon" style="background:rgba(251,191,36,0.12)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"><path d="M12 2a7 7 0 0 1 4 12.75V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.25A7 7 0 0 1 12 2z"/><path d="M9 21h6"/></svg>
       </div>
       <div class="section-title">Insights</div>
     </div>
@@ -555,11 +1126,11 @@
   <!-- Charts -->
   <div class="charts-grid animate delay-3">
     <div class="chart-card">
-      <h3 class="has-tooltip has-tooltip-below" style="display:inline-block">Tokens per Day<div class="tooltip">How many tokens you used each day. Taller bars mean heavier usage days. The indigo portion is what Claude read, the teal is what Claude wrote.</div></h3>
+      <h3 class="has-tooltip has-tooltip-below" style="display:inline-block">Tokens per Day<div class="tooltip">How many tokens you used each day. Taller bars mean heavier usage days. The indigo portion is input (what the model read), the teal is output (what the model wrote).</div></h3>
       <canvas id="dailyChart"></canvas>
       <div class="legend">
-        <div class="legend-item"><div class="legend-dot" style="background:var(--indigo)"></div> Read by Claude (your messages + context)</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div> Written by Claude (responses)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent-indigo)"></div> Input (read)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent-teal)"></div> Output (written)</div>
       </div>
     </div>
     <div class="chart-card">
@@ -572,10 +1143,10 @@
   <!-- Most Expensive Prompts -->
   <div class="top-prompts animate delay-4">
     <div class="section-header">
-      <div class="section-icon" style="background:linear-gradient(135deg,#E0E7FF,#C7D2FE)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+      <div class="section-icon" style="background:rgba(99,102,241,0.12)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2.5" stroke-linecap="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
       </div>
-      <div class="section-title has-tooltip has-tooltip-below" style="display:inline-flex">Most Expensive Prompts<div class="tooltip">Your top 20 individual messages ranked by how many tokens they used. Short vague messages like "Yes" often rank highest because they trigger long chains of tool calls where Claude tries to figure out what you meant.</div></div>
+      <div class="section-title has-tooltip has-tooltip-below" style="display:inline-flex">Most Expensive Prompts<div class="tooltip">Your top 20 individual messages ranked by how many tokens they used. Short vague messages like "Yes" often rank highest because they trigger long chains of tool calls where the model tries to figure out what you meant.</div></div>
     </div>
     <div class="prompts-card" id="topPromptsList"></div>
   </div>
@@ -595,13 +1166,14 @@
   <!-- All Sessions -->
   <div class="sessions-section animate delay-5">
     <div class="section-header">
-      <div class="section-icon" style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+      <div class="section-icon" style="background:rgba(52,211,153,0.12)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
       </div>
       <div class="section-title">All Sessions</div>
     </div>
     <div class="sessions-toolbar">
       <input type="text" class="session-search" id="searchInput" placeholder="Search prompts, models, projects...">
+      <div id="filterChips" class="filter-chips" style="display:none"></div>
       <span id="sessionCount" class="session-count"></span>
     </div>
     <div class="sessions-card">
@@ -610,11 +1182,11 @@
           <tr>
             <th data-sort="date">Date</th>
             <th data-sort="prompt">What you asked</th>
-            <th data-sort="model" class="has-tooltip has-tooltip-below">Model<div class="tooltip">Which AI model was used. Opus is the most capable (and uses more tokens), Sonnet is faster and lighter.</div></th>
-            <th data-sort="queries" style="text-align:right" class="has-tooltip has-tooltip-below">Messages<div class="tooltip">How many back-and-forth messages happened in this conversation, including automatic tool calls Claude made.</div></th>
-            <th data-sort="total" style="text-align:right" class="sorted has-tooltip has-tooltip-below">Total tokens<div class="tooltip">The total number of tokens used in this conversation. Higher means more expensive. Long conversations cost more because Claude re-reads everything each turn.</div></th>
-            <th data-sort="input" style="text-align:right" class="has-tooltip has-tooltip-below">Read<div class="tooltip">Tokens Claude read: your messages, the conversation history, files, and system context. This grows with each message because the full history gets re-sent.</div></th>
-            <th data-sort="output" style="text-align:right" class="has-tooltip has-tooltip-below">Written<div class="tooltip">Tokens Claude wrote back: responses, code, explanations. Usually a small fraction of the total.</div></th>
+            <th data-sort="model" class="has-tooltip has-tooltip-below">Model<div class="tooltip">Which AI model was used. Different models have different capabilities and token costs.</div></th>
+            <th data-sort="queries" style="text-align:right" class="has-tooltip has-tooltip-below">Messages<div class="tooltip">How many back-and-forth messages happened in this conversation, including automatic tool calls the model made.</div></th>
+            <th data-sort="total" style="text-align:right" class="sorted has-tooltip has-tooltip-below">Total tokens<div class="tooltip">The total number of tokens used in this conversation. Higher means more expensive. Long conversations cost more because the full history gets re-read each turn.</div></th>
+            <th data-sort="input" style="text-align:right" class="has-tooltip has-tooltip-below">Read<div class="tooltip">Input tokens: your messages, conversation history, files, and system context. This grows with each message because the full history gets re-sent.</div></th>
+            <th data-sort="output" style="text-align:right" class="has-tooltip has-tooltip-below">Written<div class="tooltip">Output tokens: responses, code, and explanations. Usually a small fraction of the total.</div></th>
           </tr>
         </thead>
         <tbody id="sessionsBody"></tbody>
@@ -623,7 +1195,7 @@
   </div>
 
   <div class="footer">
-    Made with <a href="https://claude.ai/code" target="_blank">Claude Code</a> and &#10084; by <a href="https://www.linkedin.com/in/aniketparihar/" target="_blank">Aniket</a>
+    Made with <a href="https://claude.ai/code" target="_blank">Claude Code</a> and &#10084; by <a href="https://www.linkedin.com/in/aniketparihar/" target="_blank">Aniket</a> and <a href="https://www.linkedin.com/in/debanitr/" target="_blank">Deba</a>
   </div>
 </div>
 
@@ -631,6 +1203,27 @@
 let DATA = null;
 let currentSort = { key: 'total', dir: 'desc' };
 let searchQuery = '';
+let activeSourceFilter = 'all'; // 'all', 'claude', 'gemini', 'codex'
+
+// ====== THEME ======
+function getTheme() {
+  return localStorage.getItem('coding-agent-theme') || 'dark';
+}
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('coding-agent-theme', theme);
+  // Re-render charts with correct colors when theme changes
+  if (DATA) { renderDailyChart(); renderModelChart(); }
+}
+function toggleTheme() {
+  applyTheme(getTheme() === 'dark' ? 'light' : 'dark');
+}
+// Apply saved theme immediately
+applyTheme(getTheme());
+
+function getCSSVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
 
 function fmt(n) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -644,12 +1237,37 @@ function modelClass(m) {
   if (m.includes('opus')) return 'model-opus';
   if (m.includes('sonnet')) return 'model-sonnet';
   if (m.includes('haiku')) return 'model-haiku';
+  if (m.includes('gemini')) return 'model-gemini';
+  if (m.includes('gpt') || m.includes('codex') || m.startsWith('o1') || m.startsWith('o3') || m.startsWith('o4')) return 'model-gpt';
   return 'model-unknown';
 }
 function modelShort(m) {
-  if (m.includes('opus')) return 'Opus';
-  if (m.includes('sonnet')) return 'Sonnet';
-  if (m.includes('haiku')) return 'Haiku';
+  // Extract version info, e.g. "claude-opus-4-6" -> "Opus 4.6", "gemini-2.5-pro" -> "Gemini 2.5 Pro"
+  const vMatch = m.match(/(\d+)[-.](\d+)/);
+  const ver = vMatch ? ` ${vMatch[1]}.${vMatch[2]}` : '';
+
+  // Claude models
+  if (m.includes('opus')) return 'Opus' + ver;
+  if (m.includes('sonnet')) return 'Sonnet' + ver;
+  if (m.includes('haiku')) return 'Haiku' + ver;
+
+  // Gemini models: "gemini-2.5-pro" -> "Gemini 2.5 Pro"
+  if (m.includes('gemini')) {
+    const suffix = m.includes('pro') ? ' Pro' : m.includes('flash') ? ' Flash' : m.includes('ultra') ? ' Ultra' : '';
+    return 'Gemini' + ver + suffix;
+  }
+
+  // OpenAI models: "gpt-5-codex" -> "GPT-5 Codex", "o3" -> "o3", "o4-mini" -> "o4 Mini"
+  if (m.startsWith('o1') || m.startsWith('o3') || m.startsWith('o4')) {
+    const base = m.split('-')[0];
+    const mini = m.includes('mini') ? ' Mini' : '';
+    return base + mini;
+  }
+  if (m.includes('gpt')) {
+    const codex = m.includes('codex') ? ' Codex' : '';
+    return 'GPT' + ver + codex;
+  }
+
   return m;
 }
 function projectShort(p) {
@@ -680,29 +1298,181 @@ async function refreshData() {
 function render() {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('app').style.display = 'block';
+  renderOTLP();
   renderStats();
   renderInsights();
   renderDailyChart();
   renderModelChart();
   renderTopPrompts();
+  renderFilterChips();
   renderSessions();
+}
+
+// OTLP status + config
+function renderOTLP() {
+  const el = document.getElementById('otlpStatus');
+  const otlp = DATA.otlp;
+  el.style.display = 'block';
+
+  if (!otlp || !otlp.enabled) {
+    el.className = 'otlp-card animate setup';
+    document.getElementById('privacyNotice').innerHTML =
+      '&#128274; All data stays on your machine. Nothing is sent anywhere.';
+
+    el.innerHTML = `
+      <div class="otlp-card-header">
+        <div class="otlp-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2.5" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="otlp-header-text">
+          <div class="otlp-title">OpenTelemetry Export</div>
+          <div class="otlp-subtitle">Send your token usage metrics to any OTLP-compatible backend</div>
+        </div>
+      </div>
+      <div class="otlp-form" id="otlpForm">
+        <div class="otlp-form-group grow">
+          <label class="otlp-form-label">Endpoint</label>
+          <input type="text" class="otlp-input" id="otlpEndpointInput"
+            placeholder="http://localhost:4318" autocomplete="off">
+        </div>
+        <div class="otlp-form-group grow">
+          <label class="otlp-form-label">Headers <span style="opacity:0.5;text-transform:none;letter-spacing:0">(optional, comma-separated key=value)</span></label>
+          <input type="text" class="otlp-input" id="otlpHeadersInput"
+            placeholder="Authorization: Basic dXNlcjpwYXNz, X-Org: my-org" autocomplete="off">
+        </div>
+        <button class="otlp-btn otlp-btn-primary" onclick="connectOTLP()">Connect</button>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('privacyNotice').innerHTML =
+    '&#128274; All data stays on your machine. Metrics are exported only to your configured OTLP endpoint.';
+
+  const hasError = !!otlp.lastError;
+  el.className = 'otlp-card animate ' + (hasError ? 'error' : 'connected');
+
+  const t = DATA.totals;
+  const models = DATA.modelBreakdown?.length || 0;
+  const days = DATA.dailyUsage?.length || 0;
+  const sessions = t.totalSessions || 0;
+
+  let timeHtml = '';
+  if (hasError) {
+    timeHtml = '<span style="color:var(--accent-rose);font-size:12px;font-weight:600">Export failed</span>';
+  } else if (otlp.lastExport) {
+    const ago = Math.round((Date.now() - new Date(otlp.lastExport).getTime()) / 1000);
+    const agoText = ago < 60 ? `${ago}s ago` : `${Math.round(ago / 60)}m ago`;
+    const intervalNote = otlp.intervalSec ? ` &middot; every ${otlp.intervalSec}s` : '';
+    timeHtml = `<div class="time">${agoText}</div><div class="count">${otlp.exports} export${otlp.exports !== 1 ? 's' : ''}${intervalNote}</div>`;
+  }
+
+  let html = '';
+  html += `<div class="otlp-card-header has-body">
+    <div class="otlp-icon"><span class="otlp-dot"></span></div>
+    <div class="otlp-header-text">
+      <div class="otlp-title">OpenTelemetry Export <span class="otlp-badge">${hasError ? 'Error' : 'Active'}</span></div>
+      <div class="otlp-endpoint-label">${escapeHtml(otlp.endpoint)}</div>
+    </div>
+    <div class="otlp-header-actions">
+      <div class="otlp-header-meta">${timeHtml}</div>
+      <button class="otlp-btn otlp-btn-ghost otlp-btn-sm" onclick="disconnectOTLP()">Disconnect</button>
+    </div>
+  </div>`;
+
+  if (hasError) {
+    html += `<div class="otlp-error-msg">${escapeHtml(otlp.lastError)}</div>`;
+  }
+
+  html += `<div class="otlp-metrics-grid">
+    <div class="otlp-metric">
+      <div class="otlp-metric-label">Metrics Exported</div>
+      <div class="otlp-metric-value">12</div>
+      <div class="otlp-metric-sub">counters, histograms, gauges</div>
+    </div>
+    <div class="otlp-metric">
+      <div class="otlp-metric-label">Sessions Tracked</div>
+      <div class="otlp-metric-value">${sessions}</div>
+      <div class="otlp-metric-sub">across ${models} model${models !== 1 ? 's' : ''}</div>
+    </div>
+    <div class="otlp-metric">
+      <div class="otlp-metric-label">Data Points</div>
+      <div class="otlp-metric-value">${sessions + days + models}</div>
+      <div class="otlp-metric-sub">sessions + daily + models</div>
+    </div>
+    <div class="otlp-metric">
+      <div class="otlp-metric-label">Time Range</div>
+      <div class="otlp-metric-value">${days}d</div>
+      <div class="otlp-metric-sub">${t.dateRange ? formatDate(t.dateRange.from) + ' \u2013 ' + formatDate(t.dateRange.to) : 'no data'}</div>
+    </div>
+  </div>`;
+
+  el.innerHTML = html;
+}
+
+async function connectOTLP() {
+  const endpoint = document.getElementById('otlpEndpointInput').value.trim();
+  if (!endpoint) {
+    document.getElementById('otlpEndpointInput').focus();
+    return;
+  }
+  const headers = document.getElementById('otlpHeadersInput').value.trim();
+
+  const errEl = document.getElementById('otlpFormError');
+  if (errEl) errEl.remove();
+
+  const btn = document.querySelector('#otlpForm .otlp-btn-primary');
+  btn.disabled = true;
+  btn.textContent = 'Testing endpoint...';
+
+  try {
+    const res = await fetch('/api/otlp/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint, headers: headers || undefined }),
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || 'Connection failed');
+
+    DATA.otlp = result.otlp;
+    renderOTLP();
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Connect';
+    const form = document.getElementById('otlpForm');
+    const errorDiv = document.createElement('div');
+    errorDiv.id = 'otlpFormError';
+    errorDiv.style.cssText = 'padding:12px 24px;font-size:13px;color:var(--accent-rose);background:rgba(251,113,133,0.06);border-top:1px solid rgba(251,113,133,0.1);font-weight:500;font-family:var(--font-mono);';
+    errorDiv.textContent = err.message;
+    form.parentElement.appendChild(errorDiv);
+  }
+}
+
+async function disconnectOTLP() {
+  try {
+    const res = await fetch('/api/otlp/disconnect', { method: 'POST' });
+    const result = await res.json();
+    DATA.otlp = result.otlp;
+    renderOTLP();
+  } catch (err) {
+    alert('Failed to disconnect: ' + err.message);
+  }
 }
 
 // Stats
 function renderStats() {
   const t = DATA.totals;
-  const range = t.dateRange ? `${formatDate(t.dateRange.from)} - ${formatDate(t.dateRange.to)}` : '';
+  const range = t.dateRange ? `${formatDate(t.dateRange.from)} — ${formatDate(t.dateRange.to)}` : '';
   document.getElementById('dateRange').textContent = range;
 
   const cards = [
-    { label: 'Total Usage', value: fmt(t.totalTokens), sub: `${fmt(t.totalInputTokens)} read by Claude + ${fmt(t.totalOutputTokens)} written back`,
-      tip: 'The total number of tokens used across all your conversations. This includes everything Claude reads (your messages, conversation history, files) plus everything Claude writes back.' },
-    { label: 'Conversations', value: fmtFull(t.totalSessions), sub: `Each one used ~${fmt(t.avgTokensPerSession)} tokens on average`,
-      tip: 'Each time you start Claude Code and begin chatting, that counts as one conversation. A new conversation starts fresh with no prior context.' },
-    { label: 'Messages Sent', value: fmtFull(t.totalQueries), sub: `Each message cost ~${fmt(t.avgTokensPerQuery)} tokens on average`,
-      tip: 'Every time you hit Enter and send something to Claude, that is one message. This includes follow-up tool calls Claude makes automatically behind the scenes.' },
-    { label: 'Claude Wrote', value: fmt(t.totalOutputTokens), sub: `Only ${((t.totalOutputTokens / Math.max(t.totalTokens, 1)) * 100).toFixed(1)}% of total -- most usage is from re-reading context`,
-      tip: 'The tokens Claude spent writing responses, code, and explanations. This is usually a tiny fraction of total usage because most tokens go toward re-reading your conversation history.' },
+    { label: 'Total Usage', value: fmt(t.totalTokens), sub: `${fmt(t.totalInputTokens)} read + ${fmt(t.totalOutputTokens)} written`,
+      tip: 'The total number of tokens used across all your conversations across all AI coding tools.' },
+    { label: 'Conversations', value: fmtFull(t.totalSessions), sub: `~${fmt(t.avgTokensPerSession)} tokens avg per session`,
+      tip: 'Each time you start an AI coding tool and begin chatting, that counts as one conversation.' },
+    { label: 'Messages Sent', value: fmtFull(t.totalQueries), sub: `~${fmt(t.avgTokensPerQuery)} tokens avg per message`,
+      tip: 'Every time you hit Enter and send something, that is one message. This includes follow-up tool calls made automatically behind the scenes.' },
+    { label: 'AI Wrote', value: fmt(t.totalOutputTokens), sub: `${((t.totalOutputTokens / Math.max(t.totalTokens, 1)) * 100).toFixed(1)}% of total usage`,
+      tip: 'The tokens the AI spent writing responses, code, and explanations. Usually a tiny fraction of total usage because most tokens go toward re-reading conversation history.' },
   ];
 
   document.getElementById('statsRow').innerHTML = cards.map((c, i) => `
@@ -711,6 +1481,23 @@ function renderStats() {
       <div class="stat-value">${c.value}</div>
       <div class="stat-sub">${c.sub}</div>
     </div>`).join('');
+
+  // Show source counts if multiple sources
+  const sourceEl = document.getElementById('sourceCounts');
+  const sources = [
+    { name: 'Claude Code', count: t.claudeSessions || 0, color: '#818cf8', cls: 'claude' },
+    { name: 'Gemini CLI', count: t.geminiSessions || 0, color: '#3b82f6', cls: 'gemini' },
+    { name: 'Codex CLI', count: t.codexSessions || 0, color: '#10b981', cls: 'codex' },
+  ].filter(s => s.count > 0);
+
+  if (sources.length > 1) {
+    sourceEl.style.display = 'flex';
+    sourceEl.innerHTML = sources.map(s =>
+      `<div class="source-count-item"><div class="source-count-dot" style="background:${s.color}"></div>${s.name}: ${s.count}</div>`
+    ).join('');
+  } else {
+    sourceEl.style.display = 'none';
+  }
 }
 
 // Insights
@@ -720,7 +1507,6 @@ function renderInsights() {
   if (!insights.length) { section.style.display = 'none'; return; }
 
   section.style.display = 'block';
-  const icons = { warning: '!', info: 'i', neutral: '~' };
   const emojis = { warning: '\u26A0\uFE0F', info: '\uD83D\uDCA1', neutral: '\uD83D\uDCC5' };
 
   document.getElementById('insightsList').innerHTML = insights.map((ins, i) => {
@@ -740,7 +1526,7 @@ function renderInsights() {
   }).join('');
 }
 
-// Daily chart
+// Daily chart — dark theme
 function renderDailyChart() {
   const canvas = document.getElementById('dailyChart');
   const ctx = canvas.getContext('2d');
@@ -749,7 +1535,7 @@ function renderDailyChart() {
 
   const dpr = window.devicePixelRatio || 1;
   const w = canvas.parentElement.clientWidth - 48;
-  const h = 200;
+  const h = 220;
   canvas.width = w * dpr; canvas.height = h * dpr;
   canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
   ctx.scale(dpr, dpr);
@@ -761,23 +1547,25 @@ function renderDailyChart() {
   const chartH = h - 36;
   const startX = 48;
 
-  // Grid
-  ctx.font = '500 10px Inter, system-ui';
-  ctx.fillStyle = '#94A3B8';
+  // Grid lines (theme-aware)
+  const labelColor = getCSSVar('--chart-label');
+  const gridColor = getCSSVar('--chart-grid');
+  ctx.font = '500 10px "JetBrains Mono", monospace';
+  ctx.fillStyle = labelColor;
   ctx.textAlign = 'right';
   for (let i = 0; i <= 4; i++) {
     const val = (maxTotal / 4) * i;
     const y = chartH - (chartH * i / 4) + 8;
     ctx.fillText(fmt(val), startX - 10, y + 3);
-    ctx.strokeStyle = 'rgba(0,0,0,0.04)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = gridColor; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(startX, y); ctx.lineTo(w, y); ctx.stroke();
   }
 
-  // Bars with gradient
+  // Bars with gradients (theme-aware)
   const inGrad = ctx.createLinearGradient(0, chartH + 8, 0, 0);
-  inGrad.addColorStop(0, '#818CF8'); inGrad.addColorStop(1, '#6366F1');
+  inGrad.addColorStop(0, getCSSVar('--chart-bar-in-0')); inGrad.addColorStop(1, getCSSVar('--chart-bar-in-1'));
   const outGrad = ctx.createLinearGradient(0, chartH + 8, 0, 0);
-  outGrad.addColorStop(0, '#2DD4BF'); outGrad.addColorStop(1, '#14B8A6');
+  outGrad.addColorStop(0, getCSSVar('--chart-bar-out-0')); outGrad.addColorStop(1, getCSSVar('--chart-bar-out-1'));
 
   data.forEach((d, i) => {
     const x = startX + i * (barW + gap);
@@ -798,13 +1586,13 @@ function renderDailyChart() {
   });
 
   // X labels
-  ctx.fillStyle = '#94A3B8'; ctx.textAlign = 'center';
-  ctx.font = '500 10px Inter, system-ui';
+  ctx.fillStyle = labelColor; ctx.textAlign = 'center';
+  ctx.font = '500 10px "JetBrains Mono", monospace';
   const step = Math.max(1, Math.floor(data.length / 7));
   data.forEach((d, i) => {
     if (i % step === 0 || i === data.length - 1) {
       const x = startX + i * (barW + gap) + barW / 2;
-      ctx.fillText(formatDate(d.date), x, chartH + 24);
+      ctx.fillText(formatDate(d.date), x, chartH + 26);
     }
   });
 }
@@ -824,7 +1612,7 @@ function roundedRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-// Model donut
+// Model donut — dark theme
 function renderModelChart() {
   const canvas = document.getElementById('modelChart');
   const ctx = canvas.getContext('2d');
@@ -837,13 +1625,22 @@ function renderModelChart() {
   canvas.style.width = size + 'px'; canvas.style.height = size + 'px';
   ctx.scale(dpr, dpr);
 
-  const cx = size/2, cy = size/2, r = size/2 - 6, innerR = r * 0.6;
+  const cx = size/2, cy = size/2, r = size/2 - 6, innerR = r * 0.62;
   const total = data.reduce((s, d) => s + d.totalTokens, 0);
 
-  const modelColors = { opus: ['#6366F1','#818CF8'], sonnet: ['#10B981','#34D399'], haiku: ['#F97316','#FB923C'] };
+  const modelColors = {
+    opus: ['#818cf8','#a5b4fc'],
+    sonnet: ['#34d399','#6ee7b7'],
+    haiku: ['#fb923c','#fdba74'],
+    gemini: ['#3b82f6','#60a5fa'],
+    gpt: ['#10b981','#34d399'],
+    codex: ['#10b981','#34d399'],
+  };
   function getColors(m) {
     for (const [k, c] of Object.entries(modelColors)) { if (m.includes(k)) return c; }
-    return ['#94A3B8','#CBD5E1'];
+    // OpenAI o-series models
+    if (m.startsWith('o1') || m.startsWith('o3') || m.startsWith('o4')) return ['#10b981','#34d399'];
+    return ['#64748b','#94a3b8'];
   }
 
   let angle = -Math.PI / 2;
@@ -851,9 +1648,7 @@ function renderModelChart() {
 
   slices.forEach(d => {
     const sa = (d.totalTokens / total) * Math.PI * 2;
-    const [c1, c2] = getColors(d.model);
-    const grad = ctx.createConicGradient(angle, cx, cy);
-    grad.addColorStop(0, c1); grad.addColorStop(1, c2);
+    const [c1] = getColors(d.model);
 
     ctx.beginPath();
     ctx.arc(cx, cy, r, angle, angle + sa);
@@ -863,22 +1658,23 @@ function renderModelChart() {
     ctx.fill();
 
     // Gap between slices
-    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = getCSSVar('--donut-gap'); ctx.lineWidth = 2.5; ctx.stroke();
     angle += sa;
   });
 
-  ctx.fillStyle = '#0F172A'; ctx.textAlign = 'center';
-  ctx.font = '800 17px Inter, system-ui';
+  // Center text
+  ctx.fillStyle = getCSSVar('--donut-center-text'); ctx.textAlign = 'center';
+  ctx.font = '700 18px "Space Grotesk", system-ui';
   ctx.fillText(fmt(total), cx, cy + 2);
-  ctx.font = '500 10px Inter, system-ui';
-  ctx.fillStyle = '#94A3B8';
-  ctx.fillText('total', cx, cy + 16);
+  ctx.font = '500 10px "JetBrains Mono", monospace';
+  ctx.fillStyle = getCSSVar('--donut-center-sub');
+  ctx.fillText('total', cx, cy + 18);
 
   document.getElementById('modelLegend').innerHTML = slices.map(d => {
     const pct = ((d.totalTokens / total) * 100).toFixed(1);
     return `<div class="legend-item">
       <div class="legend-dot" style="background:${getColors(d.model)[0]}"></div>
-      <span><strong>${modelShort(d.model)}</strong> &ndash; ${fmt(d.totalTokens)} (${pct}%)</span>
+      <span><strong style="color:var(--text-primary)">${modelShort(d.model)}</strong> <span style="color:var(--text-muted)">&ndash;</span> ${fmt(d.totalTokens)} <span style="color:var(--text-muted)">(${pct}%)</span></span>
     </div>`;
   }).join('');
 }
@@ -903,21 +1699,68 @@ function renderTopPrompts() {
       </div>
       <div class="prompt-tokens">
         <div class="value">${fmt(p.totalTokens)}</div>
-        <div class="sub">${fmt(p.inputTokens)} read &middot; ${fmt(p.outputTokens)} written</div>
+        <div class="sub">${fmt(p.inputTokens)} in &middot; ${fmt(p.outputTokens)} out</div>
       </div>
     </div>`;
   }).join('');
 }
 
 // Sessions
+function sourceLabel(src) {
+  return { claude: 'Claude Code', gemini: 'Gemini CLI', codex: 'Codex CLI' }[src] || src;
+}
+function sourceLabelShort(src) {
+  return { claude: 'Claude', gemini: 'Gemini', codex: 'Codex' }[src] || src;
+}
+
+function setSourceFilter(source) {
+  activeSourceFilter = source;
+  // Update chip active states
+  document.querySelectorAll('.filter-chip').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.source === source);
+  });
+  renderSessions();
+}
+
+function renderFilterChips() {
+  const el = document.getElementById('filterChips');
+  const sourceCounts = {};
+  for (const s of DATA.sessions) {
+    sourceCounts[s.source] = (sourceCounts[s.source] || 0) + 1;
+  }
+  const sources = Object.keys(sourceCounts);
+  if (sources.length <= 1) { el.style.display = 'none'; return; }
+
+  el.style.display = 'flex';
+  const colors = { claude: '#818cf8', gemini: '#3b82f6', codex: '#10b981' };
+  const total = DATA.sessions.length;
+
+  let html = `<button class="filter-chip ${activeSourceFilter === 'all' ? 'active' : ''}" data-source="all" onclick="setSourceFilter('all')">All <span class="chip-count">${total}</span></button>`;
+  for (const src of sources) {
+    const active = activeSourceFilter === src ? 'active' : '';
+    html += `<button class="filter-chip ${active}" data-source="${src}" onclick="setSourceFilter('${src}')"><span class="chip-dot" style="background:${colors[src] || '#64748b'}"></span>${sourceLabelShort(src)} <span class="chip-count">${sourceCounts[src]}</span></button>`;
+  }
+  el.innerHTML = html;
+}
+
 function renderSessions() {
+  const hasMixedSources = new Set(DATA.sessions.map(s => s.source)).size > 1;
+
   let sessions = [...DATA.sessions];
+
+  // Provider filter
+  if (activeSourceFilter !== 'all') {
+    sessions = sessions.filter(s => s.source === activeSourceFilter);
+  }
+
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
     sessions = sessions.filter(s =>
       s.firstPrompt.toLowerCase().includes(q) ||
       s.model.toLowerCase().includes(q) ||
-      projectShort(s.project).toLowerCase().includes(q)
+      modelShort(s.model).toLowerCase().includes(q) ||
+      projectShort(s.project).toLowerCase().includes(q) ||
+      (s.source || '').toLowerCase().includes(q)
     );
   }
 
@@ -935,20 +1778,21 @@ function renderSessions() {
 
   document.getElementById('sessionCount').textContent = `${sessions.length} sessions`;
 
-  document.getElementById('sessionsBody').innerHTML = sessions.map(s => `
-    <tr onclick="openDrilldown('${s.sessionId}')">
+  document.getElementById('sessionsBody').innerHTML = sessions.map(s => {
+    const srcBadge = hasMixedSources ? `<span class="source-badge source-${s.source || 'claude'}">${sourceLabel(s.source)}</span>` : '';
+    return `<tr onclick="openDrilldown('${s.sessionId}')">
       <td class="date-cell">
         ${formatDate(s.date)}
         <span class="project-tag" title="${escapeHtml(projectShort(s.project))}">${escapeHtml(projectShort(s.project))}</span>
       </td>
       <td><div class="prompt-preview" title="${escapeHtml(s.firstPrompt)}">${escapeHtml(s.firstPrompt)}</div></td>
-      <td><span class="model-badge ${modelClass(s.model)}"><span class="model-dot"></span>${modelShort(s.model)}</span></td>
+      <td><span class="model-badge ${modelClass(s.model)}"><span class="model-dot"></span>${modelShort(s.model)}</span>${srcBadge}</td>
       <td class="token-num">${s.queryCount}</td>
-      <td class="token-num" style="font-weight:700">${fmt(s.totalTokens)}</td>
+      <td class="token-num" style="font-weight:700;color:var(--text-primary)">${fmt(s.totalTokens)}</td>
       <td class="token-num">${fmt(s.inputTokens)}</td>
       <td class="token-num">${fmt(s.outputTokens)}</td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
 }
 
 // Sort
@@ -975,7 +1819,7 @@ function openDrilldown(sessionId) {
 
   document.getElementById('drilldownTitle').textContent = session.firstPrompt.substring(0, 140);
   document.getElementById('drilldownMeta').textContent =
-    `${formatDate(session.date)} \u00B7 ${modelShort(session.model)} \u00B7 ${session.queryCount} messages \u00B7 ${fmt(session.totalTokens)} tokens used`;
+    `${formatDate(session.date)} \u00B7 ${modelShort(session.model)} \u00B7 ${session.queryCount} messages \u00B7 ${fmt(session.totalTokens)} tokens`;
 
   const grouped = [];
   let current = null;
@@ -999,7 +1843,7 @@ function openDrilldown(sessionId) {
       <div class="query-prompt">${escapeHtml(q.prompt.substring(0, 500))}</div>
       <div class="query-tokens-col">
         <div class="total">${fmt(q.totalTokens)}</div>
-        <div class="detail">${fmt(q.inputTokens)} read / ${fmt(q.outputTokens)} written${cont}</div>
+        <div class="detail">${fmt(q.inputTokens)} in / ${fmt(q.outputTokens)} out${cont}</div>
       </div>
     </div>`;
   }).join('');

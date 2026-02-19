@@ -3,9 +3,7 @@ const path = require('path');
 const os = require('os');
 const readline = require('readline');
 
-function getClaudeDir() {
-  return path.join(os.homedir(), '.claude');
-}
+// ====== Shared utilities ======
 
 async function parseJSONLFile(filePath) {
   const lines = [];
@@ -23,7 +21,21 @@ async function parseJSONLFile(filePath) {
   return lines;
 }
 
-function extractSessionData(entries) {
+function safeDirs(dirPath) {
+  if (!fs.existsSync(dirPath)) return [];
+  return fs.readdirSync(dirPath).filter(d => {
+    try { return fs.statSync(path.join(dirPath, d)).isDirectory(); } catch { return false; }
+  });
+}
+
+function safeFiles(dirPath, ext) {
+  if (!fs.existsSync(dirPath)) return [];
+  return fs.readdirSync(dirPath).filter(f => f.endsWith(ext));
+}
+
+// ====== Claude Code parser ======
+
+function extractClaudeSessionData(entries) {
   const queries = [];
   let pendingUserMessage = null;
 
@@ -67,19 +79,16 @@ function extractSessionData(entries) {
   return queries;
 }
 
-async function parseAllSessions() {
-  const claudeDir = getClaudeDir();
+async function parseClaudeSessions() {
+  const claudeDir = path.join(os.homedir(), '.claude');
   const projectsDir = path.join(claudeDir, 'projects');
 
-  if (!fs.existsSync(projectsDir)) {
-    return { sessions: [], dailyUsage: [], modelBreakdown: [], topPrompts: [], totals: {} };
-  }
+  if (!fs.existsSync(projectsDir)) return [];
 
   // Read history.jsonl for prompt display text
   const historyPath = path.join(claudeDir, 'history.jsonl');
   const historyEntries = fs.existsSync(historyPath) ? await parseJSONLFile(historyPath) : [];
 
-  // Build a map: sessionId -> first meaningful prompt
   const sessionFirstPrompt = {};
   for (const entry of historyEntries) {
     if (entry.sessionId && entry.display && !sessionFirstPrompt[entry.sessionId]) {
@@ -89,18 +98,12 @@ async function parseAllSessions() {
     }
   }
 
-  const projectDirs = fs.readdirSync(projectsDir).filter(d => {
-    return fs.statSync(path.join(projectsDir, d)).isDirectory();
-  });
-
+  const projectDirs = safeDirs(projectsDir);
   const sessions = [];
-  const dailyMap = {};
-  const modelMap = {};
-  const allPrompts = []; // for "most expensive prompts" across all sessions
 
   for (const projectDir of projectDirs) {
     const dir = path.join(projectsDir, projectDir);
-    const files = fs.readdirSync(dir).filter(f => f.endsWith('.jsonl'));
+    const files = safeFiles(dir, '.jsonl');
 
     for (const file of files) {
       const filePath = path.join(dir, file);
@@ -114,7 +117,7 @@ async function parseAllSessions() {
       }
       if (entries.length === 0) continue;
 
-      const queries = extractSessionData(entries);
+      const queries = extractClaudeSessionData(entries);
       if (queries.length === 0) continue;
 
       let inputTokens = 0, outputTokens = 0;
@@ -138,37 +141,9 @@ async function parseAllSessions() {
         || queries.find(q => q.userPrompt)?.userPrompt
         || '(no prompt)';
 
-      // Collect per-prompt data for "most expensive prompts"
-      // Group consecutive queries under the same user prompt
-      let currentPrompt = null;
-      let promptInput = 0, promptOutput = 0;
-      const flushPrompt = () => {
-        if (currentPrompt && (promptInput + promptOutput) > 0) {
-          allPrompts.push({
-            prompt: currentPrompt.substring(0, 300),
-            inputTokens: promptInput,
-            outputTokens: promptOutput,
-            totalTokens: promptInput + promptOutput,
-            date,
-            sessionId,
-            model: primaryModel,
-          });
-        }
-      };
-      for (const q of queries) {
-        if (q.userPrompt && q.userPrompt !== currentPrompt) {
-          flushPrompt();
-          currentPrompt = q.userPrompt;
-          promptInput = 0;
-          promptOutput = 0;
-        }
-        promptInput += q.inputTokens;
-        promptOutput += q.outputTokens;
-      }
-      flushPrompt();
-
       sessions.push({
         sessionId,
+        source: 'claude',
         project: projectDir,
         date,
         timestamp: firstTimestamp,
@@ -180,30 +155,338 @@ async function parseAllSessions() {
         outputTokens,
         totalTokens,
       });
+    }
+  }
 
-      // Daily
-      if (date !== 'unknown') {
-        if (!dailyMap[date]) {
-          dailyMap[date] = { date, inputTokens: 0, outputTokens: 0, totalTokens: 0, sessions: 0, queries: 0 };
-        }
-        dailyMap[date].inputTokens += inputTokens;
-        dailyMap[date].outputTokens += outputTokens;
-        dailyMap[date].totalTokens += totalTokens;
-        dailyMap[date].sessions += 1;
-        dailyMap[date].queries += queries.length;
+  return sessions;
+}
+
+// ====== Gemini CLI parser ======
+
+async function parseGeminiSessions() {
+  const geminiDir = path.join(os.homedir(), '.gemini');
+  const tmpDir = path.join(geminiDir, 'tmp');
+
+  if (!fs.existsSync(tmpDir)) return [];
+
+  const sessions = [];
+  const projectHashes = safeDirs(tmpDir);
+
+  for (const projectHash of projectHashes) {
+    const chatsDir = path.join(tmpDir, projectHash, 'chats');
+    if (!fs.existsSync(chatsDir)) continue;
+
+    const chatFiles = safeFiles(chatsDir, '.json');
+
+    for (const file of chatFiles) {
+      const filePath = path.join(chatsDir, file);
+
+      let sessionData;
+      try {
+        const raw = fs.readFileSync(filePath, 'utf-8');
+        sessionData = JSON.parse(raw);
+      } catch {
+        continue;
       }
 
-      // Model
+      const messages = sessionData.messages;
+      if (!messages || messages.length === 0) continue;
+
+      const queries = [];
+      let pendingUserMessage = null;
+
+      for (const msg of messages) {
+        if (msg.type === 'user') {
+          pendingUserMessage = {
+            text: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content),
+            timestamp: msg.timestamp,
+          };
+        }
+
+        if (msg.type === 'gemini' && msg.tokens) {
+          const t = msg.tokens;
+          const inputTokens = (t.input || 0) + (t.cached || 0) + (t.thoughts || 0) + (t.tool || 0);
+          const outputTokens = t.output || 0;
+
+          queries.push({
+            userPrompt: pendingUserMessage?.text || null,
+            userTimestamp: pendingUserMessage?.timestamp || null,
+            assistantTimestamp: msg.timestamp,
+            model: msg.model || 'gemini-unknown',
+            inputTokens,
+            outputTokens,
+            totalTokens: inputTokens + outputTokens,
+          });
+        }
+      }
+
+      if (queries.length === 0) continue;
+
+      let inputTokens = 0, outputTokens = 0;
       for (const q of queries) {
-        if (q.model === '<synthetic>' || q.model === 'unknown') continue;
-        if (!modelMap[q.model]) {
-          modelMap[q.model] = { model: q.model, inputTokens: 0, outputTokens: 0, totalTokens: 0, queryCount: 0 };
-        }
-        modelMap[q.model].inputTokens += q.inputTokens;
-        modelMap[q.model].outputTokens += q.outputTokens;
-        modelMap[q.model].totalTokens += q.totalTokens;
-        modelMap[q.model].queryCount += 1;
+        inputTokens += q.inputTokens;
+        outputTokens += q.outputTokens;
       }
+      const totalTokens = inputTokens + outputTokens;
+
+      const firstTimestamp = sessionData.startTime || messages[0]?.timestamp;
+      const date = firstTimestamp ? firstTimestamp.split('T')[0] : 'unknown';
+
+      const modelCounts = {};
+      for (const q of queries) {
+        modelCounts[q.model] = (modelCounts[q.model] || 0) + 1;
+      }
+      const primaryModel = Object.entries(modelCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'gemini-unknown';
+
+      const firstPrompt = queries.find(q => q.userPrompt)?.userPrompt || '(no prompt)';
+      const sessionId = sessionData.sessionId || path.basename(file, '.json');
+
+      sessions.push({
+        sessionId: 'gemini-' + sessionId,
+        source: 'gemini',
+        project: projectHash.substring(0, 12), // shortened hash
+        date,
+        timestamp: firstTimestamp,
+        firstPrompt: firstPrompt.substring(0, 200),
+        model: primaryModel,
+        queryCount: queries.length,
+        queries,
+        inputTokens,
+        outputTokens,
+        totalTokens,
+      });
+    }
+  }
+
+  return sessions;
+}
+
+// ====== Codex CLI parser ======
+
+async function parseCodexSessions() {
+  const codexDir = path.join(os.homedir(), '.codex');
+  const sessionsDir = path.join(codexDir, 'sessions');
+
+  if (!fs.existsSync(sessionsDir)) return [];
+
+  // Read codex history for first prompts
+  const historyPath = path.join(codexDir, 'history.jsonl');
+  const historyEntries = fs.existsSync(historyPath) ? await parseJSONLFile(historyPath) : [];
+
+  const sessionFirstPrompt = {};
+  for (const entry of historyEntries) {
+    if (entry.session_id && entry.text && !sessionFirstPrompt[entry.session_id]) {
+      sessionFirstPrompt[entry.session_id] = entry.text.trim();
+    }
+  }
+
+  // Recursively find all .jsonl files under sessionsDir
+  const sessionFiles = [];
+  function walkDir(dir) {
+    try {
+      for (const item of fs.readdirSync(dir)) {
+        const full = path.join(dir, item);
+        try {
+          const stat = fs.statSync(full);
+          if (stat.isDirectory()) walkDir(full);
+          else if (item.endsWith('.jsonl')) sessionFiles.push(full);
+        } catch { /* skip */ }
+      }
+    } catch { /* skip */ }
+  }
+  walkDir(sessionsDir);
+
+  const sessions = [];
+
+  for (const filePath of sessionFiles) {
+    let entries;
+    try {
+      entries = await parseJSONLFile(filePath);
+    } catch {
+      continue;
+    }
+    if (entries.length === 0) continue;
+
+    const queries = [];
+    let pendingUserMessage = null;
+    let sessionMeta = null;
+    let currentModel = 'gpt-unknown';
+    let cwd = '';
+
+    for (const entry of entries) {
+      // Session metadata
+      if (entry.type === 'session_meta') {
+        sessionMeta = entry.payload;
+        cwd = entry.payload?.cwd || '';
+      }
+
+      // Turn context (contains model info)
+      if (entry.type === 'turn_context') {
+        if (entry.payload?.model) currentModel = entry.payload.model;
+        if (entry.payload?.cwd) cwd = entry.payload.cwd;
+      }
+
+      // User message
+      if (entry.type === 'response_item' && entry.payload?.role === 'user') {
+        const content = entry.payload.content;
+        let text = '';
+        if (Array.isArray(content)) {
+          text = content.map(c => c.text || '').join(' ').trim();
+        } else if (typeof content === 'string') {
+          text = content;
+        }
+        if (text) {
+          pendingUserMessage = { text, timestamp: entry.timestamp };
+        }
+      }
+
+      // Token count event — this represents one complete turn
+      if (entry.type === 'event_msg' && entry.payload?.type === 'token_count') {
+        const usage = entry.payload.info?.last_token_usage;
+        if (!usage) continue;
+
+        const inputTokens = (usage.input_tokens || 0) + (usage.cached_input_tokens || 0);
+        const outputTokens = (usage.output_tokens || 0) + (usage.reasoning_output_tokens || 0);
+
+        queries.push({
+          userPrompt: pendingUserMessage?.text || null,
+          userTimestamp: pendingUserMessage?.timestamp || null,
+          assistantTimestamp: entry.timestamp,
+          model: currentModel,
+          inputTokens,
+          outputTokens,
+          totalTokens: inputTokens + outputTokens,
+        });
+
+        // Reset pending user message after pairing
+        pendingUserMessage = null;
+      }
+    }
+
+    if (queries.length === 0) continue;
+
+    let inputTokens = 0, outputTokens = 0;
+    for (const q of queries) {
+      inputTokens += q.inputTokens;
+      outputTokens += q.outputTokens;
+    }
+    const totalTokens = inputTokens + outputTokens;
+
+    const firstTimestamp = sessionMeta?.timestamp || entries[0]?.timestamp;
+    const date = firstTimestamp ? firstTimestamp.split('T')[0] : 'unknown';
+
+    const modelCounts = {};
+    for (const q of queries) {
+      modelCounts[q.model] = (modelCounts[q.model] || 0) + 1;
+    }
+    const primaryModel = Object.entries(modelCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'gpt-unknown';
+
+    // Session ID from metadata or filename
+    const sessionId = sessionMeta?.id || path.basename(filePath, '.jsonl');
+
+    // Project name from cwd
+    const project = cwd ? path.basename(cwd) || '~' : '~';
+
+    const firstPrompt = sessionFirstPrompt[sessionId]
+      || queries.find(q => q.userPrompt)?.userPrompt
+      || '(no prompt)';
+
+    sessions.push({
+      sessionId: 'codex-' + sessionId,
+      source: 'codex',
+      project,
+      date,
+      timestamp: firstTimestamp,
+      firstPrompt: firstPrompt.substring(0, 200),
+      model: primaryModel,
+      queryCount: queries.length,
+      queries,
+      inputTokens,
+      outputTokens,
+      totalTokens,
+    });
+  }
+
+  return sessions;
+}
+
+// ====== Aggregation ======
+
+async function parseAllSessions() {
+  // Parse all three sources in parallel
+  const [claudeSessions, geminiSessions, codexSessions] = await Promise.all([
+    parseClaudeSessions().catch(() => []),
+    parseGeminiSessions().catch(() => []),
+    parseCodexSessions().catch(() => []),
+  ]);
+
+  const sessions = [...claudeSessions, ...geminiSessions, ...codexSessions];
+
+  if (sessions.length === 0) {
+    return { sessions: [], dailyUsage: [], modelBreakdown: [], topPrompts: [], totals: {}, insights: [] };
+  }
+
+  const dailyMap = {};
+  const modelMap = {};
+  const allPrompts = [];
+
+  for (const session of sessions) {
+    const { date, queries } = session;
+
+    // Primary model for this session
+    const primaryModel = session.model;
+
+    // Collect per-prompt data for "most expensive prompts"
+    let currentPrompt = null;
+    let promptInput = 0, promptOutput = 0;
+    const flushPrompt = () => {
+      if (currentPrompt && (promptInput + promptOutput) > 0) {
+        allPrompts.push({
+          prompt: currentPrompt.substring(0, 300),
+          inputTokens: promptInput,
+          outputTokens: promptOutput,
+          totalTokens: promptInput + promptOutput,
+          date,
+          sessionId: session.sessionId,
+          model: primaryModel,
+          source: session.source,
+        });
+      }
+    };
+    for (const q of queries) {
+      if (q.userPrompt && q.userPrompt !== currentPrompt) {
+        flushPrompt();
+        currentPrompt = q.userPrompt;
+        promptInput = 0;
+        promptOutput = 0;
+      }
+      promptInput += q.inputTokens;
+      promptOutput += q.outputTokens;
+    }
+    flushPrompt();
+
+    // Daily aggregation
+    if (date !== 'unknown') {
+      if (!dailyMap[date]) {
+        dailyMap[date] = { date, inputTokens: 0, outputTokens: 0, totalTokens: 0, sessions: 0, queries: 0 };
+      }
+      dailyMap[date].inputTokens += session.inputTokens;
+      dailyMap[date].outputTokens += session.outputTokens;
+      dailyMap[date].totalTokens += session.totalTokens;
+      dailyMap[date].sessions += 1;
+      dailyMap[date].queries += session.queryCount;
+    }
+
+    // Model aggregation
+    for (const q of queries) {
+      if (q.model === '<synthetic>' || q.model === 'unknown') continue;
+      if (!modelMap[q.model]) {
+        modelMap[q.model] = { model: q.model, inputTokens: 0, outputTokens: 0, totalTokens: 0, queryCount: 0 };
+      }
+      modelMap[q.model].inputTokens += q.inputTokens;
+      modelMap[q.model].outputTokens += q.outputTokens;
+      modelMap[q.model].totalTokens += q.totalTokens;
+      modelMap[q.model].queryCount += 1;
     }
   }
 
@@ -211,7 +494,6 @@ async function parseAllSessions() {
 
   const dailyUsage = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
 
-  // Top 20 most expensive individual prompts
   allPrompts.sort((a, b) => b.totalTokens - a.totalTokens);
   const topPrompts = allPrompts.slice(0, 20);
 
@@ -226,6 +508,10 @@ async function parseAllSessions() {
     dateRange: dailyUsage.length > 0
       ? { from: dailyUsage[0].date, to: dailyUsage[dailyUsage.length - 1].date }
       : null,
+    // Source counts
+    claudeSessions: claudeSessions.length,
+    geminiSessions: geminiSessions.length,
+    codexSessions: codexSessions.length,
   };
   if (grandTotals.totalQueries > 0) {
     grandTotals.avgTokensPerQuery = Math.round(grandTotals.totalTokens / grandTotals.totalQueries);
@@ -234,7 +520,6 @@ async function parseAllSessions() {
     grandTotals.avgTokensPerSession = Math.round(grandTotals.totalTokens / grandTotals.totalSessions);
   }
 
-  // Generate insights
   const insights = generateInsights(sessions, allPrompts, grandTotals);
 
   return {
@@ -246,6 +531,8 @@ async function parseAllSessions() {
     insights,
   };
 }
+
+// ====== Insights ======
 
 function generateInsights(sessions, allPrompts, totals) {
   const insights = [];
@@ -259,8 +546,8 @@ function generateInsights(sessions, allPrompts, totals) {
       id: 'vague-prompts',
       type: 'warning',
       title: 'Short, vague messages are costing you the most',
-      description: `${shortExpensive.length} times you sent a short message like ${examples.map(e => '"' + e + '"').join(', ')} -- and each time, Claude used over 100K tokens to respond. That adds up to ${fmt(totalWasted)} tokens total. When you say just "Yes" or "Do it", Claude doesn't know exactly what you want, so it tries harder -- reading more files, running more tools, making more attempts. Each of those steps re-sends the entire conversation, which multiplies the cost.`,
-      action: 'Try being specific. Instead of "Yes", say "Yes, update the login page and run the tests." It gives Claude a clear target, so it finishes faster and uses fewer tokens.',
+      description: `${shortExpensive.length} times you sent a short message like ${examples.map(e => '"' + e + '"').join(', ')} -- and each time, the model used over 100K tokens to respond. That adds up to ${fmt(totalWasted)} tokens total.`,
+      action: 'Try being specific. Instead of "Yes", say "Yes, update the login page and run the tests." It gives the model a clear target, so it finishes faster and uses fewer tokens.',
     });
   }
 
@@ -280,8 +567,8 @@ function generateInsights(sessions, allPrompts, totals) {
         id: 'context-growth',
         type: 'warning',
         title: 'The longer you chat, the more each message costs',
-        description: `In ${growthData.length} of your conversations, the messages near the end cost ${avgGrowth}x more than the ones at the start. Why? Every time you send a message, Claude re-reads the entire conversation from the beginning. So message #5 is cheap, but message #80 is expensive because Claude is re-reading 79 previous messages plus all the code it wrote. Your longest conversation ("${worstSession.session.firstPrompt.substring(0, 50)}...") grew ${worstSession.ratio.toFixed(1)}x more expensive by the end.`,
-        action: 'Start a fresh conversation when you move to a new task. If you need context from before, paste a short summary in your first message. This gives Claude a clean slate instead of re-reading hundreds of old messages.',
+        description: `In ${growthData.length} of your conversations, the messages near the end cost ${avgGrowth}x more than the ones at the start. Your longest conversation ("${worstSession.session.firstPrompt.substring(0, 50)}...") grew ${worstSession.ratio.toFixed(1)}x more expensive by the end.`,
+        action: 'Start a fresh conversation when you move to a new task. If you need context from before, paste a short summary in your first message.',
       });
     }
   }
@@ -297,7 +584,7 @@ function generateInsights(sessions, allPrompts, totals) {
       id: 'marathon-sessions',
       type: 'info',
       title: `Just ${longCount} long conversations used ${longPct}% of all your tokens`,
-      description: `You have ${longCount} conversations with over 200 messages each. These alone consumed ${fmt(longTokens)} tokens -- that's ${longPct}% of everything. Meanwhile, your typical conversation is about ${medianTurns} messages. Long conversations aren't always bad, but they're disproportionately expensive because of how context builds up.`,
+      description: `You have ${longCount} conversations with over 200 messages each. These alone consumed ${fmt(longTokens)} tokens -- that's ${longPct}% of everything. Meanwhile, your typical conversation is about ${medianTurns} messages.`,
       action: 'Try keeping one conversation per task. When a conversation starts drifting into different topics, that is a good time to start a new one.',
     });
   }
@@ -309,9 +596,9 @@ function generateInsights(sessions, allPrompts, totals) {
       insights.push({
         id: 'input-heavy',
         type: 'info',
-        title: `${outputPct.toFixed(1)}% of your tokens are Claude actually writing`,
-        description: `Here's something surprising: out of ${fmt(totals.totalTokens)} total tokens, only ${fmt(totals.totalOutputTokens)} are from Claude writing responses. The other ${(100 - outputPct).toFixed(1)}% is Claude re-reading your conversation history, files, and context before each response. This means the biggest factor in token usage isn't how much Claude writes -- it's how long your conversations are.`,
-        action: 'Keeping conversations shorter has more impact than asking for shorter answers. A 20-message conversation costs far less than a 200-message one, even if the total output is similar.',
+        title: `${outputPct.toFixed(1)}% of your tokens are the model actually writing`,
+        description: `Out of ${fmt(totals.totalTokens)} total tokens, only ${fmt(totals.totalOutputTokens)} are from the model writing responses. The other ${(100 - outputPct).toFixed(1)}% is re-reading conversation history, files, and context.`,
+        action: 'Keeping conversations shorter has more impact than asking for shorter answers.',
       });
     }
   }
@@ -336,14 +623,14 @@ function generateInsights(sessions, allPrompts, totals) {
       insights.push({
         id: 'day-pattern',
         type: 'neutral',
-        title: `You use Claude the most on ${busiest.day}s`,
-        description: `Your ${busiest.day} conversations average ${fmt(Math.round(busiest.avg))} tokens each, compared to ${fmt(Math.round(quietest.avg))} on ${quietest.day}s. This could mean you tackle bigger tasks on ${busiest.day}s, or your conversations tend to run longer.`,
+        title: `You use AI coding tools the most on ${busiest.day}s`,
+        description: `Your ${busiest.day} conversations average ${fmt(Math.round(busiest.avg))} tokens each, compared to ${fmt(Math.round(quietest.avg))} on ${quietest.day}s.`,
         action: null,
       });
     }
   }
 
-  // 6. Model mismatch -- Opus used for simple conversations
+  // 6. Model mismatch
   const opusSessions = sessions.filter(s => s.model.includes('opus'));
   if (opusSessions.length > 0) {
     const simpleOpus = opusSessions.filter(s => s.queryCount < 10 && s.totalTokens < 200_000);
@@ -354,8 +641,8 @@ function generateInsights(sessions, allPrompts, totals) {
         id: 'model-mismatch',
         type: 'warning',
         title: `${simpleOpus.length} simple conversations used Opus unnecessarily`,
-        description: `These conversations had fewer than 10 messages and used ${fmt(wastedTokens)} tokens on Opus: ${examples}. Opus is the most capable model but also the most expensive. For quick questions and small tasks, Sonnet or Haiku would give similar results at a fraction of the cost.`,
-        action: 'Use /model to switch to Sonnet or Haiku for simple tasks. Save Opus for complex multi-file changes, architecture decisions, or tricky debugging.',
+        description: `These conversations had fewer than 10 messages and used ${fmt(wastedTokens)} tokens on Opus: ${examples}. Opus is the most capable model but also the most expensive.`,
+        action: 'Use /model to switch to Sonnet or Haiku for simple tasks. Save Opus for complex multi-file changes or tricky debugging.',
       });
     }
   }
@@ -377,8 +664,8 @@ function generateInsights(sessions, allPrompts, totals) {
         id: 'tool-heavy',
         type: 'info',
         title: `${toolHeavy.length} conversations had ${Math.round(avgRatio)}x more tool calls than messages`,
-        description: `In these conversations, Claude made ~${Math.round(avgRatio)} tool calls for every message you sent. Each tool call (reading files, running commands, searching code) is a full round trip that re-reads the entire conversation. These ${toolHeavy.length} conversations used ${fmt(totalToolTokens)} tokens total.`,
-        action: 'Point Claude to specific files and line numbers when you can. "Fix the bug in src/auth.js line 42" triggers fewer tool calls than "fix the login bug" where Claude has to search for the right file first.',
+        description: `In these conversations, the model made ~${Math.round(avgRatio)} tool calls for every message you sent. These ${toolHeavy.length} conversations used ${fmt(totalToolTokens)} tokens total.`,
+        action: 'Point the model to specific files and line numbers when you can. It triggers fewer tool calls than vague requests.',
       });
     }
   }
@@ -400,14 +687,14 @@ function generateInsights(sessions, allPrompts, totals) {
           id: 'project-dominance',
           type: 'info',
           title: `${pct}% of your tokens went to one project: ${projName}`,
-          description: `Your "${projName}" project used ${fmt(topTokens)} tokens out of ${fmt(totals.totalTokens)} total. That is ${pct}% of all your usage. The next closest project used ${fmt(sorted[1][1])} tokens.`,
-          action: 'Not necessarily a problem, but worth knowing. If this project has long-running conversations, breaking them into smaller sessions could reduce its footprint.',
+          description: `Your "${projName}" project used ${fmt(topTokens)} tokens out of ${fmt(totals.totalTokens)} total.`,
+          action: 'Not necessarily a problem, but worth knowing. Breaking long conversations into smaller sessions could reduce its footprint.',
         });
       }
     }
   }
 
-  // 9. Conversation efficiency -- short vs long conversations cost per message
+  // 9. Conversation efficiency
   if (sessions.length >= 10) {
     const shortSessions = sessions.filter(s => s.queryCount >= 3 && s.queryCount <= 15);
     const longSessions2 = sessions.filter(s => s.queryCount > 80);
@@ -420,14 +707,14 @@ function generateInsights(sessions, allPrompts, totals) {
           id: 'conversation-efficiency',
           type: 'warning',
           title: `Each message costs ${ratio}x more in long conversations`,
-          description: `In your short conversations (under 15 messages), each message costs ~${fmt(shortAvg)} tokens. In your long ones (80+ messages), each message costs ~${fmt(longAvg)} tokens. That is ${ratio}x more per message, because Claude re-reads the entire history every turn.`,
-          action: 'This is the single biggest lever for reducing token usage. Start fresh conversations more often. A 5-conversation workflow costs far less than one 500-message marathon.',
+          description: `In short conversations (under 15 messages), each message costs ~${fmt(shortAvg)} tokens. In long ones (80+ messages), each message costs ~${fmt(longAvg)} tokens. That is ${ratio}x more per message.`,
+          action: 'This is the single biggest lever for reducing token usage. Start fresh conversations more often.',
         });
       }
     }
   }
 
-  // 10. Heavy context on first message (large CLAUDE.md or system prompts)
+  // 10. Heavy context on first message
   if (sessions.length >= 5) {
     const heavyStarts = sessions.filter(s => {
       const firstQuery = s.queries[0];
@@ -440,10 +727,32 @@ function generateInsights(sessions, allPrompts, totals) {
         id: 'heavy-context',
         type: 'info',
         title: `${heavyStarts.length} conversations started with ${fmt(avgStartTokens)}+ tokens of context`,
-        description: `Before you even type your first message, Claude reads your CLAUDE.md, project files, and system context. In ${heavyStarts.length} conversations, this starting context averaged ${fmt(avgStartTokens)} tokens. Across all of them, that is ${fmt(totalOverhead)} tokens just on setup -- and this context gets re-read with every message.`,
-        action: 'Keep your CLAUDE.md files concise. Remove sections you rarely need. A smaller starting context compounds into savings across every message in the conversation.',
+        description: `Before you even type your first message, the model reads project files and system context. In ${heavyStarts.length} conversations, this starting context averaged ${fmt(avgStartTokens)} tokens. That is ${fmt(totalOverhead)} tokens just on setup.`,
+        action: 'Keep your project config files concise. Remove sections you rarely need.',
       });
     }
+  }
+
+  // 11. Multi-tool insight (if using more than one CLI)
+  const sources = new Set(sessions.map(s => s.source));
+  if (sources.size > 1) {
+    const sourceStats = {};
+    for (const s of sessions) {
+      if (!sourceStats[s.source]) sourceStats[s.source] = { tokens: 0, sessions: 0 };
+      sourceStats[s.source].tokens += s.totalTokens;
+      sourceStats[s.source].sessions += 1;
+    }
+    const names = { claude: 'Claude Code', gemini: 'Gemini CLI', codex: 'Codex CLI' };
+    const parts = Object.entries(sourceStats)
+      .sort((a, b) => b[1].tokens - a[1].tokens)
+      .map(([src, v]) => `${names[src] || src}: ${v.sessions} sessions, ${fmt(v.tokens)} tokens`);
+    insights.push({
+      id: 'multi-tool',
+      type: 'neutral',
+      title: `Using ${sources.size} AI coding tools`,
+      description: `Breakdown across tools: ${parts.join(' | ')}`,
+      action: null,
+    });
   }
 
   return insights;

@@ -1,9 +1,11 @@
 {
-  "name": "claude-spend",
-  "version": "1.0.0",
-  "description": "See where your Claude Code tokens go. One command, zero setup.",
+  "name": "coding-agent-usage",
+  "version": "1.0.2",
+  "description": "Coding Agent Usage — token usage dashboard for Claude Code, Gemini CLI, and Codex CLI with OpenTelemetry export.",
   "main": "src/index.js",
   "bin": {
+    "coding-agent-usage": "src/index.js",
+    "claude-spend-otel": "src/index.js",
     "claude-spend": "src/index.js"
   },
   "scripts": {
@@ -12,20 +14,35 @@
   "keywords": [
     "claude",
     "claude-code",
+    "gemini",
+    "gemini-cli",
+    "codex",
+    "codex-cli",
     "tokens",
     "usage",
     "analytics",
     "dashboard",
     "spend",
-    "cost"
+    "cost",
+    "opentelemetry",
+    "otlp",
+    "otel",
+    "metrics",
+    "observability",
+    "parseable",
+    "grafana"
   ],
-  "author": "Aniket Parihar",
+  "author": "Debabrata Panigrahi",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/writetoaniketparihar-collab/claude-spend.git"
+    "url": "https://github.com/Debanitrkl/claude-spend.git"
   },
   "dependencies": {
+    "@opentelemetry/exporter-metrics-otlp-http": "^0.212.0",
+    "@opentelemetry/resources": "^2.5.1",
+    "@opentelemetry/sdk-metrics": "^2.5.1",
+    "@opentelemetry/semantic-conventions": "^1.39.0",
     "express": "^4.21.0",
     "open": "^10.1.0"
   }
