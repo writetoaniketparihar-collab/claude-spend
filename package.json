@@ -1,7 +1,7 @@
 {
   "name": "claude-spend-otel",
   "version": "1.0.0",
-  "description": "Claude Code token usage dashboard with OpenTelemetry export. See where your tokens go and send metrics to any OTLP backend.",
+  "description": "Coding Agent Usage — token usage dashboard for Claude Code, Gemini CLI, and Codex CLI with OpenTelemetry export.",
   "main": "src/index.js",
   "bin": {
     "claude-spend-otel": "src/index.js",
@@ -13,6 +13,10 @@
   "keywords": [
     "claude",
     "claude-code",
+    "gemini",
+    "gemini-cli",
+    "codex",
+    "codex-cli",
     "tokens",
     "usage",
     "analytics",

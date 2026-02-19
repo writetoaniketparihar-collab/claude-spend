@@ -7,7 +7,7 @@ const args = process.argv.slice(2);
 
 if (args.includes('--help') || args.includes('-h')) {
   console.log(`
-claude-spend - See where your Claude Code tokens go
+claude-spend - Token usage dashboard for Claude Code, Gemini CLI & Codex CLI
 
 Usage:
   claude-spend [options]
@@ -81,7 +81,7 @@ const app = createServer({ otel, otlpEndpoint });
 
 const server = app.listen(port, async () => {
   const url = `http://localhost:${port}`;
-  console.log(`\n  claude-spend dashboard running at ${url}\n`);
+  console.log(`\n  Coding Agent Usage dashboard running at ${url}\n`);
 
   if (!noOpen) {
     try {

@@ -1,10 +1,10 @@
-# claude-spend-otel
+# Coding Agent Usage
 
-Claude Code token usage dashboard with built-in OpenTelemetry export.
+Token usage dashboard for **Claude Code**, **Gemini CLI**, and **Codex CLI** — with built-in OpenTelemetry export.
 
-See where your tokens go — and optionally send the metrics to any OTLP-compatible backend (Grafana, Datadog, Parseable, Prometheus, etc.).
+See where your tokens go across all your AI coding tools. Optionally send the metrics to any OTLP-compatible backend (Grafana, Datadog, Parseable, Prometheus, etc.).
 
-> Fork of [claude-spend](https://github.com/writetoaniketparihar-collab/claude-spend) by [Aniket Parihar](https://github.com/writetoaniketparihar-collab) — thank you for building the original, it's an incredibly useful tool. This fork adds OTLP export support.
+> Fork of [claude-spend](https://github.com/writetoaniketparihar-collab/claude-spend) by [Aniket Parihar](https://github.com/writetoaniketparihar-collab) — thank you for building the original. This fork adds multi-tool support, a redesigned UI, and OTLP export.
 
 ## Install
 
@@ -16,20 +16,26 @@ That's it. Opens a dashboard in your browser.
 
 ## What it does
 
-- Reads your local Claude Code session files (nothing leaves your machine)
-- Shows token usage per conversation, per day, and per model
-- Surfaces insights like which prompts cost the most and usage patterns
+- Reads local session files from **Claude Code**, **Gemini CLI**, and **Codex CLI** (nothing leaves your machine)
+- Shows token usage per conversation, per day, and per model across all tools
+- Filter sessions by provider (Claude / Gemini / Codex)
+- Dark and light theme with persistent preference
+- Surfaces insights like which prompts cost the most, usage patterns, and multi-tool stats
 - **Exports token usage metrics to any OTLP endpoint** (opt-in)
+
+## Supported tools
+
+| Tool | Session location | Format |
+|---|---|---|
+| Claude Code | `~/.claude/projects/` | JSONL |
+| Gemini CLI | `~/.gemini/tmp/*/chats/` | JSON |
+| Codex CLI | `~/.codex/sessions/` | JSONL |
+
+Each tool is parsed independently. If a tool isn't installed or has no sessions, it's silently skipped.
 
 ## Screenshots
 
-<img width="1910" height="966" alt="Dashboard overview" src="https://github.com/user-attachments/assets/11cc7149-d4dd-4e44-a3a0-0b48e935b7bc" />
-
-<img width="1906" height="966" alt="Insights" src="https://github.com/user-attachments/assets/537c3611-5794-41d2-864e-e368e6949812" />
-
-<img width="1908" height="969" alt="Sessions" src="https://github.com/user-attachments/assets/aaaa8ce5-2025-407d-8596-ea1965748691" />
-
-<img width="1908" height="969" alt="Top prompts" src="https://github.com/user-attachments/assets/a9fde5e2-6e52-4bae-9b96-03655109aef6" />
+<!-- Screenshots are outdated — new ones coming soon -->
 
 ## Options
 
@@ -93,7 +99,7 @@ claude-spend-otel
 
 ### Continuous export
 
-When connected, session files are re-parsed and metrics are re-exported **every 60 seconds** — so your observability backend always has fresh data, even as new Claude Code sessions happen in the background.
+When connected, session files are re-parsed and metrics are re-exported **every 60 seconds** — so your observability backend always has fresh data as new sessions happen in the background.
 
 ### Endpoint validation
 
@@ -106,11 +112,11 @@ Before connecting, the endpoint is tested with a ping. You'll get specific error
 
 ## Privacy
 
-All data stays local. Reads files from `~/.claude/` on your machine and serves a dashboard on localhost. No data is sent anywhere unless you explicitly configure an OTLP endpoint.
+All data stays local. Reads files from `~/.claude/`, `~/.gemini/`, and `~/.codex/` on your machine and serves a dashboard on localhost. No data is sent anywhere unless you explicitly configure an OTLP endpoint.
 
 ## Credits
 
-Built on top of [claude-spend](https://github.com/writetoaniketparihar-collab/claude-spend) by [Aniket Parihar](https://www.linkedin.com/in/aniketparihar/). OTLP export added by [Debabrata Panigrahi](https://github.com/Debanitrkl).
+Built on top of [claude-spend](https://github.com/writetoaniketparihar-collab/claude-spend) by [Aniket Parihar](https://www.linkedin.com/in/aniketparihar/). Multi-tool support, UI redesign, and OTLP export by [Debabrata Panigrahi](https://www.linkedin.com/in/debanitr/).
 
 ## License
 
