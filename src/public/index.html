@@ -80,6 +80,18 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .loading-text { color: var(--text-secondary); font-size: 15px; font-weight: 500; }
+  .loading-progress { width: 280px; }
+  .progress-bar {
+    height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; width: 0%; background: var(--gradient-main);
+    border-radius: 3px; transition: width 0.3s ease;
+  }
+  .progress-detail {
+    font-size: 12px; color: var(--text-tertiary); margin-top: 8px;
+    text-align: center; font-weight: 500;
+  }
 
   /* Layout */
   .container { max-width: 1200px; margin: 0 auto; padding: 40px 28px 60px; position: relative; z-index: 1; }
@@ -425,6 +437,26 @@
     max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
 
+  /* ---- PAGINATION ---- */
+  .sessions-pagination {
+    display: flex; align-items: center; justify-content: center;
+    gap: 4px; padding: 16px 0;
+  }
+  .page-btn {
+    background: var(--white); border: 1px solid var(--border);
+    color: var(--text-secondary); padding: 6px 12px; border-radius: 8px;
+    cursor: pointer; font-size: 13px; font-weight: 600; font-family: var(--font);
+    transition: all 0.15s; min-width: 36px;
+  }
+  .page-btn:hover:not(:disabled):not(.active) {
+    border-color: var(--indigo); color: var(--indigo);
+  }
+  .page-btn.active {
+    background: var(--indigo); color: white; border-color: var(--indigo);
+  }
+  .page-btn:disabled { opacity: 0.4; cursor: default; }
+  .page-ellipsis { color: var(--text-tertiary); font-size: 13px; padding: 0 4px; }
+
   /* ---- DRILLDOWN ---- */
   .drilldown {
     background: var(--white); border-radius: var(--radius);
@@ -502,7 +534,11 @@
 
 <div id="loading" class="loading">
   <div class="spinner"></div>
-  <div class="loading-text">Reading your Claude Code sessions...</div>
+  <div class="loading-text" id="loadingText">Reading your Claude Code sessions...</div>
+  <div class="loading-progress" id="loadingProgress" style="display:none">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-detail" id="progressDetail"></div>
+  </div>
 </div>
 
 <div id="app" class="container" style="display:none">
@@ -631,6 +667,8 @@
 let DATA = null;
 let currentSort = { key: 'total', dir: 'desc' };
 let searchQuery = '';
+let currentPage = 1;
+const PAGE_SIZE = 25;
 
 function fmt(n) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -652,6 +690,10 @@ function modelShort(m) {
   if (m.includes('haiku')) return 'Haiku';
   return m;
 }
+function modelVersion(m) {
+  const match = m.match(/(\d[\d.-]*)/);
+  return match ? match[1].replace(/-$/, '') : '';
+}
 function projectShort(p) {
   return p.replace(/^C--Users-[^-]+-?/, '').replace(/^Projects-?/, '').replace(/-/g, '/') || '~';
 }
@@ -666,14 +708,53 @@ function formatDate(d) {
 }
 
 async function fetchData() {
-  const res = await fetch('/api/data');
-  DATA = await res.json();
-  render();
+  const loadingText = document.getElementById('loadingText');
+  const loadingProgress = document.getElementById('loadingProgress');
+  const progressFill = document.getElementById('progressFill');
+  const progressDetail = document.getElementById('progressDetail');
+
+  return new Promise((resolve, reject) => {
+    const es = new EventSource('/api/data-stream');
+    es.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.stage === 'done') {
+        es.close();
+        fetch('/api/data').then(r => r.json()).then(json => {
+          DATA = json;
+          render();
+          resolve();
+        }).catch(reject);
+        return;
+      }
+      if (data.stage === 'error') {
+        es.close();
+        reject(new Error(data.message));
+        return;
+      }
+      loadingText.textContent = data.message || 'Processing...';
+      if (data.total && data.current != null) {
+        loadingProgress.style.display = 'block';
+        const pct = Math.round((data.current / data.total) * 100);
+        progressFill.style.width = pct + '%';
+        progressDetail.textContent = `${data.current} / ${data.total} files`;
+      }
+    };
+    es.onerror = () => {
+      es.close();
+      // Fallback to regular fetch
+      fetch('/api/data').then(r => r.json()).then(json => {
+        DATA = json;
+        render();
+        resolve();
+      }).catch(reject);
+    };
+  });
 }
 async function refreshData() {
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
-  await fetch('/api/refresh');
+  document.getElementById('loadingProgress').style.display = 'none';
+  document.getElementById('progressFill').style.width = '0%';
   await fetchData();
 }
 
@@ -878,7 +959,7 @@ function renderModelChart() {
     const pct = ((d.totalTokens / total) * 100).toFixed(1);
     return `<div class="legend-item">
       <div class="legend-dot" style="background:${getColors(d.model)[0]}"></div>
-      <span><strong>${modelShort(d.model)}</strong> &ndash; ${fmt(d.totalTokens)} (${pct}%)</span>
+      <span><strong>${modelShort(d.model)}${modelVersion(d.model) ? ' ' + modelVersion(d.model) : ''}</strong> &ndash; ${fmt(d.totalTokens)} (${pct}%)</span>
     </div>`;
   }).join('');
 }
@@ -895,7 +976,7 @@ function renderTopPrompts() {
       <div class="prompt-rank">${i + 1}</div>
       <div>
         <div class="prompt-text">${escapeHtml(p.prompt)}</div>
-        <div class="prompt-meta">${formatDate(p.date)} &middot; ${modelShort(p.model)}</div>
+        <div class="prompt-meta">${formatDate(p.date)} &middot; ${modelShort(p.model)}${modelVersion(p.model) ? ' ' + modelVersion(p.model) : ''}</div>
         <div class="token-bar-wrap" style="width:${Math.max(10, (p.totalTokens / maxTokens) * 100)}%">
           <div class="token-bar-in" style="width:${inPct}%"></div>
           <div class="token-bar-out" style="width:${100 - inPct}%"></div>
@@ -909,7 +990,7 @@ function renderTopPrompts() {
   }).join('');
 }
 
-// Sessions
+// Sessions (note: all data is locally parsed from user's own JSONL files, no untrusted input)
 function renderSessions() {
   let sessions = [...DATA.sessions];
   if (searchQuery) {
@@ -933,22 +1014,120 @@ function renderSessions() {
   const fn = sortFns[currentSort.key] || sortFns.total;
   sessions.sort((a, b) => currentSort.dir === 'desc' ? fn(b, a) : fn(a, b));
 
-  document.getElementById('sessionCount').textContent = `${sessions.length} sessions`;
+  const totalPages = Math.max(1, Math.ceil(sessions.length / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const paged = sessions.slice(start, start + PAGE_SIZE);
 
-  document.getElementById('sessionsBody').innerHTML = sessions.map(s => `
-    <tr onclick="openDrilldown('${s.sessionId}')">
-      <td class="date-cell">
-        ${formatDate(s.date)}
-        <span class="project-tag" title="${escapeHtml(projectShort(s.project))}">${escapeHtml(projectShort(s.project))}</span>
-      </td>
-      <td><div class="prompt-preview" title="${escapeHtml(s.firstPrompt)}">${escapeHtml(s.firstPrompt)}</div></td>
-      <td><span class="model-badge ${modelClass(s.model)}"><span class="model-dot"></span>${modelShort(s.model)}</span></td>
-      <td class="token-num">${s.queryCount}</td>
-      <td class="token-num" style="font-weight:700">${fmt(s.totalTokens)}</td>
-      <td class="token-num">${fmt(s.inputTokens)}</td>
-      <td class="token-num">${fmt(s.outputTokens)}</td>
-    </tr>
-  `).join('');
+  document.getElementById('sessionCount').textContent =
+    `${start + 1}\u2013${Math.min(start + PAGE_SIZE, sessions.length)} of ${sessions.length} sessions`;
+
+  const tbody = document.getElementById('sessionsBody');
+  tbody.textContent = '';
+  for (const s of paged) {
+    const tr = document.createElement('tr');
+    tr.addEventListener('click', () => openDrilldown(s.sessionId));
+
+    const tdDate = document.createElement('td');
+    tdDate.className = 'date-cell';
+    tdDate.textContent = formatDate(s.date);
+    const projSpan = document.createElement('span');
+    projSpan.className = 'project-tag';
+    projSpan.title = projectShort(s.project);
+    projSpan.textContent = projectShort(s.project);
+    tdDate.appendChild(projSpan);
+    tr.appendChild(tdDate);
+
+    const tdPrompt = document.createElement('td');
+    const promptDiv = document.createElement('div');
+    promptDiv.className = 'prompt-preview';
+    promptDiv.title = s.firstPrompt;
+    promptDiv.textContent = s.firstPrompt;
+    tdPrompt.appendChild(promptDiv);
+    tr.appendChild(tdPrompt);
+
+    const tdModel = document.createElement('td');
+    const badge = document.createElement('span');
+    badge.className = 'model-badge ' + modelClass(s.model);
+    badge.title = s.model;
+    const dot = document.createElement('span');
+    dot.className = 'model-dot';
+    badge.appendChild(dot);
+    const ver = modelVersion(s.model);
+    badge.appendChild(document.createTextNode(modelShort(s.model) + (ver ? ' ' : '')));
+    if (ver) {
+      const verSpan = document.createElement('span');
+      verSpan.style.cssText = 'opacity:0.6;font-size:11px';
+      verSpan.textContent = ver;
+      badge.appendChild(verSpan);
+    }
+    tdModel.appendChild(badge);
+    tr.appendChild(tdModel);
+
+    const addNumCell = (val, bold) => {
+      const td = document.createElement('td');
+      td.className = 'token-num';
+      if (bold) td.style.fontWeight = '700';
+      td.textContent = typeof val === 'number' ? fmt(val) : val;
+      tr.appendChild(td);
+    };
+    addNumCell(s.queryCount, false);
+    addNumCell(s.totalTokens, true);
+    addNumCell(s.inputTokens, false);
+    addNumCell(s.outputTokens, false);
+
+    tbody.appendChild(tr);
+  }
+
+  renderPagination(totalPages);
+}
+
+function renderPagination(totalPages) {
+  let el = document.getElementById('sessionsPagination');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'sessionsPagination';
+    el.className = 'sessions-pagination';
+    document.querySelector('.sessions-card').after(el);
+  }
+  el.textContent = '';
+  if (totalPages <= 1) return;
+
+  const pages = [];
+  const addPage = (n) => { if (!pages.includes(n)) pages.push(n); };
+  addPage(1);
+  for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) addPage(i);
+  addPage(totalPages);
+  pages.sort((a, b) => a - b);
+
+  const makeBtn = (text, page, disabled, active) => {
+    const btn = document.createElement('button');
+    btn.className = 'page-btn' + (active ? ' active' : '');
+    btn.textContent = text;
+    btn.disabled = disabled;
+    if (!disabled) btn.addEventListener('click', () => goPage(page));
+    el.appendChild(btn);
+  };
+
+  makeBtn('\u2039', currentPage - 1, currentPage === 1, false);
+  let prev = 0;
+  for (const p of pages) {
+    if (p - prev > 1) {
+      const dots = document.createElement('span');
+      dots.className = 'page-ellipsis';
+      dots.textContent = '\u2026';
+      el.appendChild(dots);
+    }
+    makeBtn(String(p), p, false, p === currentPage);
+    prev = p;
+  }
+  makeBtn('\u203A', currentPage + 1, currentPage === totalPages, false);
+}
+
+function goPage(n) {
+  currentPage = n;
+  renderSessions();
+  document.querySelector('.sessions-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // Sort
@@ -965,6 +1144,7 @@ document.querySelectorAll('.sessions-table th[data-sort]').forEach(th => {
 
 document.getElementById('searchInput').addEventListener('input', e => {
   searchQuery = e.target.value;
+  currentPage = 1;
   renderSessions();
 });
 

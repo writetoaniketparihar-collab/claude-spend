@@ -67,13 +67,16 @@ function extractSessionData(entries) {
   return queries;
 }
 
-async function parseAllSessions() {
+async function parseAllSessions(onProgress) {
+  const report = onProgress || (() => {});
   const claudeDir = getClaudeDir();
   const projectsDir = path.join(claudeDir, 'projects');
 
   if (!fs.existsSync(projectsDir)) {
     return { sessions: [], dailyUsage: [], modelBreakdown: [], topPrompts: [], totals: {} };
   }
+
+  report({ stage: 'history', message: 'Reading conversation history...' });
 
   // Read history.jsonl for prompt display text
   const historyPath = path.join(claudeDir, 'history.jsonl');
@@ -89,6 +92,8 @@ async function parseAllSessions() {
     }
   }
 
+  report({ stage: 'scanning', message: 'Scanning project directories...' });
+
   const projectDirs = fs.readdirSync(projectsDir).filter(d => {
     return fs.statSync(path.join(projectsDir, d)).isDirectory();
   });
@@ -98,10 +103,20 @@ async function parseAllSessions() {
   const modelMap = {};
   const allPrompts = []; // for "most expensive prompts" across all sessions
 
+  // Count total files for progress
+  let totalFiles = 0;
+  const projectFiles = [];
   for (const projectDir of projectDirs) {
     const dir = path.join(projectsDir, projectDir);
     const files = fs.readdirSync(dir).filter(f => f.endsWith('.jsonl'));
+    totalFiles += files.length;
+    projectFiles.push({ projectDir, dir, files });
+  }
 
+  let filesProcessed = 0;
+  report({ stage: 'parsing', message: `Parsing 0 of ${totalFiles} session files...`, current: 0, total: totalFiles });
+
+  for (const { projectDir, dir, files } of projectFiles) {
     for (const file of files) {
       const filePath = path.join(dir, file);
       const sessionId = path.basename(file, '.jsonl');
@@ -204,8 +219,15 @@ async function parseAllSessions() {
         modelMap[q.model].totalTokens += q.totalTokens;
         modelMap[q.model].queryCount += 1;
       }
+
+      filesProcessed++;
+      if (filesProcessed % 10 === 0 || filesProcessed === totalFiles) {
+        report({ stage: 'parsing', message: `Parsing ${filesProcessed} of ${totalFiles} session files...`, current: filesProcessed, total: totalFiles });
+      }
     }
   }
+
+  report({ stage: 'analyzing', message: 'Analyzing patterns and generating insights...' });
 
   sessions.sort((a, b) => b.totalTokens - a.totalTokens);
 
