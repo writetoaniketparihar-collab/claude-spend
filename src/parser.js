@@ -36,8 +36,11 @@ function extractSessionData(entries) {
         content.startsWith('<command-name')
       )) continue;
 
+      const textContent = typeof content === 'string'
+        ? content
+        : content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
       pendingUserMessage = {
-        text: typeof content === 'string' ? content : JSON.stringify(content),
+        text: textContent || null,
         timestamp: entry.timestamp,
       };
     }
@@ -52,6 +55,13 @@ function extractSessionData(entries) {
         + (usage.cache_read_input_tokens || 0);
       const outputTokens = usage.output_tokens || 0;
 
+      const tools = [];
+      if (Array.isArray(entry.message.content)) {
+        for (const block of entry.message.content) {
+          if (block.type === 'tool_use' && block.name) tools.push(block.name);
+        }
+      }
+
       queries.push({
         userPrompt: pendingUserMessage?.text || null,
         userTimestamp: pendingUserMessage?.timestamp || null,
@@ -60,6 +70,7 @@ function extractSessionData(entries) {
         inputTokens,
         outputTokens,
         totalTokens: inputTokens + outputTokens,
+        tools,
       });
     }
   }
@@ -209,6 +220,85 @@ async function parseAllSessions() {
 
   sessions.sort((a, b) => b.totalTokens - a.totalTokens);
 
+  // Build per-project aggregation
+  const projectMap = {};
+  for (const session of sessions) {
+    const proj = session.project;
+    if (!projectMap[proj]) {
+      projectMap[proj] = {
+        project: proj,
+        inputTokens: 0, outputTokens: 0, totalTokens: 0,
+        sessionCount: 0, queryCount: 0,
+        modelMap: {},
+        allPrompts: [],
+      };
+    }
+    const p = projectMap[proj];
+    p.inputTokens += session.inputTokens;
+    p.outputTokens += session.outputTokens;
+    p.totalTokens += session.totalTokens;
+    p.sessionCount += 1;
+    p.queryCount += session.queryCount;
+
+    for (const q of session.queries) {
+      if (q.model === '<synthetic>' || q.model === 'unknown') continue;
+      if (!p.modelMap[q.model]) {
+        p.modelMap[q.model] = { model: q.model, inputTokens: 0, outputTokens: 0, totalTokens: 0, queryCount: 0 };
+      }
+      const m = p.modelMap[q.model];
+      m.inputTokens += q.inputTokens;
+      m.outputTokens += q.outputTokens;
+      m.totalTokens += q.totalTokens;
+      m.queryCount += 1;
+    }
+
+    // Per-project prompt grouping with tool tracking
+    let curPrompt = null, curInput = 0, curOutput = 0, curConts = 0;
+    let curModels = {}, curTools = {};
+    const flushProjectPrompt = () => {
+      if (curPrompt && (curInput + curOutput) > 0) {
+        const topModel = Object.entries(curModels).sort((a, b) => b[1] - a[1])[0]?.[0] || session.model;
+        p.allPrompts.push({
+          prompt: curPrompt.substring(0, 300),
+          inputTokens: curInput,
+          outputTokens: curOutput,
+          totalTokens: curInput + curOutput,
+          continuations: curConts,
+          model: topModel,
+          toolCounts: { ...curTools },
+          date: session.date,
+          sessionId: session.sessionId,
+        });
+      }
+    };
+    for (const q of session.queries) {
+      if (q.userPrompt && q.userPrompt !== curPrompt) {
+        flushProjectPrompt();
+        curPrompt = q.userPrompt;
+        curInput = 0; curOutput = 0; curConts = 0;
+        curModels = {}; curTools = {};
+      } else if (!q.userPrompt) {
+        curConts++;
+      }
+      curInput += q.inputTokens;
+      curOutput += q.outputTokens;
+      if (q.model && q.model !== '<synthetic>') curModels[q.model] = (curModels[q.model] || 0) + 1;
+      for (const t of q.tools || []) curTools[t] = (curTools[t] || 0) + 1;
+    }
+    flushProjectPrompt();
+  }
+
+  const projectBreakdown = Object.values(projectMap).map(p => ({
+    project: p.project,
+    inputTokens: p.inputTokens,
+    outputTokens: p.outputTokens,
+    totalTokens: p.totalTokens,
+    sessionCount: p.sessionCount,
+    queryCount: p.queryCount,
+    modelBreakdown: Object.values(p.modelMap).sort((a, b) => b.totalTokens - a.totalTokens),
+    topPrompts: (p.allPrompts || []).sort((a, b) => b.totalTokens - a.totalTokens).slice(0, 10),
+  })).sort((a, b) => b.totalTokens - a.totalTokens);
+
   const dailyUsage = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
 
   // Top 20 most expensive individual prompts
@@ -241,6 +331,7 @@ async function parseAllSessions() {
     sessions,
     dailyUsage,
     modelBreakdown: Object.values(modelMap),
+    projectBreakdown,
     topPrompts,
     totals: grandTotals,
     insights,

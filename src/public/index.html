@@ -359,6 +359,50 @@
   }
   .prompt-tokens .sub { font-size: 11px; color: var(--text-tertiary); font-weight: 500; margin-top: 2px; }
 
+  /* ---- PROJECTS ---- */
+  .projects-section { margin-bottom: 32px; }
+
+  /* Project accordion */
+  .proj-chevron {
+    width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text-tertiary); transition: transform 0.25s ease; flex-shrink: 0;
+  }
+  .proj-row { cursor: pointer; }
+  .proj-row:hover td { background: #FAFBFF; }
+  .proj-row.expanded .proj-chevron { transform: rotate(90deg); }
+  .proj-drawer td { padding: 0; border-bottom: 1px solid var(--border); }
+  .proj-drawer-inner { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; background: #FAFBFC; }
+  .proj-drawer.open .proj-drawer-inner { max-height: 600px; }
+  .proj-drawer-content { padding: 12px 16px 16px; }
+  .drawer-prompt-list { display: flex; flex-direction: column; gap: 8px; }
+  .drawer-prompt-row {
+    display: grid; grid-template-columns: 24px 1fr auto;
+    gap: 10px; padding: 10px 14px; align-items: start;
+    background: white; border: 1px solid var(--border); border-radius: 10px;
+    cursor: pointer; transition: box-shadow 0.15s;
+  }
+  .drawer-prompt-row:hover { box-shadow: var(--shadow-md); }
+  .drawer-rank {
+    width: 20px; height: 20px; border-radius: 6px;
+    background: var(--bg); display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: var(--text-secondary); flex-shrink: 0;
+  }
+  .drawer-prompt-text {
+    font-size: 13px; font-weight: 500; line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    word-break: break-word;
+  }
+  .drawer-prompt-meta { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 5px; }
+  .tool-chip {
+    background: var(--bg); border: 1px solid var(--border-strong);
+    padding: 1px 7px; border-radius: 6px; font-size: 10px; font-weight: 600;
+    color: var(--text-secondary); white-space: nowrap;
+  }
+  .drawer-tokens { text-align: right; white-space: nowrap; }
+  .drawer-tokens .value { font-family: var(--mono); font-size: 14px; font-weight: 700; }
+  .drawer-tokens .sub { font-size: 11px; color: var(--text-tertiary); font-weight: 500; margin-top: 2px; }
+  .drawer-empty { text-align: center; padding: 20px; color: var(--text-tertiary); font-size: 13px; font-weight: 500; }
+
   /* ---- SESSIONS ---- */
   .sessions-section { margin-bottom: 40px; }
   .sessions-toolbar {
@@ -409,15 +453,43 @@
     display: inline-flex; align-items: center; gap: 5px;
     padding: 3px 10px; border-radius: 20px;
     font-size: 12px; font-weight: 600;
+    transition: box-shadow 0.15s;
   }
-  .model-opus { background: #EEF2FF; color: #4F46E5; }
-  .model-sonnet { background: #ECFDF5; color: #059669; }
-  .model-haiku { background: #FFF7ED; color: #EA580C; }
-  .model-unknown { background: #F1F5F9; color: #64748B; }
-  .model-dot { width: 6px; height: 6px; border-radius: 50%; }
-  .model-opus .model-dot { background: #6366F1; }
+  .model-badge:focus-visible { outline: 2px solid var(--indigo); outline-offset: 2px; }
+  /* Contrast-corrected badge colors (WCAG AA compliant) */
+  .model-opus { background: #EEF2FF; color: #3730A3; }
+  .model-sonnet { background: #ECFDF5; color: #047857; }
+  .model-haiku { background: #FFF7ED; color: #C2410C; }
+  .model-unknown { background: #F1F5F9; color: #475569; }
+  .model-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .model-opus .model-dot { background: #4F46E5; }
   .model-sonnet .model-dot { background: #10B981; }
   .model-haiku .model-dot { background: #F97316; }
+  /* Sub-line pills in project rows — compact variant */
+  .model-pills {
+    list-style: none; padding: 0; margin: 5px 0 0;
+    display: flex; flex-wrap: wrap; gap: 4px;
+  }
+  .model-pills li { display: flex; }
+  .model-pills .model-badge {
+    padding: 2px 8px; font-size: 11px; border-radius: 10px;
+  }
+  /* Screen-reader-only label (WCAG 2.1 compliant) */
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0;
+    margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
+    white-space: nowrap; border-width: 0;
+  }
+  /* Inline ↓in ↑out token pair inside a model badge */
+  .token-detail {
+    display: inline-flex; align-items: center; gap: 2px;
+    font-size: 10px; font-weight: 600; opacity: 0.9;
+  }
+  /* Project name styled as path */
+  .proj-name {
+    font-weight: 600; font-size: 13px;
+    font-family: var(--mono); letter-spacing: -0.2px; color: var(--text);
+  }
   .date-cell { white-space: nowrap; color: var(--text-secondary); font-weight: 500; }
   .project-tag {
     font-size: 11px; color: var(--text-tertiary); display: block;
@@ -569,6 +641,30 @@
     </div>
   </div>
 
+  <!-- Projects -->
+  <div class="projects-section animate delay-4">
+    <div class="section-header">
+      <div class="section-icon" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M12 3v18"/><path d="M3 7l9 4 9-4"/></svg>
+      </div>
+      <div class="section-title">Projects</div>
+      <span id="projectsCount" style="font-size:13px;color:var(--text-tertiary);font-weight:600;margin-left:auto"></span>
+    </div>
+    <div class="sessions-card">
+      <table class="sessions-table">
+        <thead>
+          <tr>
+            <th>Project</th>
+            <th style="text-align:right">Total Tokens</th>
+            <th style="text-align:right">Sessions</th>
+            <th style="text-align:right">Queries</th>
+          </tr>
+        </thead>
+        <tbody id="projectsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- Most Expensive Prompts -->
   <div class="top-prompts animate delay-4">
     <div class="section-header">
@@ -647,13 +743,42 @@ function modelClass(m) {
   return 'model-unknown';
 }
 function modelShort(m) {
+  // New format: claude-{family}-{major}-{minor}[-date]
+  // e.g. claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5-20251001
+  let match = m.match(/^claude-(opus|sonnet|haiku)-(\d+)-(\d+)/i);
+  if (match) {
+    const name = match[1].charAt(0).toUpperCase() + match[1].slice(1);
+    return name + ' ' + match[2] + '.' + match[3];
+  }
+  // Old format with sub-version: claude-3-5-{family} or claude-3-7-{family}
+  match = m.match(/^claude-(\d+)-(\d+)-(opus|sonnet|haiku)/i);
+  if (match) {
+    const name = match[3].charAt(0).toUpperCase() + match[3].slice(1);
+    return name + ' ' + match[1] + '.' + match[2];
+  }
+  // Old format: claude-3-{family}
+  match = m.match(/^claude-(\d+)-(opus|sonnet|haiku)/i);
+  if (match) {
+    const name = match[2].charAt(0).toUpperCase() + match[2].slice(1);
+    return name + ' ' + match[1];
+  }
   if (m.includes('opus')) return 'Opus';
   if (m.includes('sonnet')) return 'Sonnet';
   if (m.includes('haiku')) return 'Haiku';
   return m;
 }
 function projectShort(p) {
-  return p.replace(/^C--Users-[^-]+-?/, '').replace(/^Projects-?/, '').replace(/-/g, '/') || '~';
+  // Strip Windows drive prefix (e.g. D-- or C--)
+  let s = p.replace(/^[A-Za-z]--/, '');
+  // Iteratively strip known parent directory segments
+  const known = /^(?:Users|home|user)-[^-]+-|^(?:GitHub|GitLab|git|Projects|projects|workspace|Workspace|Desktop|Documents|source|src|dev|Dev|code|Code|repos|Repos)-/;
+  let prev;
+  do { prev = s; s = s.replace(known, ''); } while (s !== prev && s.length > 0);
+  return s || p;
+}
+function projectFull(p) {
+  // Show the raw encoded name with Windows drive restored for readability
+  return p.replace(/^([A-Za-z])--/, '$1:\\');
 }
 function escapeHtml(s) {
   const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
@@ -684,6 +809,7 @@ function render() {
   renderInsights();
   renderDailyChart();
   renderModelChart();
+  renderProjectBreakdown();
   renderTopPrompts();
   renderSessions();
 }
@@ -881,6 +1007,95 @@ function renderModelChart() {
       <span><strong>${modelShort(d.model)}</strong> &ndash; ${fmt(d.totalTokens)} (${pct}%)</span>
     </div>`;
   }).join('');
+}
+
+// Project accordion
+function toggleProjectDrawer(i) {
+  const row = document.getElementById('proj-row-' + i);
+  const drawer = document.getElementById('proj-drawer-' + i);
+  const isOpen = drawer.classList.contains('open');
+  row.classList.toggle('expanded', !isOpen);
+  drawer.classList.toggle('open', !isOpen);
+}
+
+function buildDrawerContent(p) {
+  if (!p.topPrompts || p.topPrompts.length === 0) {
+    return '<div class="drawer-empty">No prompt data available</div>';
+  }
+  const items = p.topPrompts.map((pr, i) => {
+    const toolEntries = Object.entries(pr.toolCounts || {}).sort((a, b) => b[1] - a[1]);
+    const chips = toolEntries.map(([name, count]) =>
+      '<span class="tool-chip">' + count + '\u00d7\u00a0' + escapeHtml(name) + '</span>'
+    ).join('') + (pr.continuations > 0 ? '<span class="tool-chip">+' + pr.continuations + ' turns</span>' : '');
+    const badge = '<span class="model-badge ' + modelClass(pr.model) + '"><span class="model-dot"></span>' + modelShort(pr.model) + '</span>';
+    const tokVal = fmt(pr.totalTokens);
+    const tokSub = fmt(pr.inputTokens) + ' / ' + fmt(pr.outputTokens);
+    const promptText = escapeHtml(pr.prompt);
+    const sid = pr.sessionId;
+    return [
+      '<div class="drawer-prompt-row" onclick="openDrilldown(\'' + sid + '\')">',
+      '<div class="drawer-rank">' + (i + 1) + '</div>',
+      '<div>',
+      '<div class="drawer-prompt-text">' + promptText + '</div>',
+      '<div class="drawer-prompt-meta">' + badge + chips + '</div>',
+      '</div>',
+      '<div class="drawer-tokens"><div class="value">' + tokVal + '</div><div class="sub">' + tokSub + '</div></div>',
+      '</div>',
+    ].join('');
+  });
+  return '<div class="drawer-prompt-list">' + items.join('') + '</div>';
+}
+
+// Project breakdown
+function renderProjectBreakdown() {
+  const projects = DATA.projectBreakdown;
+  if (!projects || !projects.length) return;
+
+  const countEl = document.getElementById('projectsCount');
+  countEl.textContent = projects.length + ' project' + (projects.length === 1 ? '' : 's');
+
+  const maxTokens = projects[0].totalTokens;
+  const chevron = '<svg class="proj-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l4 4-4 4"/></svg>';
+  const rows = [];
+  projects.forEach((p, i) => {
+    const barPct = (p.totalTokens / maxTokens * 100).toFixed(1);
+    const ariaLabel = p.modelBreakdown.map(m => modelShort(m.model) + ': ' + fmt(m.inputTokens) + ' input, ' + fmt(m.outputTokens) + ' output').join(', ');
+    const pillItems = p.modelBreakdown.map(m =>
+      '<li><span class="model-badge ' + modelClass(m.model) +
+      '" aria-label="' + modelShort(m.model) + ': ' + fmt(m.inputTokens) + ' input, ' + fmt(m.outputTokens) + ' output">' +
+      '<span class="model-dot" aria-hidden="true"></span>' +
+      modelShort(m.model) +
+      ' <span class="token-detail"><span aria-hidden="true">\u2193</span><span class="sr-only">in </span>' + fmt(m.inputTokens) + '</span>' +
+      ' <span class="token-detail"><span aria-hidden="true">\u2191</span><span class="sr-only">out </span>' + fmt(m.outputTokens) + '</span>' +
+      '</span></li>'
+    ).join('');
+    const summaryRow = [
+      '<tr class="proj-row" id="proj-row-' + i + '" onclick="toggleProjectDrawer(' + i + ')">',
+      '<td style="padding:10px 16px">',
+      '<div style="display:flex;align-items:center;gap:6px">',
+      chevron,
+      '<div>',
+      '<div class="proj-name" title="' + projectFull(p.project) + '">' + escapeHtml(projectShort(p.project)) + '</div>',
+      '<ul class="model-pills" aria-label="Models used: ' + ariaLabel + '">' + pillItems + '</ul>',
+      '</div></div></td>',
+      '<td class="token-num" style="font-weight:700;vertical-align:top;padding-top:12px">',
+      '<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">',
+      '<div style="flex:1;max-width:60px;height:3px;background:var(--bg);border-radius:4px;overflow:hidden">',
+      '<div style="width:' + barPct + '%;height:100%;background:var(--indigo);border-radius:4px"></div>',
+      '</div><div><div>' + fmt(p.totalTokens) + '</div><div style="font-size:11px;font-weight:500;color:var(--text-tertiary);margin-top:1px">' + fmt(p.inputTokens) + ' in\u00a0\u00b7\u00a0' + fmt(p.outputTokens) + ' out</div></div></div></td>',
+      '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.sessionCount + '</td>',
+      '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.queryCount + '</td>',
+      '</tr>',
+    ].join('');
+    const drawerRow = [
+      '<tr class="proj-drawer" id="proj-drawer-' + i + '">',
+      '<td colspan="4"><div class="proj-drawer-inner"><div class="proj-drawer-content">',
+      buildDrawerContent(p),
+      '</div></div></td></tr>',
+    ].join('');
+    rows.push(summaryRow, drawerRow);
+  });
+  document.getElementById('projectsBody').innerHTML = rows.join('');
 }
 
 // Top prompts

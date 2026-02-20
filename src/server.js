@@ -1,7 +1,5 @@
 const express = require('express');
 const path = require('path');
-const { parseAllSessions } = require('./parser');
-
 function createServer() {
   const app = express();
 
@@ -11,7 +9,7 @@ function createServer() {
   app.get('/api/data', async (req, res) => {
     try {
       if (!cachedData) {
-        cachedData = await parseAllSessions();
+        cachedData = await require('./parser').parseAllSessions();
       }
       res.json(cachedData);
     } catch (err) {
@@ -21,7 +19,8 @@ function createServer() {
 
   app.get('/api/refresh', async (req, res) => {
     try {
-      cachedData = await parseAllSessions();
+      delete require.cache[require.resolve('./parser')];
+      cachedData = await require('./parser').parseAllSessions();
       res.json({ ok: true, sessions: cachedData.sessions.length });
     } catch (err) {
       res.status(500).json({ error: err.message });
