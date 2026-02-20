@@ -377,7 +377,8 @@
   .proj-row { cursor: pointer; }
   .proj-row:hover td { background: #FAFBFF; }
   .proj-row.expanded .proj-chevron { transform: rotate(90deg); }
-  .proj-drawer td { padding: 0; border-bottom: 1px solid var(--border); }
+  .proj-drawer td { padding: 0; border-bottom: none; }
+  .proj-drawer.open td { border-bottom: 1px solid var(--border); }
   .proj-drawer-inner { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; background: var(--bg); }
   .proj-drawer.open .proj-drawer-inner { max-height: 600px; }
   .proj-drawer-content { padding: 12px 16px 16px; }
@@ -440,6 +441,8 @@
     cursor: pointer; user-select: none; white-space: nowrap;
     background: #FAFBFC;
   }
+  .sessions-table thead th:first-child { border-top-left-radius: calc(var(--radius) - 1px); }
+  .sessions-table thead th:last-child { border-top-right-radius: calc(var(--radius) - 1px); }
   .sessions-table th:hover { color: var(--text-secondary); }
   .sessions-table th.sorted { color: var(--indigo); }
   .sessions-table td {
