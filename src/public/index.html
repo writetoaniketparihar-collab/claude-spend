@@ -378,14 +378,14 @@
   .proj-row:hover td { background: #FAFBFF; }
   .proj-row.expanded .proj-chevron { transform: rotate(90deg); }
   .proj-drawer td { padding: 0; border-bottom: 1px solid var(--border); }
-  .proj-drawer-inner { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; background: #FAFBFC; }
+  .proj-drawer-inner { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; background: var(--bg); }
   .proj-drawer.open .proj-drawer-inner { max-height: 600px; }
   .proj-drawer-content { padding: 12px 16px 16px; }
   .drawer-prompt-list { display: flex; flex-direction: column; gap: 8px; }
   .drawer-prompt-row {
     display: grid; grid-template-columns: 24px 1fr auto;
     gap: 10px; padding: 10px 14px; align-items: start;
-    background: white; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--white); border: 1px solid var(--border); border-radius: 10px;
     cursor: pointer; transition: box-shadow 0.15s;
   }
   .drawer-prompt-row:hover { box-shadow: var(--shadow-md); }
@@ -611,6 +611,7 @@
   .theme-toggle svg { width: 15px; height: 15px; }
   /* Selector-specific dark overrides */
   [data-theme="dark"] .prompt-row:hover { background: rgba(255,255,255,0.08); }
+  [data-theme="dark"] .proj-row:hover td { background: rgba(255,255,255,0.08); }
   [data-theme="dark"] .sessions-table th { background: rgba(255,255,255,0.08); }
   [data-theme="dark"] .sessions-table tbody tr:hover td { background: rgba(255,255,255,0.08); }
   [data-theme="dark"] .query-item:hover { background: rgba(255,255,255,0.08); }
