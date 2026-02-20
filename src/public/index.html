@@ -174,8 +174,8 @@
     bottom: calc(100% + 10px);
     left: 50%;
     transform: translateX(-50%);
-    background: var(--text);
-    color: #F8FAFC;
+    background: #1E293B;
+    color: #E2E8F0;
     font-size: 12px;
     font-weight: 500;
     line-height: 1.5;
@@ -201,7 +201,7 @@
     left: 50%;
     transform: translateX(-50%);
     border: 6px solid transparent;
-    border-top-color: var(--text);
+    border-top-color: #1E293B;
   }
   .has-tooltip:hover .tooltip {
     opacity: 1;
@@ -216,7 +216,7 @@
     top: auto;
     bottom: 100%;
     border-top-color: transparent;
-    border-bottom-color: var(--text);
+    border-bottom-color: #1E293B;
   }
   /* Help icon next to labels */
   .help-icon {
@@ -632,6 +632,8 @@
   [data-theme="dark"] .section-icon-prompts  { background: linear-gradient(135deg, #1E2A5E, #2D3A8C) !important; }
   [data-theme="dark"] .section-icon-sessions { background: linear-gradient(135deg, #0D2E1F, #14532D) !important; }
   [data-theme="dark"] .section-icon-sessions svg { stroke: #4ADE80; }
+  [data-theme="dark"] .section-icon-projects { background: linear-gradient(135deg, #4C1D95, #6D28D9) !important; }
+  [data-theme="dark"] .section-icon-projects svg { stroke: #C4B5FD; }
 </style>
 </head>
 <body>
@@ -709,7 +711,7 @@
   <!-- Projects -->
   <div class="projects-section animate delay-4">
     <div class="section-header">
-      <div class="section-icon" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE)">
+      <div class="section-icon section-icon-projects" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE)">
         <svg viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M12 3v18"/><path d="M3 7l9 4 9-4"/></svg>
       </div>
       <div class="section-title">Projects</div>
