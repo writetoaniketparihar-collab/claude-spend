@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Features · Claude Spend</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      :root {
+        --indigo: #6366F1;
+        --text: #0F172A;
+        --text-secondary: #475569;
+        --text-tertiary: #94A3B8;
+        --bg: #F1F5F9;
+        --white: #FFFFFF;
+        --border: #E2E8F0;
+        --radius: 14px;
+        --gradient-main: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+        font-family: 'Inter', system-ui, sans-serif;
+      }
+      body { background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6; }
+      .container { max-width: 700px; margin: 0 auto; padding: 48px 24px 80px; }
+
+      /* Header */
+      .back-link {
+        display: inline-flex; align-items: center; gap: 6px;
+        font-size: 13px; font-weight: 600; color: var(--indigo);
+        text-decoration: none; margin-bottom: 36px;
+        transition: opacity 0.15s;
+      }
+      .back-link:hover { opacity: 0.7; }
+      .page-title {
+        font-size: 32px; font-weight: 800; letter-spacing: -1px;
+        background: var(--gradient-main);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        margin-bottom: 6px;
+      }
+      .page-sub { font-size: 16px; color: var(--text-secondary); margin-bottom: 40px; }
+
+      /* Feature cards */
+      .feature-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 32px; }
+      .feature {
+        background: var(--white); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 20px 24px;
+        box-shadow: var(--shadow-sm);
+        display: flex; align-items: flex-start; gap: 16px;
+      }
+      .feature-icon {
+        font-size: 24px; line-height: 1; flex-shrink: 0; margin-top: 2px;
+      }
+      .feature-name { font-size: 15px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+      .feature-desc { font-size: 14px; color: var(--text-secondary); }
+
+      /* Footer */
+      .footer { margin-top: 56px; text-align: center; font-size: 13px; color: var(--text-tertiary); }
+      .footer a { color: var(--indigo); text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <a href="/" class="back-link">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <path d="M9 2L4 7l5 5"/>
+        </svg>
+        Back to Dashboard
+      </a>
+
+      <div class="page-title">What you can do with Claude Spend</div>
+      <div class="page-sub">A simple guide to understanding and coaching your Claude Code usage.</div>
+
+      <div class="feature-list">
+        
+        <div class="feature">
+          <div class="feature-icon">💵</div>
+          <div>
+            <div class="feature-name">Track Your Exact Spend</div>
+            <div class="feature-desc">See your estimated USD cost across all projects and models. Monitor your spend trajectory to make sure you aren't surprised at the end of the month. See how much you're saving with Anthropic's Prompt Caching.</div>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon">💯</div>
+          <div>
+            <div class="feature-name">Global Efficiency Score</div>
+            <div class="feature-desc">Get an instant 0-100 grade on how effectively you are using Claude. We analyze your Cache Utilization, Context Discipline (short vs marathon conversations), and Tool Rework (solving problems on the first try) to help you get the most out of your tokens.</div>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon">📅</div>
+          <div>
+            <div class="feature-name">Filter by Date Range</div>
+            <div class="feature-desc">Drill down into specific time periods using quick presets (7 days, 30 days, This month) or custom dates. All charts and totals instantly recompute based on your selection.</div>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon">📈</div>
+          <div>
+            <div class="feature-name">Catch the "Context Snowball"</div>
+            <div class="feature-desc">Long conversations get exponentially expensive because Claude must re-read everything on every turn. In the Session Drilldown, we calculate exactly when you should have started a new session—and how many tokens you would have saved.</div>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon">🤔</div>
+          <div>
+            <div class="feature-name">Spot Vague or Expensive Prompts</div>
+            <div class="feature-desc">We automatically flag your most expensive prompts. If a short prompt forces Claude to do a massive search fanout or rewrite a file multiple times, we'll tag it as a high "Cost Driver" and give you advice on how to phrase it better.</div>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon">🛠️</div>
+          <div>
+            <div class="feature-name">Visualize Claude's "Thinking"</div>
+            <div class="feature-desc">Click any message in a session to see Claude's internal scratchpad visualized as a Tool Chain Pipeline (e.g., 🔍 Search → 📄 Read → ✏️ Write). Discover which files Claude frequently targets via the File Access Heatmap.</div>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon">📁</div>
+          <div>
+            <div class="feature-name">Break Cost Down by Project</div>
+            <div class="feature-desc">Instantly see which parts of your codebase are costing you the most. Expand a project drawer to view the precise prompts and models that drove its token usage up.</div>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon">📊</div>
+          <div>
+            <div class="feature-name">Token Waterfall Chart</div>
+            <div class="feature-desc">Open any session to see a horizontal bar chart — one bar per message — where each bar's width equals that turn's total token cost. As context accumulates the bars visually widen, making the "context re-read tax" impossible to ignore. Token spikes (turns costing 2× the session average) are highlighted in amber.</div>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon">🟢</div>
+          <div>
+            <div class="feature-name">Live Mode</div>
+            <div class="feature-desc">Click the "Live" button in the header to enable auto-refresh. The dashboard watches your <code>~/.claude/projects/</code> folder for new session files and updates all charts and totals within 2 seconds of any change — no manual refresh needed. A pulsing green dot indicates live mode is active.</div>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon">⚡</div>
+          <div>
+            <div class="feature-name">CLI Summary Mode</div>
+            <div class="feature-desc">Run <code>claude-spend --summary</code> to print a compact usage snapshot to your terminal — total cost, tokens, sessions, date range, top model, and cache savings — without opening a browser.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="footer">
+        <a href="/">← Back to Dashboard</a> &nbsp;·&nbsp;
+        All data stays on your machine. Nothing is sent anywhere.
+      </div>
+    </div>
+  </body>
+</html>

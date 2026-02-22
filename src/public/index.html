@@ -1,860 +1,2210 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Claude Spend</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Claude Spend</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-  :root {
-    --bg: #F8F9FC;
-    --bg-mesh-1: #EEF0FF;
-    --bg-mesh-2: #F0FDFA;
-    --white: #FFFFFF;
-    --text: #0F172A;
-    --text-secondary: #475569;
-    --text-tertiary: #94A3B8;
-    --border: rgba(0,0,0,0.06);
-    --border-strong: rgba(0,0,0,0.1);
+      :root {
+        --bg: #f8f9fc;
+        --bg-mesh-1: #eef0ff;
+        --bg-mesh-2: #f0fdfa;
+        --white: #ffffff;
+        --text: #0f172a;
+        --text-secondary: #475569;
+        --text-tertiary: #94a3b8;
+        --border: rgba(0, 0, 0, 0.06);
+        --border-strong: rgba(0, 0, 0, 0.1);
 
-    --indigo: #6366F1;
-    --violet: #8B5CF6;
-    --purple: #A855F7;
-    --teal: #14B8A6;
-    --cyan: #06B6D4;
-    --emerald: #10B981;
-    --amber: #F59E0B;
-    --orange: #F97316;
-    --rose: #F43F5E;
-    --blue: #3B82F6;
+        --indigo: #6366f1;
+        --violet: #8b5cf6;
+        --purple: #a855f7;
+        --teal: #14b8a6;
+        --cyan: #06b6d4;
+        --emerald: #10b981;
+        --amber: #f59e0b;
+        --orange: #f97316;
+        --rose: #f43f5e;
+        --blue: #3b82f6;
 
-    --gradient-main: linear-gradient(135deg, #6366F1, #8B5CF6, #A855F7);
-    --gradient-teal: linear-gradient(135deg, #14B8A6, #06B6D4);
-    --gradient-warm: linear-gradient(135deg, #F59E0B, #F97316);
-    --gradient-rose: linear-gradient(135deg, #F43F5E, #EC4899);
+        --gradient-main: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+        --gradient-teal: linear-gradient(135deg, #14b8a6, #06b6d4);
+        --gradient-warm: linear-gradient(135deg, #f59e0b, #f97316);
+        --gradient-rose: linear-gradient(135deg, #f43f5e, #ec4899);
 
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-    --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
-    --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
-    --shadow-glow: 0 0 40px rgba(99,102,241,0.15);
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+        --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
+        --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.15);
 
-    --radius: 16px;
-    --radius-sm: 10px;
-    --radius-xs: 6px;
-    --font: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
-  }
+        --radius: 16px;
+        --radius-sm: 10px;
+        --radius-xs: 6px;
+        --font:
+          "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        --mono:
+          "SF Mono", "Cascadia Code", "Fira Code", "JetBrains Mono", monospace;
+      }
 
-  body {
-    font-family: var(--font);
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.6;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+      body {
+        font-family: var(--font);
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
 
-  /* Mesh gradient background */
-  body::before {
-    content: '';
-    position: fixed; top: 0; left: 0; right: 0; height: 600px;
-    background:
-      radial-gradient(ellipse 80% 60% at 10% 0%, rgba(99,102,241,0.12) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 90% 10%, rgba(139,92,246,0.08) 0%, transparent 50%),
-      radial-gradient(ellipse 50% 40% at 50% 20%, rgba(20,184,166,0.06) 0%, transparent 50%);
-    pointer-events: none; z-index: 0;
-  }
+      /* Mesh gradient background */
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 600px;
+        background:
+          radial-gradient(
+            ellipse 80% 60% at 10% 0%,
+            rgba(99, 102, 241, 0.12) 0%,
+            transparent 60%
+          ),
+          radial-gradient(
+            ellipse 60% 50% at 90% 10%,
+            rgba(139, 92, 246, 0.08) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            ellipse 50% 40% at 50% 20%,
+            rgba(20, 184, 166, 0.06) 0%,
+            transparent 50%
+          );
+        pointer-events: none;
+        z-index: 0;
+      }
 
-  /* Loading */
-  .loading {
-    display: flex; align-items: center; justify-content: center;
-    min-height: 100vh; flex-direction: column; gap: 20px;
-  }
-  .spinner {
-    width: 36px; height: 36px;
-    border: 3px solid var(--border); border-top-color: var(--indigo);
-    border-radius: 50%; animation: spin 0.7s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { color: var(--text-secondary); font-size: 15px; font-weight: 500; }
+      /* Loading */
+      .loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .spinner {
+        width: 36px;
+        height: 36px;
+        border: 3px solid var(--border);
+        border-top-color: var(--indigo);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .loading-text {
+        color: var(--text-secondary);
+        font-size: 15px;
+        font-weight: 500;
+      }
 
-  /* Layout */
-  .container { max-width: 1200px; margin: 0 auto; padding: 40px 28px 60px; position: relative; z-index: 1; }
+      /* Layout */
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 28px 60px;
+        position: relative;
+        z-index: 1;
+      }
 
-  /* Fade-in animation */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .animate { animation: fadeUp 0.5s ease-out both; }
-  .delay-1 { animation-delay: 0.05s; }
-  .delay-2 { animation-delay: 0.1s; }
-  .delay-3 { animation-delay: 0.15s; }
-  .delay-4 { animation-delay: 0.2s; }
-  .delay-5 { animation-delay: 0.25s; }
+      /* Fade-in animation */
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(16px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate {
+        animation: fadeUp 0.5s ease-out both;
+      }
+      .delay-1 {
+        animation-delay: 0.05s;
+      }
+      .delay-2 {
+        animation-delay: 0.1s;
+      }
+      .delay-3 {
+        animation-delay: 0.15s;
+      }
+      .delay-4 {
+        animation-delay: 0.2s;
+      }
+      .delay-5 {
+        animation-delay: 0.25s;
+      }
 
-  /* ---- HEADER ---- */
-  .header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 40px; flex-wrap: wrap; gap: 16px;
-  }
-  .header-left { display: flex; align-items: center; gap: 14px; }
-  .logo-mark {
-    width: 40px; height: 40px; border-radius: 12px;
-    background: var(--gradient-main);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 12px rgba(99,102,241,0.3);
-  }
-  .logo-mark svg { width: 22px; height: 22px; }
-  .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
-  .header-right { display: flex; align-items: center; gap: 14px; }
-  .date-range {
-    color: var(--text-tertiary); font-size: 13px; font-weight: 500;
-    background: var(--white); padding: 6px 14px; border-radius: 20px;
-    border: 1px solid var(--border);
-  }
-  .refresh-btn {
-    background: var(--white); border: 1px solid var(--border);
-    color: var(--text-secondary); padding: 7px 16px; border-radius: 20px;
-    cursor: pointer; font-size: 13px; font-weight: 500; font-family: var(--font);
-    transition: all 0.2s; display: flex; align-items: center; gap: 6px;
-  }
-  .refresh-btn:hover {
-    border-color: var(--indigo); color: var(--indigo);
-    box-shadow: 0 2px 8px rgba(99,102,241,0.12);
-  }
-  .refresh-btn svg { width: 14px; height: 14px; }
+      /* ---- HEADER ---- */
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 40px;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .logo-mark {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: var(--gradient-main);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+      }
+      .logo-mark svg {
+        width: 22px;
+        height: 22px;
+      }
+      .header h1 {
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+      }
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .date-range {
+        color: var(--text-tertiary);
+        font-size: 13px;
+        font-weight: 500;
+        background: var(--white);
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid var(--border);
+      }
+      .refresh-btn {
+        background: var(--white);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        padding: 7px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        font-family: var(--font);
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .refresh-btn:hover {
+        border-color: var(--indigo);
+        color: var(--indigo);
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.12);
+      }
+      .refresh-btn svg {
+        width: 14px;
+        height: 14px;
+      }
 
-  /* ---- STAT CARDS ---- */
-  .stats-row {
-    display: grid; grid-template-columns: repeat(4, 1fr);
-    gap: 16px; margin-bottom: 32px;
-  }
-  @media (max-width: 780px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+      /* ---- STAT CARDS ---- */
+      .stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+      @media (max-width: 780px) {
+        .stats-row {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
 
-  .stat-card {
-    background: var(--white); border-radius: var(--radius);
-    padding: 24px; position: relative;
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-sm);
-    transition: box-shadow 0.2s, transform 0.2s;
-  }
-  .stat-card:hover { box-shadow: var(--shadow-md); }
-  .stat-card .accent-bar {
-    position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  }
-  .stat-label {
-    font-size: 12px; font-weight: 600; color: var(--text-tertiary);
-    text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px;
-  }
-  .stat-value {
-    font-size: 34px; font-weight: 800; letter-spacing: -2px;
-    line-height: 1; margin-bottom: 6px;
-    color: var(--text);
-  }
-  .stat-sub { font-size: 13px; color: var(--text-tertiary); font-weight: 500; }
+      /* ---- DATE FILTER BAR ---- */
+      .date-filter-bar {
+        display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+        margin-bottom: 22px;
+        padding: 10px 14px;
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: var(--shadow-sm);
+      }
+      .filter-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+      .filter-pill {
+        font-size: 12px; font-weight: 600;
+        padding: 5px 12px; border-radius: 20px; cursor: pointer;
+        border: 1px solid var(--border);
+        background: var(--bg); color: var(--text-secondary);
+        transition: all 0.15s; white-space: nowrap;
+        user-select: none;
+      }
+      .filter-pill:hover { border-color: var(--indigo); color: var(--indigo); }
+      .filter-pill.active {
+        background: var(--gradient-main); border-color: transparent;
+        color: #fff; box-shadow: 0 2px 8px rgba(99,102,241,0.3);
+      }
+      .filter-divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; flex-shrink: 0; }
+      .date-input-wrap { display: flex; align-items: center; gap: 6px; }
+      .date-input-label { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; }
+      .date-input {
+        font-size: 12px; font-weight: 500; font-family: inherit;
+        padding: 4px 8px; border-radius: 7px;
+        border: 1px solid var(--border); background: var(--bg);
+        color: var(--text); cursor: pointer;
+        transition: border-color 0.15s;
+      }
+      .date-input:focus { outline: none; border-color: var(--indigo); }
+      .filter-count {
+        margin-left: auto; font-size: 11px; font-weight: 600;
+        color: var(--text-tertiary); white-space: nowrap;
+      }
+      /* Trend indicators on stat cards */
+      .trend {
+        display: inline-flex; align-items: center; gap: 3px;
+        font-size: 11px; font-weight: 700; margin-left: 6px;
+        padding: 1px 5px; border-radius: 5px;
+      }
+      .trend-up   { color: #DC2626; background: #FEE2E2; }
+      .trend-down { color: #059669; background: #D1FAE5; }
+      .trend-flat { color: var(--text-tertiary); background: var(--bg); }
 
-  /* Tooltips */
-  .has-tooltip {
-    position: relative;
-    cursor: help;
-  }
-  .has-tooltip .tooltip {
-    position: absolute;
-    bottom: calc(100% + 10px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--text);
-    color: #F8FAFC;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 1.5;
-    padding: 10px 14px;
-    border-radius: 10px;
-    white-space: normal;
-    width: max-content;
-    max-width: 280px;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.15s, transform 0.15s;
-    transform: translateX(-50%) translateY(4px);
-    z-index: 100;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    text-transform: none;
-    letter-spacing: 0;
-    text-align: left;
-  }
-  .has-tooltip .tooltip::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 6px solid transparent;
-    border-top-color: var(--text);
-  }
-  .has-tooltip:hover .tooltip {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-  /* For table headers, tooltip goes below */
-  .has-tooltip-below .tooltip {
-    bottom: auto;
-    top: calc(100% + 10px);
-  }
-  .has-tooltip-below .tooltip::after {
-    top: auto;
-    bottom: 100%;
-    border-top-color: transparent;
-    border-bottom-color: var(--text);
-  }
-  /* Help icon next to labels */
-  .help-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    background: rgba(0,0,0,0.06);
-    color: var(--text-tertiary);
-    font-size: 10px;
-    font-weight: 700;
-    margin-left: 5px;
-    vertical-align: middle;
-    flex-shrink: 0;
-  }
+      .stat-card {
+        background: var(--white);
+        border-radius: var(--radius);
+        padding: 24px;
+        position: relative;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        transition: box-shadow 0.2s, transform 0.2s;
+      }
+      .stat-card:hover {
+        box-shadow: var(--shadow-md);
+      }
+      .stat-card .accent-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+      }
+      /* Cost card — lead metric */
+      .stat-card-cost {
+        border-color: rgba(99, 102, 241, 0.25);
+        background: linear-gradient(135deg, #fafafe 0%, #f0f1ff 100%);
+      }
+      .stat-card-cost::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: var(--gradient-main);
+        border-radius: var(--radius) var(--radius) 0 0;
+      }
+      .stat-card-cost .stat-value {
+        background: var(--gradient-main);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      /* Cache savings card — green accent */
+      .stat-card-savings {
+        border-color: rgba(16, 185, 129, 0.2);
+        background: linear-gradient(135deg, #fafffe 0%, #f0fdf8 100%);
+      }
+      .stat-card-savings::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #10B981, #34D399);
+        border-radius: var(--radius) var(--radius) 0 0;
+      }
+      .stat-card-savings .stat-value { color: #059669; }
+      .stat-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        margin-bottom: 10px;
+      }
+      .stat-value {
+        font-size: 34px;
+        font-weight: 800;
+        letter-spacing: -2px;
+        line-height: 1;
+        margin-bottom: 6px;
+        color: var(--text);
+      }
+      .stat-sub {
+        font-size: 13px;
+        color: var(--text-tertiary);
+        font-weight: 500;
+      }
+      /* Inline cost badge used in tables/prompts */
+      .cost-badge {
+        display: inline-block;
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 700;
+        color: #4F46E5;
+        background: rgba(99,102,241,0.08);
+        border: 1px solid rgba(99,102,241,0.15);
+        padding: 2px 7px;
+        border-radius: 6px;
+        white-space: nowrap;
+      }
 
-  /* Token explainer */
-  .token-explainer {
-    font-size: 13px; color: var(--text-tertiary); font-weight: 500;
-    text-align: center; padding: 10px 20px; margin: -16px 0 28px;
-    line-height: 1.5;
-  }
 
-  /* ---- SECTION HEADINGS ---- */
-  .section-header {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 16px;
-  }
-  .section-icon {
-    width: 28px; height: 28px; border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .section-icon svg { width: 16px; height: 16px; }
-  .section-title {
-    font-size: 16px; font-weight: 700; letter-spacing: -0.3px;
-  }
+      /* Tooltips */
+      .has-tooltip {
+        position: relative;
+        cursor: help;
+      }
+      .has-tooltip .tooltip {
+        position: absolute;
+        bottom: calc(100% + 10px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--text);
+        color: #f8fafc;
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1.5;
+        padding: 10px 14px;
+        border-radius: 10px;
+        white-space: normal;
+        width: max-content;
+        max-width: 280px;
+        pointer-events: none;
+        opacity: 0;
+        transition:
+          opacity 0.15s,
+          transform 0.15s;
+        transform: translateX(-50%) translateY(4px);
+        z-index: 100;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        text-transform: none;
+        letter-spacing: 0;
+        text-align: left;
+      }
+      .has-tooltip .tooltip::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 6px solid transparent;
+        border-top-color: var(--text);
+      }
+      .has-tooltip:hover .tooltip {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      /* For table headers, tooltip goes below */
+      .has-tooltip-below .tooltip {
+        bottom: auto;
+        top: calc(100% + 10px);
+      }
+      .has-tooltip-below .tooltip::after {
+        top: auto;
+        bottom: 100%;
+        border-top-color: transparent;
+        border-bottom-color: var(--text);
+      }
+      /* Help icon next to labels */
+      .help-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.06);
+        color: var(--text-tertiary);
+        font-size: 10px;
+        font-weight: 700;
+        margin-left: 5px;
+        vertical-align: middle;
+        flex-shrink: 0;
+      }
 
-  /* ---- INSIGHTS ---- */
-  .insights-section { margin-bottom: 32px; }
-  .insight-card {
-    background: var(--white); border-radius: var(--radius-sm);
-    padding: 14px 20px; margin-bottom: 8px;
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-sm);
-    cursor: pointer; transition: box-shadow 0.2s;
-  }
-  .insight-card:hover { box-shadow: var(--shadow-md); }
-  .insight-top {
-    display: flex; align-items: center; gap: 12px;
-  }
-  .insight-arrow {
-    margin-left: auto; flex-shrink: 0;
-    width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
-    color: var(--text-tertiary); transition: transform 0.25s ease;
-  }
-  .insight-card.expanded .insight-arrow { transform: rotate(180deg); }
-  .insight-indicator {
-    width: 28px; height: 28px; border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; font-size: 14px;
-  }
-  .insight-card.warning .insight-indicator { background: linear-gradient(135deg, #FEF3C7, #FDE68A); }
-  .insight-card.info .insight-indicator { background: linear-gradient(135deg, #E0E7FF, #C7D2FE); }
-  .insight-card.neutral .insight-indicator { background: linear-gradient(135deg, #F1F5F9, #E2E8F0); }
-  .insight-title { font-size: 14px; font-weight: 700; line-height: 1.4; }
-  .insight-oneliner { font-size: 13px; color: var(--text-secondary); margin-left: auto; white-space: nowrap; font-weight: 500; }
-  .insight-expand {
-    max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
-  }
-  .insight-card.expanded .insight-expand { max-height: 300px; }
-  .insight-detail {
-    font-size: 13px; color: var(--text-secondary); line-height: 1.65;
-    padding: 12px 0 4px 40px;
-    border-top: 1px solid var(--border); margin-top: 12px;
-  }
-  .insight-action-tip {
-    font-size: 13px; line-height: 1.6;
-    padding: 8px 0 0 40px; color: var(--indigo); font-weight: 600;
-  }
+      /* Token explainer */
+      .token-explainer {
+        font-size: 13px;
+        color: var(--text-tertiary);
+        font-weight: 500;
+        text-align: center;
+        padding: 10px 20px;
+        margin: -16px 0 28px;
+        line-height: 1.5;
+      }
 
-  /* ---- CHARTS ---- */
-  .charts-grid {
-    display: grid; grid-template-columns: 5fr 2fr;
-    gap: 16px; margin-bottom: 32px;
-  }
-  @media (max-width: 800px) { .charts-grid { grid-template-columns: 1fr; } }
+      /* ---- SECTION HEADINGS ---- */
+      .section-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+      .section-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .section-icon svg {
+        width: 16px;
+        height: 16px;
+      }
+      .section-title {
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+      }
 
-  .chart-card {
-    background: var(--white); border-radius: var(--radius);
-    padding: 24px; border: 1px solid var(--border);
-    box-shadow: var(--shadow-sm);
-  }
-  .chart-card h3 {
-    font-size: 13px; font-weight: 700; color: var(--text-tertiary);
-    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 20px;
-  }
-  canvas { display: block; }
-  .legend {
-    display: flex; gap: 20px; margin-top: 16px;
-    font-size: 12px; font-weight: 500; color: var(--text-secondary);
-  }
-  .legend-item { display: flex; align-items: center; gap: 7px; }
-  .legend-dot { width: 10px; height: 10px; border-radius: 4px; flex-shrink: 0; }
+      /* ---- INSIGHTS ---- */
+      .insights-section {
+        margin-bottom: 32px;
+      }
+      .insight-card {
+        background: var(--white);
+        border-radius: var(--radius-sm);
+        padding: 14px 20px;
+        margin-bottom: 8px;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        cursor: pointer;
+        transition: box-shadow 0.2s;
+      }
+      .insight-card:hover {
+        box-shadow: var(--shadow-md);
+      }
+      .insight-top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .insight-arrow {
+        margin-left: auto;
+        flex-shrink: 0;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-tertiary);
+        transition: transform 0.25s ease;
+      }
+      .insight-card.expanded .insight-arrow {
+        transform: rotate(180deg);
+      }
+      .insight-indicator {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 14px;
+      }
+      .insight-card.warning .insight-indicator {
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+      }
+      .insight-card.info .insight-indicator {
+        background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+      }
+      .insight-card.neutral .insight-indicator {
+        background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+      }
+      .insight-title {
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.4;
+      }
+      .insight-oneliner {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-left: auto;
+        white-space: nowrap;
+        font-weight: 500;
+      }
+      .insight-expand {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+      }
+      .insight-card.expanded .insight-expand {
+        max-height: 300px;
+      }
+      .insight-detail {
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.65;
+        padding: 12px 0 4px 40px;
+        border-top: 1px solid var(--border);
+        margin-top: 12px;
+      }
+      .insight-action-tip {
+        font-size: 13px;
+        line-height: 1.6;
+        padding: 8px 0 0 40px;
+        color: var(--indigo);
+        font-weight: 600;
+      }
 
-  /* ---- TOP PROMPTS ---- */
-  .top-prompts { margin-bottom: 32px; }
-  .prompts-card {
-    background: var(--white); border-radius: var(--radius);
-    border: 1px solid var(--border); box-shadow: var(--shadow-sm);
-    overflow: hidden;
-  }
-  .prompt-row {
-    display: grid; grid-template-columns: 36px 1fr auto;
-    gap: 14px; padding: 16px 24px; align-items: start;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer; transition: background 0.15s;
-  }
-  .prompt-row:last-child { border-bottom: none; }
-  .prompt-row:hover { background: #FAFBFF; }
-  .prompt-rank {
-    width: 28px; height: 28px; border-radius: 8px;
-    background: var(--bg); display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 700; color: var(--text-secondary);
-  }
-  .prompt-row:nth-child(1) .prompt-rank { background: var(--gradient-main); color: white; }
-  .prompt-row:nth-child(2) .prompt-rank { background: var(--gradient-teal); color: white; }
-  .prompt-row:nth-child(3) .prompt-rank { background: var(--gradient-warm); color: white; }
-  .prompt-text {
-    font-size: 14px; font-weight: 500; line-height: 1.5;
-    display: -webkit-box; -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical; overflow: hidden;
-  }
-  .prompt-meta { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; font-weight: 500; }
-  .token-bar-wrap {
-    display: flex; gap: 1px; height: 4px; margin-top: 8px;
-    border-radius: 4px; overflow: hidden;
-  }
-  .token-bar-in { background: var(--indigo); height: 100%; border-radius: 4px 0 0 4px; }
-  .token-bar-out { background: var(--teal); height: 100%; border-radius: 0 4px 4px 0; }
-  .prompt-tokens { text-align: right; white-space: nowrap; padding-top: 2px; }
-  .prompt-tokens .value {
-    font-size: 16px; font-weight: 700; font-family: var(--mono);
-    letter-spacing: -0.5px;
-  }
-  .prompt-tokens .sub { font-size: 11px; color: var(--text-tertiary); font-weight: 500; margin-top: 2px; }
+      /* ---- CHARTS ---- */
+      .charts-grid {
+        display: grid;
+        grid-template-columns: 5fr 2fr;
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+      @media (max-width: 800px) {
+        .charts-grid {
+          grid-template-columns: 1fr;
+        }
+      }
 
-  /* ---- PROJECTS ---- */
-  .projects-section { margin-bottom: 32px; }
+      .chart-card {
+        background: var(--white);
+        border-radius: var(--radius);
+        padding: 24px;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+      }
+      .chart-card h3 {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 20px;
+      }
+      canvas {
+        display: block;
+      }
+      .legend {
+        display: flex;
+        gap: 20px;
+        margin-top: 16px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-secondary);
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 4px;
+        flex-shrink: 0;
+      }
 
-  /* Project accordion */
-  .proj-chevron {
-    width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center;
-    color: var(--text-tertiary); transition: transform 0.25s ease; flex-shrink: 0;
-  }
-  .proj-row { cursor: pointer; }
-  .proj-row:hover td { background: #FAFBFF; }
-  .proj-row.expanded .proj-chevron { transform: rotate(90deg); }
-  .proj-drawer td { padding: 0; border-bottom: 1px solid var(--border); }
-  .proj-drawer-inner { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; background: #FAFBFC; }
-  .proj-drawer.open .proj-drawer-inner { max-height: 600px; }
-  .proj-drawer-content { padding: 12px 16px 16px; }
-  .drawer-prompt-list { display: flex; flex-direction: column; gap: 8px; }
-  .drawer-prompt-row {
-    display: grid; grid-template-columns: 24px 1fr auto;
-    gap: 10px; padding: 10px 14px; align-items: start;
-    background: white; border: 1px solid var(--border); border-radius: 10px;
-    cursor: pointer; transition: box-shadow 0.15s;
-  }
-  .drawer-prompt-row:hover { box-shadow: var(--shadow-md); }
-  .drawer-rank {
-    width: 20px; height: 20px; border-radius: 6px;
-    background: var(--bg); display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 700; color: var(--text-secondary); flex-shrink: 0;
-  }
-  .drawer-prompt-text {
-    font-size: 13px; font-weight: 500; line-height: 1.5;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-    word-break: break-word;
-  }
-  .drawer-prompt-meta { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 5px; }
-  .tool-chip {
-    background: var(--bg); border: 1px solid var(--border-strong);
-    padding: 1px 7px; border-radius: 6px; font-size: 10px; font-weight: 600;
-    color: var(--text-secondary); white-space: nowrap;
-  }
-  .drawer-tokens { text-align: right; white-space: nowrap; }
-  .drawer-tokens .value { font-family: var(--mono); font-size: 14px; font-weight: 700; }
-  .drawer-tokens .sub { font-size: 11px; color: var(--text-tertiary); font-weight: 500; margin-top: 2px; }
-  .drawer-empty { text-align: center; padding: 20px; color: var(--text-tertiary); font-size: 13px; font-weight: 500; }
+      /* ---- TOP PROMPTS ---- */
+      .top-prompts {
+        margin-bottom: 32px;
+      }
+      .prompts-card {
+        background: var(--white);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+      }
+      .prompt-row {
+        display: grid;
+        grid-template-columns: 36px 1fr auto;
+        gap: 14px;
+        padding: 16px 24px;
+        align-items: start;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .prompt-row:last-child {
+        border-bottom: none;
+      }
+      .prompt-row:hover {
+        background: #fafbff;
+      }
+      .prompt-rank {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-secondary);
+      }
+      .prompt-row:nth-child(1) .prompt-rank {
+        background: var(--gradient-main);
+        color: white;
+      }
+      .prompt-row:nth-child(2) .prompt-rank {
+        background: var(--gradient-teal);
+        color: white;
+      }
+      .prompt-row:nth-child(3) .prompt-rank {
+        background: var(--gradient-warm);
+        color: white;
+      }
+      .prompt-text {
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .prompt-meta {
+        font-size: 12px;
+        color: var(--text-tertiary);
+        margin-top: 4px;
+        font-weight: 500;
+      }
+      .token-bar-wrap {
+        display: flex;
+        gap: 1px;
+        height: 4px;
+        margin-top: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .token-bar-in {
+        background: var(--indigo);
+        height: 100%;
+        border-radius: 4px 0 0 4px;
+      }
+      .token-bar-out {
+        background: var(--teal);
+        height: 100%;
+        border-radius: 0 4px 4px 0;
+      }
+      .prompt-tokens {
+        text-align: right;
+        white-space: nowrap;
+        padding-top: 2px;
+      }
+      .prompt-tokens .value {
+        font-size: 16px;
+        font-weight: 700;
+        font-family: var(--mono);
+        letter-spacing: -0.5px;
+      }
+      .prompt-tokens .sub {
+        font-size: 11px;
+        color: var(--text-tertiary);
+        font-weight: 500;
+        margin-top: 2px;
+      }
 
-  /* ---- SESSIONS ---- */
-  .sessions-section { margin-bottom: 40px; }
-  .sessions-toolbar {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 14px; gap: 12px; flex-wrap: wrap;
-  }
-  .session-search {
-    background: var(--white); border: 1px solid var(--border);
-    color: var(--text); padding: 9px 16px; border-radius: 10px;
-    font-size: 14px; font-weight: 500; width: 300px; outline: none;
-    font-family: var(--font); transition: all 0.2s;
-  }
-  .session-search::placeholder { color: var(--text-tertiary); }
-  .session-search:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
-  .session-count { color: var(--text-tertiary); font-size: 13px; font-weight: 600; }
+      /* ---- COLLAPSIBLE SECTIONS ---- */
+      details summary { cursor: pointer; user-select: none; outline: none; list-style: none; }
+      details summary::-webkit-details-marker { display: none; }
+      .collapse-icon {
+        width: 18px; height: 18px; stroke: var(--text-tertiary); margin-left: auto;
+        transition: transform 0.2s;
+      }
+      details[open] > summary .collapse-icon { transform: rotate(180deg); }
 
-  .sessions-card {
-    background: var(--white); border-radius: var(--radius);
-    border: 1px solid var(--border); box-shadow: var(--shadow-sm);
-    overflow: visible;
-  }
-  .sessions-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-  .sessions-table th {
-    text-align: left; padding: 12px 16px;
-    font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.6px; color: var(--text-tertiary);
-    border-bottom: 1px solid var(--border);
-    cursor: pointer; user-select: none; white-space: nowrap;
-    background: #FAFBFC;
-  }
-  .sessions-table th:hover { color: var(--text-secondary); }
-  .sessions-table th.sorted { color: var(--indigo); }
-  .sessions-table td {
-    padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle;
-  }
-  .sessions-table tbody tr { cursor: pointer; transition: background 0.1s; }
-  .sessions-table tbody tr:hover td { background: #FAFBFF; }
-  .sessions-table tbody tr:last-child td { border-bottom: none; }
-  .prompt-preview {
-    max-width: 340px; overflow: hidden; text-overflow: ellipsis;
-    white-space: nowrap; font-weight: 500;
-  }
-  .token-num {
-    font-family: var(--mono); font-size: 13px; font-weight: 600;
-    text-align: right; white-space: nowrap; letter-spacing: -0.3px;
-  }
-  .model-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 10px; border-radius: 20px;
-    font-size: 12px; font-weight: 600;
-    transition: box-shadow 0.15s;
-  }
-  .model-badge:focus-visible { outline: 2px solid var(--indigo); outline-offset: 2px; }
-  /* Contrast-corrected badge colors (WCAG AA compliant) */
-  .model-opus { background: #EEF2FF; color: #3730A3; }
-  .model-sonnet { background: #ECFDF5; color: #047857; }
-  .model-haiku { background: #FFF7ED; color: #C2410C; }
-  .model-unknown { background: #F1F5F9; color: #475569; }
-  .model-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-  .model-opus .model-dot { background: #4F46E5; }
-  .model-sonnet .model-dot { background: #10B981; }
-  .model-haiku .model-dot { background: #F97316; }
-  /* Sub-line pills in project rows — compact variant */
-  .model-pills {
-    list-style: none; padding: 0; margin: 5px 0 0;
-    display: flex; flex-wrap: wrap; gap: 4px;
-  }
-  .model-pills li { display: flex; }
-  .model-pills .model-badge {
-    padding: 2px 8px; font-size: 11px; border-radius: 10px;
-  }
-  /* Screen-reader-only label (WCAG 2.1 compliant) */
-  .sr-only {
-    position: absolute; width: 1px; height: 1px; padding: 0;
-    margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
-    white-space: nowrap; border-width: 0;
-  }
-  /* Inline ↓in ↑out token pair inside a model badge */
-  .token-detail {
-    display: inline-flex; align-items: center; gap: 2px;
-    font-size: 10px; font-weight: 600; opacity: 0.9;
-  }
-  /* Project name styled as path */
-  .proj-name {
-    font-weight: 600; font-size: 13px;
-    font-family: var(--mono); letter-spacing: -0.2px; color: var(--text);
-  }
-  .date-cell { white-space: nowrap; color: var(--text-secondary); font-weight: 500; }
-  .project-tag {
-    font-size: 11px; color: var(--text-tertiary); display: block;
-    margin-top: 1px; font-weight: 500;
-    max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
+      /* ---- PROJECTS ---- */
+      .projects-section {
+        margin-bottom: 32px;
+      }
 
-  /* ---- DRILLDOWN ---- */
-  .drilldown {
-    background: var(--white); border-radius: var(--radius);
-    padding: 28px; margin-bottom: 32px; display: none;
-    border: 1px solid var(--border); box-shadow: var(--shadow-lg);
-  }
-  .drilldown.open { display: block; animation: fadeUp 0.3s ease-out; }
-  .drilldown-header {
-    display: flex; align-items: flex-start; justify-content: space-between;
-    margin-bottom: 24px; gap: 16px;
-  }
-  .drilldown-title { font-size: 16px; font-weight: 700; line-height: 1.4; }
-  .drilldown-meta { font-size: 13px; color: var(--text-tertiary); margin-top: 4px; font-weight: 500; }
-  .drilldown-close {
-    background: var(--bg); border: none; color: var(--text-secondary);
-    width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
-    font-size: 18px; display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; transition: all 0.15s;
-  }
-  .drilldown-close:hover { background: #EEF2FF; color: var(--indigo); }
+      /* Project accordion */
+      .proj-chevron {
+        width: 20px;
+        height: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-tertiary);
+        transition: transform 0.25s ease;
+        flex-shrink: 0;
+      }
+      .proj-row {
+        cursor: pointer;
+      }
+      .proj-row:hover td {
+        background: #fafbff;
+      }
+      .proj-row.expanded .proj-chevron {
+        transform: rotate(90deg);
+      }
+      .proj-drawer td {
+        padding: 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .proj-drawer-inner {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.35s ease;
+        background: #fafbfc;
+      }
+      .proj-drawer.open .proj-drawer-inner {
+        max-height: 600px;
+      }
+      .proj-drawer-content {
+        padding: 12px 16px 16px;
+      }
+      .drawer-prompt-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .drawer-prompt-row {
+        display: grid;
+        grid-template-columns: 24px 1fr auto;
+        gap: 10px;
+        padding: 10px 14px;
+        align-items: start;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: box-shadow 0.15s;
+      }
+      .drawer-prompt-row:hover {
+        box-shadow: var(--shadow-md);
+      }
+      .drawer-rank {
+        width: 20px;
+        height: 20px;
+        border-radius: 6px;
+        background: var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-secondary);
+        flex-shrink: 0;
+      }
+      .drawer-prompt-text {
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        word-break: break-word;
+      }
+      .drawer-prompt-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        align-items: center;
+        margin-top: 5px;
+      }
+      .tool-chip {
+        background: var(--bg);
+        border: 1px solid var(--border-strong);
+        padding: 1px 7px;
+        border-radius: 6px;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        white-space: nowrap;
+      }
+      .drawer-tokens {
+        text-align: right;
+        white-space: nowrap;
+      }
+      .drawer-tokens .value {
+        font-family: var(--mono);
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .drawer-tokens .sub {
+        font-size: 11px;
+        color: var(--text-tertiary);
+        font-weight: 500;
+        margin-top: 2px;
+      }
+      .drawer-empty {
+        text-align: center;
+        padding: 20px;
+        color: var(--text-tertiary);
+        font-size: 13px;
+        font-weight: 500;
+      }
 
-  .query-list { display: flex; flex-direction: column; gap: 8px; }
-  .query-item {
-    display: grid; grid-template-columns: 36px 1fr auto;
-    gap: 14px; padding: 14px 16px; border-radius: var(--radius-sm);
-    background: var(--bg); align-items: start;
-    transition: background 0.1s;
-  }
-  .query-item:hover { background: #EEF2FF; }
-  .query-num {
-    width: 28px; height: 28px; border-radius: 8px; background: var(--white);
-    border: 1px solid var(--border);
-    font-size: 12px; font-weight: 700; color: var(--text-tertiary);
-    display: flex; align-items: center; justify-content: center;
-  }
-  .query-prompt { font-size: 14px; font-weight: 500; line-height: 1.5; word-break: break-word; }
-  .query-prompt.no-prompt { color: var(--text-tertiary); font-style: italic; font-weight: 400; }
-  .query-tokens-col { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; white-space: nowrap; }
-  .query-tokens-col .total { font-family: var(--mono); font-size: 14px; font-weight: 700; }
-  .query-tokens-col .detail { font-size: 12px; color: var(--text-tertiary); font-weight: 500; }
+      /* ---- SESSIONS ---- */
+      .sessions-section {
+        margin-bottom: 40px;
+      }
+      .sessions-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .session-search {
+        background: var(--white);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 9px 16px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        width: 300px;
+        outline: none;
+        font-family: var(--font);
+        transition: all 0.2s;
+      }
+      .session-search::placeholder {
+        color: var(--text-tertiary);
+      }
+      .session-search:focus {
+        border-color: var(--indigo);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      }
+      .session-count {
+        color: var(--text-tertiary);
+        font-size: 13px;
+        font-weight: 600;
+      }
 
-  /* ---- FOOTER ---- */
-  .footer {
-    text-align: center; padding: 24px;
-    color: var(--text-tertiary); font-size: 13px; font-weight: 500;
-  }
-  .footer a { color: var(--indigo); text-decoration: none; font-weight: 600; }
-  .footer a:hover { text-decoration: underline; }
+      .sessions-card {
+        background: var(--white);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        overflow: visible;
+      }
+      .sessions-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      .sessions-table th {
+        text-align: left;
+        padding: 12px 16px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--text-tertiary);
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+        background: #fafbfc;
+      }
+      .sessions-table th:hover {
+        color: var(--text-secondary);
+      }
+      .sessions-table th.sorted {
+        color: var(--indigo);
+      }
+      .sessions-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+      }
+      .sessions-table tbody tr {
+        cursor: pointer;
+        transition: background 0.1s;
+      }
+      .sessions-table tbody tr:hover td {
+        background: #fafbff;
+      }
+      .sessions-table tbody tr:last-child td {
+        border-bottom: none;
+      }
+      .prompt-preview {
+        max-width: 340px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 500;
+      }
+      .token-num {
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 600;
+        text-align: right;
+        white-space: nowrap;
+        letter-spacing: -0.3px;
+      }
+      .model-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        transition: box-shadow 0.15s;
+      }
+      .model-badge:focus-visible {
+        outline: 2px solid var(--indigo);
+        outline-offset: 2px;
+      }
+      /* Contrast-corrected badge colors (WCAG AA compliant) */
+      .model-opus {
+        background: #eef2ff;
+        color: #3730a3;
+      }
+      .model-sonnet {
+        background: #ecfdf5;
+        color: #047857;
+      }
+      .model-haiku {
+        background: #fff7ed;
+        color: #c2410c;
+      }
+      .model-unknown {
+        background: #f1f5f9;
+        color: #475569;
+      }
+      .model-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .model-opus .model-dot {
+        background: #4f46e5;
+      }
+      .model-sonnet .model-dot {
+        background: #10b981;
+      }
+      .model-haiku .model-dot {
+        background: #f97316;
+      }
+      /* Sub-line pills in project rows — compact variant */
+      .model-pills {
+        list-style: none;
+        padding: 0;
+        margin: 5px 0 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      .model-pills li {
+        display: flex;
+      }
+      .model-pills .model-badge {
+        padding: 2px 8px;
+        font-size: 11px;
+        border-radius: 10px;
+      }
+      /* Screen-reader-only label (WCAG 2.1 compliant) */
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+      }
+      /* Inline ↓in ↑out token pair inside a model badge */
+      .token-detail {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        font-size: 10px;
+        font-weight: 600;
+        opacity: 0.9;
+      }
+      /* Project name styled as path */
+      .proj-name {
+        font-weight: 600;
+        font-size: 13px;
+        font-family: var(--mono);
+        letter-spacing: -0.2px;
+        color: var(--text);
+      }
+      .date-cell {
+        white-space: nowrap;
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+      .project-tag {
+        font-size: 11px;
+        color: var(--text-tertiary);
+        display: block;
+        margin-top: 1px;
+        font-weight: 500;
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
 
-  /* Privacy notice */
-  .privacy-notice {
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-    font-size: 13px; font-weight: 500; color: var(--text-secondary);
-    background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.1);
-    padding: 8px 16px; border-radius: 10px; margin-bottom: 20px;
-  }
+      /* ---- DRILLDOWN ---- */
+      .drilldown {
+        background: var(--white);
+        border-radius: var(--radius);
+        padding: 28px;
+        margin-bottom: 32px;
+        display: none;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-lg);
+      }
+      .drilldown.open {
+        display: block;
+        animation: fadeUp 0.3s ease-out;
+      }
+      .drilldown-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        gap: 16px;
+      }
+      .drilldown-title {
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.4;
+      }
+      .drilldown-meta {
+        font-size: 13px;
+        color: var(--text-tertiary);
+        margin-top: 4px;
+        font-weight: 500;
+      }
+      .drilldown-close {
+        background: var(--bg);
+        border: none;
+        color: var(--text-secondary);
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.15s;
+      }
+      .drilldown-close:hover {
+        background: #eef2ff;
+        color: var(--indigo);
+      }
 
-  /* Hero / value prop */
-  .hero-section {
-    text-align: center; margin-bottom: 36px; padding: 0 20px;
-  }
-  .hero-title {
-    font-size: 38px; font-weight: 800; letter-spacing: -1.5px;
-    background: var(--gradient-main); -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent; background-clip: text;
-    margin-bottom: 10px; line-height: 1.3;
-  }
-  .hero-subtitle {
-    font-size: 15px; color: var(--text-secondary); font-weight: 500;
-    max-width: 600px; margin: 0 auto; line-height: 1.7;
-  }
-</style>
-</head>
-<body>
+      .query-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .query-item {
+        display: grid;
+        grid-template-columns: 36px 1fr auto;
+        gap: 14px;
+        padding: 14px 16px;
+        border-radius: var(--radius-sm);
+        background: var(--bg);
+        align-items: start;
+        transition: background 0.1s;
+      }
+      .query-item:hover {
+        background: #eef2ff;
+      }
+      .query-num {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: var(--white);
+        border: 1px solid var(--border);
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-tertiary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .query-prompt {
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1.5;
+        word-break: break-word;
+      }
+      .query-prompt.no-prompt {
+        color: var(--text-tertiary);
+        font-style: italic;
+        font-weight: 400;
+      }
+      .query-tokens-col {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
+        white-space: nowrap;
+      }
+      .query-tokens-col .total {
+        font-family: var(--mono);
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .query-tokens-col .detail {
+        font-size: 12px;
+        color: var(--text-tertiary);
+        font-weight: 500;
+      }
 
-<div id="loading" class="loading">
-  <div class="spinner"></div>
-  <div class="loading-text">Reading your Claude Code sessions...</div>
-</div>
+      /* ---- FOOTER ---- */
+      .footer {
+        text-align: center;
+        padding: 24px;
+        color: var(--text-tertiary);
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .footer a {
+        color: var(--indigo);
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .footer a:hover {
+        text-decoration: underline;
+      }
 
-<div id="app" class="container" style="display:none">
+      /* Privacy notice */
+      .privacy-notice {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        background: rgba(99, 102, 241, 0.06);
+        border: 1px solid rgba(99, 102, 241, 0.1);
+        padding: 8px 16px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+      }
 
-  <!-- Privacy notice -->
-  <div class="privacy-notice animate">
-    &#128274; All data stays on your machine. Nothing is sent anywhere.
-  </div>
+      /* Hero / value prop */
+      .hero-section {
+        text-align: center;
+        margin-bottom: 36px;
+        padding: 0 20px;
+      }
+      .hero-title {
+        font-size: 38px;
+        font-weight: 800;
+        letter-spacing: -1.5px;
+        background: var(--gradient-main);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 10px;
+        line-height: 1.3;
+      }
+      .hero-subtitle {
+        font-size: 15px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.7;
+      }
+      /* ---- COACHING UI (F11, F12, F13) ---- */
+      .coaching-panel {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 16px;
+        margin-top: 12px;
+      }
+      .coaching-title {
+        font-size: 13px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+      }
+      /* F11: Cost Drivers */
+      .driver-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+      .driver-tag { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; background: white; border: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
+      .driver-tag.high { border-color: #fca5a5; background: #fef2f2; color: #991b1b; }
+      .driver-tag.med { border-color: #fcd34d; background: #fffbeb; color: #92400e; }
+      .prompt-suggestion { margin-top: 10px; font-size: 13px; color: #047857; background: #ecfdf5; padding: 8px 12px; border-radius: 6px; border: 1px solid #a7f3d0; display: inline-block; font-weight: 500; }
+      
+      /* F12: Snowball Chart */
+      .snowball-container { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px dashed var(--border); flex-wrap: wrap; }
+      .snowball-chart-wrap { flex: 1; min-width: 300px; height: 160px; }
+      .what-if-panel { width: 250px; background: linear-gradient(135deg, #f0fdf4, #ecfdf5); border: 1px solid #a7f3d0; border-radius: 12px; padding: 16px; text-align: center; }
+      .what-if-val { font-size: 24px; font-weight: 800; color: #059669; margin: 8px 0 4px; }
+      .what-if-sub { font-size: 12px; color: #047857; line-height: 1.4; font-weight: 500; }
+      
+      /* F13: Tool Chain Pipeline */
+      .tool-pipeline { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
+      .tool-node { background: white; border: 1px solid var(--border-strong); padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+      .tool-node.search { border-color: #cbd5e1; }
+      .tool-node.read { border-color: #bfdbfe; background: #eff6ff; color: #1e3a8a; }
+      .tool-node.write { border-color: #fbcfe8; background: #fdf2f8; color: #9d174d; }
+      .tool-node.bash { border-color: #d8b4fe; background: #faf5ff; color: #581c87; }
+      .tool-arrow { color: #cbd5e1; font-size: 14px; }
+      .heatmap-grid { display: flex; flex-direction: column; gap: 4px; margin-top: 16px; min-width: 250px; }
+      .heatmap-row { display: flex; align-items: center; gap: 8px; font-size: 12px; font-family: var(--mono); }
+      .heatmap-bar { height: 12px; border-radius: 2px; }
+      .heatmap-bar.read { background: #3b82f6; }
+      .heatmap-bar.write { background: #ec4899; }
 
-  <!-- Header -->
-  <div class="header animate">
-    <div class="header-left">
-      <div class="logo-mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      /* ---- F4: TOKEN WATERFALL ---- */
+      .waterfall-container { padding: 14px 16px; background: var(--bg); border-radius: 10px; border: 1px solid var(--border); }
+      .waterfall-bars { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+      .waterfall-row { display: flex; align-items: center; gap: 8px; padding: 3px 6px; border-radius: 5px; transition: background 0.1s; }
+      .waterfall-row:hover { background: rgba(99,102,241,0.05); }
+      .waterfall-row.spike-highlight { background: #fffbeb; border-left: 3px solid #f59e0b; padding-left: 4px; }
+      .waterfall-label { width: 130px; font-size: 11px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; cursor: default; }
+      .waterfall-track { flex: 1; height: 13px; background: white; border-radius: 3px; overflow: hidden; display: flex; border: 1px solid var(--border); }
+      .waterfall-bar-input { height: 100%; background: #6366f1; opacity: 0.75; }
+      .waterfall-bar-output { height: 100%; background: #14b8a6; opacity: 0.85; }
+      .waterfall-stat { width: 52px; text-align: right; font-size: 10px; font-family: var(--mono); color: var(--text-tertiary); flex-shrink: 0; }
+      .waterfall-stat.spike { color: #b45309; font-weight: 700; }
+      .spike-badge { display: inline-block; font-size: 9px; background: #fef3c7; color: #92400e; padding: 1px 4px; border-radius: 3px; font-weight: 700; margin-left: 3px; vertical-align: middle; }
+      .wf-legend { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-tertiary); flex-wrap: wrap; }
+      .wf-legend-dot { display: inline-block; width: 10px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+      /* ---- F7: LIVE MODE ---- */
+      .live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; flex-shrink: 0; transition: background 0.2s; }
+      .live-dot.active { background: #10b981; animation: live-pulse 2s infinite; }
+      @keyframes live-pulse {
+        0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+        50%      { box-shadow: 0 0 0 5px rgba(16,185,129,0); }
+      }
+      @keyframes card-flash {
+        0%,100% { transform: scale(1); box-shadow: var(--shadow-sm); }
+        50%      { transform: scale(1.015); box-shadow: 0 0 20px rgba(16,185,129,0.2); }
+      }
+      .card-flash { animation: card-flash 0.5s ease; }
+    </style>
+  </head>
+  <body>
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <div class="loading-text">Reading your Claude Code sessions...</div>
+    </div>
+
+    <div id="app" class="container" style="display: none">
+      <!-- Privacy notice -->
+      <div class="privacy-notice animate">
+        &#128274; All data stays on your machine. Nothing is sent anywhere.
       </div>
-      <h1>Claude Spend</h1>
-    </div>
-    <div class="header-right">
-      <span id="dateRange" class="date-range"></span>
-      <button class="refresh-btn" onclick="refreshData()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-        Refresh
-      </button>
-    </div>
-  </div>
 
-  <!-- Value proposition -->
-  <div class="hero-section animate delay-1">
-    <h2 class="hero-title">Your Claude Code usage, visualized.</h2>
-    <p class="hero-subtitle">See where your tokens actually go.</p>
-  </div>
-
-  <!-- Stats -->
-  <div class="stats-row" id="statsRow"></div>
-  <div id="tokenExplainer" class="token-explainer animate delay-2">
-    Tokens are how AI measures text -- roughly 1 token = 1 word. Hover over any label with a <span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:rgba(0,0,0,0.08);font-size:10px;font-weight:700;vertical-align:middle;">?</span> for an explanation.
-  </div>
-
-  <!-- Insights -->
-  <div id="insightsSection" class="insights-section" style="display:none">
-    <div class="section-header animate">
-      <div class="section-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round"><path d="M12 2a7 7 0 0 1 4 12.75V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.25A7 7 0 0 1 12 2z"/><path d="M9 21h6"/></svg>
+      <!-- Header -->
+      <div class="header animate">
+        <div class="header-left">
+          <div class="logo-mark">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              stroke-width="2.5"
+              stroke-linecap="round"
+            >
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5" />
+              <path d="M2 12l10 5 10-5" />
+            </svg>
+          </div>
+          <h1>Claude Spend</h1>
+        </div>
+        <div class="header-right">
+          <span id="dateRange" class="date-range"></span>
+          <a href="/features.html" class="refresh-btn" style="text-decoration:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+              <rect x="9" y="3" width="6" height="4" rx="1"/>
+              <path d="M9 12h6M9 16h4"/>
+            </svg>
+            Features
+          </a>
+          <button id="liveToggleBtn" class="refresh-btn" onclick="toggleLiveMode()" title="Toggle live auto-refresh when new sessions are detected">
+            <span class="live-dot" id="liveDot"></span>
+            Live
+          </button>
+          <button class="refresh-btn" onclick="refreshData()">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+            >
+              <path d="M1 4v6h6" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+            Refresh
+          </button>
+        </div>
       </div>
-      <div class="section-title">Insights</div>
-    </div>
-    <div id="insightsList"></div>
-  </div>
 
-  <!-- Charts -->
-  <div class="charts-grid animate delay-3">
-    <div class="chart-card">
-      <h3 class="has-tooltip has-tooltip-below" style="display:inline-block">Tokens per Day<div class="tooltip">How many tokens you used each day. Taller bars mean heavier usage days. The indigo portion is what Claude read, the teal is what Claude wrote.</div></h3>
-      <canvas id="dailyChart"></canvas>
-      <div class="legend">
-        <div class="legend-item"><div class="legend-dot" style="background:var(--indigo)"></div> Read by Claude (your messages + context)</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div> Written by Claude (responses)</div>
+      <!-- Value proposition -->
+      <div class="hero-section animate delay-1">
+        <h2 class="hero-title">Your Claude Code usage, visualized.</h2>
+        <p class="hero-subtitle">See where your tokens actually go.</p>
+      </div>
+
+      <!-- Date Filter Bar -->
+      <div class="date-filter-bar animate delay-2" id="dateFilterBar">
+        <div class="filter-pills">
+          <span class="filter-pill" data-preset="7d">7 days</span>
+          <span class="filter-pill" data-preset="30d">30 days</span>
+          <span class="filter-pill" data-preset="90d">90 days</span>
+          <span class="filter-pill" data-preset="month">This month</span>
+          <span class="filter-pill active" data-preset="all">All time</span>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="date-input-wrap">
+          <span class="date-input-label">From</span>
+          <input type="date" class="date-input" id="filterFrom" />
+        </div>
+        <div class="date-input-wrap">
+          <span class="date-input-label">To</span>
+          <input type="date" class="date-input" id="filterTo" />
+        </div>
+        <span class="filter-count" id="filteredCount"></span>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row" id="statsRow"></div>
+      <div id="tokenExplainer" class="token-explainer animate delay-2">
+        Tokens are how AI measures text -- roughly 1 token = 1 word. Hover over
+        any label with a
+        <span
+          style="
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.08);
+            font-size: 10px;
+            font-weight: 700;
+            vertical-align: middle;
+          "
+          >?</span
+        >
+        for an explanation.
+      </div>
+
+      <!-- Insights -->
+      <div id="insightsSection" class="insights-section" style="display: none">
+        <div class="section-header animate">
+          <div
+            class="section-icon"
+            style="background: linear-gradient(135deg, #fef3c7, #fde68a)"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#D97706"
+              stroke-width="2.5"
+              stroke-linecap="round"
+            >
+              <path
+                d="M12 2a7 7 0 0 1 4 12.75V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.25A7 7 0 0 1 12 2z"
+              />
+              <path d="M9 21h6" />
+            </svg>
+          </div>
+          <div class="section-title">Insights</div>
+        </div>
+        <div id="insightsList"></div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-grid animate delay-3">
+        <div class="chart-card">
+          <h3
+            class="has-tooltip has-tooltip-below"
+            style="display: inline-block"
+          >
+            Tokens per Day
+            <div class="tooltip">
+              How many tokens you used each day. Taller bars mean heavier usage
+              days. The indigo portion is what Claude read, the teal is what
+              Claude wrote.
+            </div>
+          </h3>
+          <canvas id="dailyChart"></canvas>
+          <div class="legend">
+            <div class="legend-item">
+              <div class="legend-dot" style="background: var(--indigo)"></div>
+              Read by Claude (your messages + context)
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background: var(--teal)"></div>
+              Written by Claude (responses)
+            </div>
+            <div class="legend-item" id="avgLegendItem" style="display:none">
+              <div class="legend-dot" style="background: #F43F5E; height: 2px; border-radius: 0; width: 12px; margin-right: 6px;"></div>
+              7-day average
+            </div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>By Model</h3>
+          <canvas id="modelChart"></canvas>
+          <div
+            id="modelLegend"
+            class="legend"
+            style="flex-direction: column; gap: 12px; margin-top: 20px"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Cumulative Trend -->
+      <div class="chart-card animate delay-3" style="margin-top: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+          <div>
+            <h3 class="has-tooltip has-tooltip-below" style="display: inline-block; margin-bottom: 4px;">
+              Cumulative Spend Trajectory
+              <div class="tooltip">How your cost accumulates over the selected period. The dashed line projects your current run-rate to the end of the period.</div>
+            </h3>
+            <div id="trajectorySub" style="font-size: 13px; color: var(--text-secondary);">Projecting ~$0.00 by month end</div>
+          </div>
+        </div>
+        <div style="height: 200px; width: 100%;">
+          <canvas id="cumulativeChart"></canvas>
+        </div>
+      </div>
+
+
+      <!-- Projects -->
+      <details class="projects-section animate delay-4" open>
+        <summary class="section-header">
+          <div
+            class="section-icon"
+            style="background: linear-gradient(135deg, #ede9fe, #ddd6fe)"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#7C3AED"
+              stroke-width="2.5"
+              stroke-linecap="round"
+            >
+              <path d="M3 7l9-4 9 4v10l-9 4-9-4z" />
+              <path d="M12 3v18" />
+              <path d="M3 7l9 4 9-4" />
+            </svg>
+          </div>
+          <div class="section-title">Projects</div>
+          <span
+            id="projectsCount"
+            style="
+              font-size: 13px;
+              color: var(--text-tertiary);
+              font-weight: 600;
+              margin-left: 12px;
+            "
+          ></span>
+          <svg class="collapse-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8l4 4 4-4"/></svg>
+        </summary>
+        <div class="sessions-card">
+          <table class="sessions-table">
+            <thead>
+              <tr>
+                <th>Project</th>
+                <th style="text-align: right">Cost</th>
+                <th style="text-align: right">Total Tokens</th>
+                <th style="text-align: right">Sessions</th>
+                <th style="text-align: right">Queries</th>
+              </tr>
+            </thead>
+            <tbody id="projectsBody"></tbody>
+          </table>
+        </div>
+      </details>
+
+      <!-- Most Expensive Prompts -->
+      <details class="top-prompts animate delay-4" open>
+        <summary class="section-header">
+          <div
+            class="section-icon"
+            style="background: linear-gradient(135deg, #e0e7ff, #c7d2fe)"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#6366F1"
+              stroke-width="2.5"
+              stroke-linecap="round"
+            >
+              <path d="M12 20V10" />
+              <path d="M18 20V4" />
+              <path d="M6 20v-4" />
+            </svg>
+          </div>
+          <div
+            class="section-title has-tooltip has-tooltip-below"
+            style="display: inline-flex"
+          >
+            Most Expensive Prompts
+            <div class="tooltip">
+              Your top 20 individual messages ranked by how many tokens they
+              used. Short vague messages like "Yes" often rank highest because
+              they trigger long chains of tool calls where Claude tries to
+              figure out what you meant.
+            </div>
+          </div>
+          <svg class="collapse-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8l4 4 4-4"/></svg>
+        </summary>
+        <div class="prompts-card" id="topPromptsList"></div>
+      </details>
+      <!-- Drill-down -->
+      <div id="drilldown" class="drilldown">
+        <div class="drilldown-header">
+          <div>
+            <div id="drilldownTitle" class="drilldown-title"></div>
+            <div id="drilldownMeta" class="drilldown-meta"></div>
+          </div>
+          <button class="drilldown-close" onclick="closeDrilldown()">
+            &times;
+          </button>
+        </div>
+        <div id="sessionCoaching" style="display:none;margin-bottom:24px;"></div>
+        <div id="waterfallSection" style="display:none;margin-bottom:20px;"></div>
+        <div id="queryList" class="query-list"></div>
+      </div>
+
+      <!-- All Sessions -->
+      <details class="sessions-section animate delay-5" open>
+        <summary class="section-header">
+          <div
+            class="section-icon"
+            style="background: linear-gradient(135deg, #ecfdf5, #d1fae5)"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#059669"
+              stroke-width="2.5"
+              stroke-linecap="round"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <path d="M16 2v4" />
+              <path d="M8 2v4" />
+              <path d="M3 10h18" />
+            </svg>
+          </div>
+          <div class="section-title">All Sessions</div>
+          <svg class="collapse-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8l4 4 4-4"/></svg>
+        </summary>
+        <div class="sessions-toolbar">
+          <input
+            type="text"
+            class="session-search"
+            id="searchInput"
+            placeholder="Search prompts, models, projects..."
+          />
+          <span id="sessionCount" class="session-count"></span>
+        </div>
+        <div class="sessions-card">
+          <table class="sessions-table">
+            <thead>
+              <tr>
+                <th data-sort="date">Date</th>
+                <th data-sort="prompt">What you asked</th>
+                <th data-sort="model" class="has-tooltip has-tooltip-below">
+                  Model
+                  <div class="tooltip">
+                    Which AI model was used. Opus is the most capable (and uses
+                    more tokens), Sonnet is faster and lighter.
+                  </div>
+                </th>
+                <th data-sort="cost" style="text-align: right" class="has-tooltip has-tooltip-below">
+                  Cost
+                  <div class="tooltip">Estimated USD cost for this conversation based on Anthropic's public pricing.</div>
+                </th>
+                <th
+                  data-sort="queries"
+                  style="text-align: right"
+                  class="has-tooltip has-tooltip-below"
+                >
+                  Messages
+                  <div class="tooltip">
+                    How many back-and-forth messages happened in this
+                    conversation, including automatic tool calls Claude made.
+                  </div>
+                </th>
+                <th
+                  data-sort="total"
+                  style="text-align: right"
+                  class="sorted has-tooltip has-tooltip-below"
+                >
+                  Total tokens
+                  <div class="tooltip">
+                    The total number of tokens used in this conversation. Higher
+                    means more expensive. Long conversations cost more because
+                    Claude re-reads everything each turn.
+                  </div>
+                </th>
+                <th
+                  data-sort="input"
+                  style="text-align: right"
+                  class="has-tooltip has-tooltip-below"
+                >
+                  Read
+                  <div class="tooltip">
+                    Tokens Claude read: your messages, the conversation history,
+                    files, and system context. This grows with each message
+                    because the full history gets re-sent.
+                  </div>
+                </th>
+                <th
+                  data-sort="output"
+                  style="text-align: right"
+                  class="has-tooltip has-tooltip-below"
+                >
+                  Written
+                  <div class="tooltip">
+                    Tokens Claude wrote back: responses, code, explanations.
+                    Usually a small fraction of the total.
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="sessionsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="footer">
+        Made with
+        <a href="https://claude.ai/code" target="_blank">Claude Code</a> and
+        &#10084; by
+        <a href="https://www.linkedin.com/in/himanshujhawar/" target="_blank"
+          >Himanshu Jhawar</a
+        >
       </div>
     </div>
-    <div class="chart-card">
-      <h3>By Model</h3>
-      <canvas id="modelChart"></canvas>
-      <div id="modelLegend" class="legend" style="flex-direction:column; gap:12px; margin-top:20px;"></div>
-    </div>
-  </div>
 
-  <!-- Projects -->
-  <div class="projects-section animate delay-4">
-    <div class="section-header">
-      <div class="section-icon" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M12 3v18"/><path d="M3 7l9 4 9-4"/></svg>
-      </div>
-      <div class="section-title">Projects</div>
-      <span id="projectsCount" style="font-size:13px;color:var(--text-tertiary);font-weight:600;margin-left:auto"></span>
-    </div>
-    <div class="sessions-card">
-      <table class="sessions-table">
-        <thead>
-          <tr>
-            <th>Project</th>
-            <th style="text-align:right">Total Tokens</th>
-            <th style="text-align:right">Sessions</th>
-            <th style="text-align:right">Queries</th>
-          </tr>
-        </thead>
-        <tbody id="projectsBody"></tbody>
-      </table>
-    </div>
-  </div>
+    <script>
+      let DATA = null;
+      let currentSort = { key: "total", dir: "desc" };
+      let searchQuery = "";
 
-  <!-- Most Expensive Prompts -->
-  <div class="top-prompts animate delay-4">
-    <div class="section-header">
-      <div class="section-icon" style="background:linear-gradient(135deg,#E0E7FF,#C7D2FE)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
-      </div>
-      <div class="section-title has-tooltip has-tooltip-below" style="display:inline-flex">Most Expensive Prompts<div class="tooltip">Your top 20 individual messages ranked by how many tokens they used. Short vague messages like "Yes" often rank highest because they trigger long chains of tool calls where Claude tries to figure out what you meant.</div></div>
-    </div>
-    <div class="prompts-card" id="topPromptsList"></div>
-  </div>
+      function fmt(n) {
+        if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
+        if (n >= 10_000) return (n / 1_000).toFixed(0) + "K";
+        if (n >= 1_000) return (n / 1_000).toFixed(1) + "K";
+        return n.toLocaleString();
+      }
+      function fmtFull(n) {
+        return n.toLocaleString();
+      }
+      function fmtCost(n) {
+        if (n === 0) return "$0.00";
+        if (n >= 1000)
+          return "$" + n.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        if (n >= 100)
+          return "$" + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        if (n >= 1) return "$" + n.toFixed(2);
+        if (n >= 0.01) return "$" + n.toFixed(3);
+        return "$" + n.toFixed(4);
+      }
 
-  <!-- Drill-down -->
-  <div id="drilldown" class="drilldown">
-    <div class="drilldown-header">
-      <div>
-        <div id="drilldownTitle" class="drilldown-title"></div>
-        <div id="drilldownMeta" class="drilldown-meta"></div>
-      </div>
-      <button class="drilldown-close" onclick="closeDrilldown()">&times;</button>
-    </div>
-    <div id="queryList" class="query-list"></div>
-  </div>
+      function modelClass(m) {
+        if (m.includes("opus")) return "model-opus";
+        if (m.includes("sonnet")) return "model-sonnet";
+        if (m.includes("haiku")) return "model-haiku";
+        return "model-unknown";
+      }
+      function modelShort(m) {
+        // New format: claude-{family}-{major}-{minor}[-date]
+        // e.g. claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5-20251001
+        let match = m.match(/^claude-(opus|sonnet|haiku)-(\d+)-(\d+)/i);
+        if (match) {
+          const name = match[1].charAt(0).toUpperCase() + match[1].slice(1);
+          return name + " " + match[2] + "." + match[3];
+        }
+        // Old format with sub-version: claude-3-5-{family} or claude-3-7-{family}
+        match = m.match(/^claude-(\d+)-(\d+)-(opus|sonnet|haiku)/i);
+        if (match) {
+          const name = match[3].charAt(0).toUpperCase() + match[3].slice(1);
+          return name + " " + match[1] + "." + match[2];
+        }
+        // Old format: claude-3-{family}
+        match = m.match(/^claude-(\d+)-(opus|sonnet|haiku)/i);
+        if (match) {
+          const name = match[2].charAt(0).toUpperCase() + match[2].slice(1);
+          return name + " " + match[1];
+        }
+        if (m.includes("opus")) return "Opus";
+        if (m.includes("sonnet")) return "Sonnet";
+        if (m.includes("haiku")) return "Haiku";
+        return m;
+      }
+      function projectShort(p) {
+        // Strip Windows drive prefix (e.g. D-- or C--)
+        let s = p.replace(/^[A-Za-z]--/, "");
+        // Iteratively strip known parent directory segments
+        const known =
+          /^(?:Users|home|user)-[^-]+-|^(?:GitHub|GitLab|git|Projects|projects|workspace|Workspace|Desktop|Documents|source|src|dev|Dev|code|Code|repos|Repos)-/;
+        let prev;
+        do {
+          prev = s;
+          s = s.replace(known, "");
+        } while (s !== prev && s.length > 0);
+        return s || p;
+      }
+      function projectFull(p) {
+        // Show the raw encoded name with Windows drive restored for readability
+        return p.replace(/^([A-Za-z])--/, "$1:\\");
+      }
+      function escapeHtml(s) {
+        const d = document.createElement("div");
+        d.textContent = s;
+        return d.innerHTML;
+      }
+      function formatDate(d) {
+        if (!d) return "";
+        const parts = d.split("-");
+        const months = [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
+        ];
+        return `${months[parseInt(parts[1]) - 1]} ${parseInt(parts[2])}`;
+      }
 
-  <!-- All Sessions -->
-  <div class="sessions-section animate delay-5">
-    <div class="section-header">
-      <div class="section-icon" style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
-      </div>
-      <div class="section-title">All Sessions</div>
-    </div>
-    <div class="sessions-toolbar">
-      <input type="text" class="session-search" id="searchInput" placeholder="Search prompts, models, projects...">
-      <span id="sessionCount" class="session-count"></span>
-    </div>
-    <div class="sessions-card">
-      <table class="sessions-table">
-        <thead>
-          <tr>
-            <th data-sort="date">Date</th>
-            <th data-sort="prompt">What you asked</th>
-            <th data-sort="model" class="has-tooltip has-tooltip-below">Model<div class="tooltip">Which AI model was used. Opus is the most capable (and uses more tokens), Sonnet is faster and lighter.</div></th>
-            <th data-sort="queries" style="text-align:right" class="has-tooltip has-tooltip-below">Messages<div class="tooltip">How many back-and-forth messages happened in this conversation, including automatic tool calls Claude made.</div></th>
-            <th data-sort="total" style="text-align:right" class="sorted has-tooltip has-tooltip-below">Total tokens<div class="tooltip">The total number of tokens used in this conversation. Higher means more expensive. Long conversations cost more because Claude re-reads everything each turn.</div></th>
-            <th data-sort="input" style="text-align:right" class="has-tooltip has-tooltip-below">Read<div class="tooltip">Tokens Claude read: your messages, the conversation history, files, and system context. This grows with each message because the full history gets re-sent.</div></th>
-            <th data-sort="output" style="text-align:right" class="has-tooltip has-tooltip-below">Written<div class="tooltip">Tokens Claude wrote back: responses, code, explanations. Usually a small fraction of the total.</div></th>
-          </tr>
-        </thead>
-        <tbody id="sessionsBody"></tbody>
-      </table>
-    </div>
-  </div>
+      // Filtering State
+      let FILTERED_DATA = null;
+      let PREV_FILTERED_DATA = null;
+      let currentPreset = 'all';
 
-  <div class="footer">
-    Made with <a href="https://claude.ai/code" target="_blank">Claude Code</a> and &#10084; by <a href="https://www.linkedin.com/in/aniketparihar/" target="_blank">Aniket</a>
-  </div>
-</div>
+      // Date utils
+      function getDaysAgo(days) {
+        const d = new Date();
+        d.setDate(d.getDate() - days);
+        return d.toISOString().split('T')[0];
+      }
+      function getFirstDayOfMonth() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+      }
+      function shiftDateRange(from, to) {
+        // Calculates the same length period immediately preceding the current one
+        const d1 = new Date(from);
+        const d2 = new Date(to);
+        const diffTime = Math.abs(d2 - d1);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        const prevTo = new Date(d1);
+        prevTo.setDate(prevTo.getDate() - 1);
+        const prevFrom = new Date(prevTo);
+        prevFrom.setDate(prevFrom.getDate() - diffDays + 1);
+        return { from: prevFrom.toISOString().split('T')[0], to: prevTo.toISOString().split('T')[0] };
+      }
 
-<script>
-let DATA = null;
-let currentSort = { key: 'total', dir: 'desc' };
-let searchQuery = '';
+      function initFilters() {
+        const saved = localStorage.getItem('claude-spend-filterPreset');
+        if (saved) currentPreset = saved;
 
-function fmt(n) {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
-  if (n >= 10_000) return (n / 1_000).toFixed(0) + 'K';
-  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
-  return n.toLocaleString();
-}
-function fmtFull(n) { return n.toLocaleString(); }
+        const pills = document.querySelectorAll('.filter-pill');
+        const fromInput = document.getElementById('filterFrom');
+        const toInput = document.getElementById('filterTo');
 
-function modelClass(m) {
-  if (m.includes('opus')) return 'model-opus';
-  if (m.includes('sonnet')) return 'model-sonnet';
-  if (m.includes('haiku')) return 'model-haiku';
-  return 'model-unknown';
-}
-function modelShort(m) {
-  // New format: claude-{family}-{major}-{minor}[-date]
-  // e.g. claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5-20251001
-  let match = m.match(/^claude-(opus|sonnet|haiku)-(\d+)-(\d+)/i);
-  if (match) {
-    const name = match[1].charAt(0).toUpperCase() + match[1].slice(1);
-    return name + ' ' + match[2] + '.' + match[3];
-  }
-  // Old format with sub-version: claude-3-5-{family} or claude-3-7-{family}
-  match = m.match(/^claude-(\d+)-(\d+)-(opus|sonnet|haiku)/i);
-  if (match) {
-    const name = match[3].charAt(0).toUpperCase() + match[3].slice(1);
-    return name + ' ' + match[1] + '.' + match[2];
-  }
-  // Old format: claude-3-{family}
-  match = m.match(/^claude-(\d+)-(opus|sonnet|haiku)/i);
-  if (match) {
-    const name = match[2].charAt(0).toUpperCase() + match[2].slice(1);
-    return name + ' ' + match[1];
-  }
-  if (m.includes('opus')) return 'Opus';
-  if (m.includes('sonnet')) return 'Sonnet';
-  if (m.includes('haiku')) return 'Haiku';
-  return m;
-}
-function projectShort(p) {
-  // Strip Windows drive prefix (e.g. D-- or C--)
-  let s = p.replace(/^[A-Za-z]--/, '');
-  // Iteratively strip known parent directory segments
-  const known = /^(?:Users|home|user)-[^-]+-|^(?:GitHub|GitLab|git|Projects|projects|workspace|Workspace|Desktop|Documents|source|src|dev|Dev|code|Code|repos|Repos)-/;
-  let prev;
-  do { prev = s; s = s.replace(known, ''); } while (s !== prev && s.length > 0);
-  return s || p;
-}
-function projectFull(p) {
-  // Show the raw encoded name with Windows drive restored for readability
-  return p.replace(/^([A-Za-z])--/, '$1:\\');
-}
-function escapeHtml(s) {
-  const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
-}
-function formatDate(d) {
-  if (!d) return '';
-  const parts = d.split('-');
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return `${months[parseInt(parts[1])-1]} ${parseInt(parts[2])}`;
-}
+        function setPreset(p) {
+          currentPreset = p;
+          localStorage.setItem('claude-spend-filterPreset', p);
+          pills.forEach(el => el.classList.remove('active'));
+          let pill = document.querySelector(`.filter-pill[data-preset="${p}"]`);
+          if (pill) pill.classList.add('active');
 
-async function fetchData() {
-  const res = await fetch('/api/data');
-  DATA = await res.json();
-  render();
-}
-async function refreshData() {
-  document.getElementById('loading').style.display = 'flex';
-  document.getElementById('app').style.display = 'none';
-  await fetch('/api/refresh');
-  await fetchData();
-}
+          const today = new Date().toISOString().split('T')[0];
+          toInput.value = today;
 
-function render() {
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  renderStats();
-  renderInsights();
-  renderDailyChart();
-  renderModelChart();
-  renderProjectBreakdown();
-  renderTopPrompts();
-  renderSessions();
-}
+          if (p === '7d') fromInput.value = getDaysAgo(7);
+          else if (p === '30d') fromInput.value = getDaysAgo(30);
+          else if (p === '90d') fromInput.value = getDaysAgo(90);
+          else if (p === 'month') fromInput.value = getFirstDayOfMonth();
+          else {
+            fromInput.value = '';
+            toInput.value = '';
+          }
+          applyFilter();
+        }
 
-// Stats
-function renderStats() {
-  const t = DATA.totals;
-  const range = t.dateRange ? `${formatDate(t.dateRange.from)} - ${formatDate(t.dateRange.to)}` : '';
-  document.getElementById('dateRange').textContent = range;
+        // Initialize from preset
+        setPreset(currentPreset);
 
-  const cards = [
-    { label: 'Total Usage', value: fmt(t.totalTokens), sub: `${fmt(t.totalInputTokens)} read by Claude + ${fmt(t.totalOutputTokens)} written back`,
-      tip: 'The total number of tokens used across all your conversations. This includes everything Claude reads (your messages, conversation history, files) plus everything Claude writes back.' },
-    { label: 'Conversations', value: fmtFull(t.totalSessions), sub: `Each one used ~${fmt(t.avgTokensPerSession)} tokens on average`,
-      tip: 'Each time you start Claude Code and begin chatting, that counts as one conversation. A new conversation starts fresh with no prior context.' },
-    { label: 'Messages Sent', value: fmtFull(t.totalQueries), sub: `Each message cost ~${fmt(t.avgTokensPerQuery)} tokens on average`,
-      tip: 'Every time you hit Enter and send something to Claude, that is one message. This includes follow-up tool calls Claude makes automatically behind the scenes.' },
-    { label: 'Claude Wrote', value: fmt(t.totalOutputTokens), sub: `Only ${((t.totalOutputTokens / Math.max(t.totalTokens, 1)) * 100).toFixed(1)}% of total -- most usage is from re-reading context`,
-      tip: 'The tokens Claude spent writing responses, code, and explanations. This is usually a tiny fraction of total usage because most tokens go toward re-reading your conversation history.' },
-  ];
+        // Bind clicks
+        pills.forEach(pill => {
+          pill.addEventListener('click', () => setPreset(pill.dataset.preset));
+        });
 
-  document.getElementById('statsRow').innerHTML = cards.map((c, i) => `
-    <div class="stat-card animate delay-${i + 1}">
+        // Bind custom inputs
+        const onCustomDateChange = () => {
+          currentPreset = 'custom';
+          localStorage.setItem('claude-spend-filterPreset', 'custom');
+          pills.forEach(el => el.classList.remove('active'));
+          applyFilter();
+        };
+        fromInput.addEventListener('change', onCustomDateChange);
+        toInput.addEventListener('change', onCustomDateChange);
+      }
+
+      function applyFilter() {
+        if (!DATA || !DATA.sessions || DATA.sessions.length === 0) return;
+        const fromDate = document.getElementById('filterFrom').value;
+        const toDate = document.getElementById('filterTo').value;
+
+        // Ensure we always have a bounded range for the current filter if "all" is virtually bounded by actual data
+        const earliestDate = DATA.sessions[DATA.sessions.length - 1].date.split('T')[0];
+        const latestDate = DATA.sessions[0].date.split('T')[0];
+        const effectiveFrom = fromDate || earliestDate;
+        const effectiveTo = toDate || latestDate;
+
+        FILTERED_DATA = aggregateSessions(fromDate, toDate);
+        
+        // Compute previous period if a bounded preset exists (so we can show trend arrows)
+        if (fromDate) {
+            const prevRange = shiftDateRange(effectiveFrom, effectiveTo);
+            PREV_FILTERED_DATA = aggregateSessions(prevRange.from, prevRange.to);
+        } else {
+            PREV_FILTERED_DATA = null;
+        }
+
+        const countEl = document.getElementById('filteredCount');
+        countEl.textContent = `${FILTERED_DATA.sessions.length} session${FILTERED_DATA.sessions.length !== 1 ? 's' : ''}`;
+
+        render();
+      }
+
+      function aggregateSessions(fromDate, toDate) {
+        const filteredSessions = DATA.sessions.filter(s => {
+          const d = s.date.split('T')[0];
+          if (fromDate && d < fromDate) return false;
+          if (toDate && d > toDate) return false;
+          return true;
+        });
+
+        const dailyMap = {};
+        const modelMap = {};
+        const projectMap = {};
+        let totalInputTokens=0, totalOutputTokens=0, totalTokens=0, totalQueries=0, totalCost=0;
+        let freshInput=0, cacheWrite=0, cacheRead=0, cacheSavings=0;
+        const allPromptsMap = {};
+
+        for (const s of filteredSessions) {
+          totalQueries += s.queryCount;
+          totalTokens += s.totalTokens;
+          totalInputTokens += s.inputTokens;
+          totalOutputTokens += s.outputTokens;
+          totalCost += (s.estimatedCost || 0);
+          freshInput += (s.freshInputTokens || 0);
+          cacheWrite += (s.cacheWriteTokens || 0);
+          cacheRead += (s.cacheReadTokens || 0);
+
+          // Daily
+          const d = s.date.split('T')[0];
+          if (!dailyMap[d]) dailyMap[d] = { date: d, inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCost: 0 };
+          dailyMap[d].inputTokens += s.inputTokens;
+          dailyMap[d].outputTokens += s.outputTokens;
+          dailyMap[d].totalTokens += s.totalTokens;
+          dailyMap[d].estimatedCost += (s.estimatedCost || 0);
+
+          // Model
+          if (!modelMap[s.model]) modelMap[s.model] = { model: s.model, inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCost: 0 };
+          modelMap[s.model].inputTokens += s.inputTokens;
+          modelMap[s.model].outputTokens += s.outputTokens;
+          modelMap[s.model].totalTokens += s.totalTokens;
+          modelMap[s.model].estimatedCost += (s.estimatedCost || 0);
+
+          // Project
+          const p = s.project;
+          if (!projectMap[p]) projectMap[p] = { project: p, sessionCount: 0, queryCount: 0, inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCost: 0, modelBreakdown: [] };
+          projectMap[p].sessionCount++;
+          projectMap[p].queryCount += s.queryCount;
+          projectMap[p].inputTokens += s.inputTokens;
+          projectMap[p].outputTokens += s.outputTokens;
+          projectMap[p].totalTokens += s.totalTokens;
+          projectMap[p].estimatedCost += (s.estimatedCost || 0);
+
+          let pModels = projectMap[p].modelBreakdown;
+          let mIdx = pModels.findIndex(x => x.model === s.model);
+          if (mIdx === -1) {
+            pModels.push({ model: s.model, inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCost: 0 });
+            mIdx = pModels.length - 1;
+          }
+          pModels[mIdx].inputTokens += s.inputTokens;
+          pModels[mIdx].outputTokens += s.outputTokens;
+          pModels[mIdx].totalTokens += s.totalTokens;
+          pModels[mIdx].estimatedCost += (s.estimatedCost || 0);
+          
+          let curPrompt = null, curInput = 0, curOutput = 0, curCst = 0;
+          const flush = () => {
+            if (curPrompt && (curInput + curOutput) > 0) {
+              const k = curPrompt + '|' + s.sessionId;
+              if (!allPromptsMap[k]) allPromptsMap[k] = { prompt: curPrompt.substring(0,300), inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCost: 0, date: s.date, sessionId: s.sessionId, model: s.model };
+              allPromptsMap[k].inputTokens += curInput;
+              allPromptsMap[k].outputTokens += curOutput;
+              allPromptsMap[k].totalTokens += curInput + curOutput;
+              allPromptsMap[k].estimatedCost += curCst;
+            }
+          };
+          for (const q of s.queries) {
+            if (q.userPrompt && q.userPrompt !== curPrompt) {
+              flush();
+              curPrompt = q.userPrompt; curInput = 0; curOutput = 0; curCst = 0;
+            }
+            curInput += q.inputTokens; curOutput += q.outputTokens; curCst += (q.estimatedCost || 0);
+          }
+          flush();
+        }
+
+        const totalCacheHitRate = (freshInput + cacheRead > 0) ? cacheRead / (freshInput + cacheRead) : 0;
+        if (DATA.totals && DATA.totals.cacheSavingsDollars > 0 && DATA.totals.totalCacheReadTokens > 0) {
+          const savingsPerToken = DATA.totals.cacheSavingsDollars / DATA.totals.totalCacheReadTokens;
+          cacheSavings = cacheRead * savingsPerToken;
+        }
+
+        const topPrompts = Object.values(allPromptsMap).sort((a,b) => b.totalTokens - a.totalTokens).slice(0, 20);
+        const sortedDaily = Object.values(dailyMap).sort((a,b) => a.date.localeCompare(b.date));
+        
+        const dateRangeStr = sortedDaily.length > 0 
+          ? { from: sortedDaily[0].date, to: sortedDaily[sortedDaily.length-1].date }
+          : null;
+
+        const projectBreakdown = Object.values(projectMap).sort((a,b) => b.totalTokens - a.totalTokens);
+        projectBreakdown.forEach(p => {
+          const globalP = DATA.projectBreakdown.find(gp => gp.project === p.project);
+          p.topPrompts = globalP ? globalP.topPrompts : [];
+        });
+
+        return {
+          sessions: filteredSessions,
+          dailyUsage: sortedDaily,
+          modelBreakdown: Object.values(modelMap),
+          projectBreakdown: projectBreakdown,
+          topPrompts: topPrompts,
+          totals: {
+            totalSessions: filteredSessions.length,
+            totalQueries, totalTokens, totalInputTokens, totalOutputTokens,
+            totalFreshInputTokens: freshInput,
+            totalCacheReadTokens: cacheRead,
+            totalCacheWriteTokens: cacheWrite,
+            totalEstimatedCost: totalCost,
+            cacheSavingsDollars: cacheSavings,
+            cacheHitRate: totalCacheHitRate,
+            dateRange: dateRangeStr
+          },
+          insights: DATA.insights // Pass through global insights
+        };
+      }
+
+      async function fetchData() {
+        const res = await fetch("/api/data");
+        DATA = await res.json();
+        initFilters();
+      }
+      async function refreshData() {
+        document.getElementById("loading").style.display = "flex";
+        document.getElementById("app").style.display = "none";
+        await fetch("/api/refresh");
+        await fetchData();
+      }
+
+      function render() {
+        if (!FILTERED_DATA) return;
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("app").style.display = "block";
+        renderStats();
+        renderInsights();
+        renderDailyChart();
+        renderCumulativeChart(); // F3
+        renderModelChart();
+        renderProjectBreakdown();
+        renderTopPrompts();
+        renderSessions();
+      }
+
+      // Stats
+      function renderStats() {
+        const t = FILTERED_DATA.totals;
+        const pt = PREV_FILTERED_DATA ? PREV_FILTERED_DATA.totals : null;
+
+        const range = t.dateRange
+          ? `${formatDate(t.dateRange.from)} – ${formatDate(t.dateRange.to)}`
+          : '';
+        document.getElementById('dateRange').textContent = range;
+
+        const cacheHitPct = ((t.cacheHitRate || 0) * 100).toFixed(1);
+        const hasCacheSavings = (t.cacheSavingsDollars || 0) > 0.005;
+
+        function getTrendHtml(curr, prev, isSpend = true) {
+          if (!prev || prev === 0) return '';
+          const pct = ((curr - prev) / prev) * 100;
+          if (Math.abs(pct) < 1) return '<span class="trend trend-flat">→ 0%</span>';
+          const isUp = pct > 0;
+          // For spend/tokens, Up is bad (red), Down is good (green)
+          // IF we were doing savings, Up is good (green), but we only trend cost/tokens here
+          let cls = 'trend-flat';
+          if (isSpend) {
+            cls = isUp ? 'trend-up' : 'trend-down';
+          }
+          const arrow = isUp ? '↑' : '↓';
+          return `<span class="trend ${cls}">${arrow}${Math.abs(pct).toFixed(0)}%</span>`;
+        }
+
+        const costTrend = pt ? getTrendHtml(t.totalEstimatedCost, pt.totalEstimatedCost) : '';
+        const tokensTrend = pt ? getTrendHtml(t.totalTokens, pt.totalTokens) : '';
+
+        const cards = [
+          {
+            label: 'Estimated Cost' + costTrend,
+            value: fmtCost(t.totalEstimatedCost || 0),
+            sub: `${fmt(t.totalTokens)} tokens · based on Anthropic public pricing`,
+            tip: 'Estimated USD spend based on Anthropic\'s public pricing. Actual invoiced amount may differ slightly based on your plan, taxes, and rounding.',
+            highlight: true,
+          }
+        ];
+
+        // F6: Efficiency Score Card
+        if (t.efficiency) {
+            let color = 'var(--text-primary)';
+            if (t.efficiency.grade.includes('A')) color = '#10b981'; // green
+            else if (t.efficiency.grade.includes('B')) color = '#3b82f6'; // blue
+            else if (t.efficiency.grade.includes('C')) color = '#f59e0b'; // yellow
+            else color = '#ef4444'; // red
+            
+            let bestProp = 'Good tool discipline';
+            if (t.efficiency.cacheRatio > 0.4) bestProp = 'Excellent caching';
+            else if (t.efficiency.toolEfficiency > 0.9) bestProp = 'Low rework (1st try solves)';
+            else if (t.efficiency.contextDiscipline > 0.9) bestProp = 'Keeps conversations focused';
+
+            cards.push({
+                isEfficiencyCard: true,
+                html: `
+                  <div class="stat-card animate delay-2" style="display:flex; flex-direction:row; align-items:center; gap: 16px;">
+                    <div style="position:relative; width:60px; height:60px; flex-shrink:0;">
+                       <svg width="60" height="60" viewBox="0 0 36 36">
+                          <!-- Background ring -->
+                          <path class="circle-bg" stroke="#f3f4f6" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                          <!-- Progress ring -->
+                          <path class="circle" stroke="${color}" stroke-dasharray="${t.efficiency.score}, 100" stroke-width="3" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                       </svg>
+                       <div style="position:absolute; top:0; left:0; right:0; bottom:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px; color:${color};">
+                          ${t.efficiency.grade}
+                       </div>
+                    </div>
+                    <div>
+                       <div class="stat-label has-tooltip">Efficiency Score<span class="help-icon">?</span><div class="tooltip">Score from 0-100 measuring how optimally you use tokens. Based on Cache Hit Rate (40%), Tool 1st-Try Resolves (30%), and Shorter Chat Lengths (30%).</div></div>
+                       <div class="stat-value" style="font-size:20px;">${t.efficiency.score} / 100</div>
+                       <div class="stat-sub" style="color:${color};"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> ${bestProp}</div>
+                    </div>
+                  </div>
+                `
+            });
+        }
+
+        cards.push(
+          {
+            label: 'Cache Savings',
+            value: hasCacheSavings ? fmtCost(t.cacheSavingsDollars) : '–',
+            sub: hasCacheSavings
+              ? `${cacheHitPct}% of input was served from cache`
+              : 'No prompt cache usage detected yet',
+            tip: 'How much you saved because Anthropic\'s prompt caching served repeated context from cache instead of charging full input price. Projects with a large CLAUDE.md benefit most.',
+            green: hasCacheSavings,
+          },
+          {
+            label: 'Conversations',
+            value: fmtFull(t.totalSessions),
+            sub: `~${fmtCost((t.totalEstimatedCost || 0) / Math.max(t.totalSessions, 1))} / conversation on average`,
+            tip: 'Each time you start Claude Code and begin chatting, that\'s one conversation. A new conversation starts fresh with no prior context.',
+          }
+        );
+
+        document.getElementById('statsRow').innerHTML = cards.map((c, i) => {
+            if (c.isEfficiencyCard) return c.html;
+            return `
+    <div class="stat-card animate delay-${i + 1}${c.highlight ? ' stat-card-cost' : ''}${c.green ? ' stat-card-savings' : ''}">
       <div class="stat-label has-tooltip">${c.label}<span class="help-icon">?</span><div class="tooltip">${c.tip}</div></div>
       <div class="stat-value">${c.value}</div>
       <div class="stat-sub">${c.sub}</div>
-    </div>`).join('');
-}
+    </div>`;
+        }).join('');
+      }
 
-// Insights
-function renderInsights() {
-  const insights = DATA.insights || [];
-  const section = document.getElementById('insightsSection');
-  if (!insights.length) { section.style.display = 'none'; return; }
+      // Insights
+      function renderInsights() {
+        const insights = FILTERED_DATA.insights || [];
+        const section = document.getElementById("insightsSection");
+        if (!insights.length || currentPreset !== 'all') { // Insights only make sense on 'all time' for now since they are purely backend generated
+          section.style.display = "none";
+          return;
+        }
 
-  section.style.display = 'block';
-  const icons = { warning: '!', info: 'i', neutral: '~' };
-  const emojis = { warning: '\u26A0\uFE0F', info: '\uD83D\uDCA1', neutral: '\uD83D\uDCC5' };
+        section.style.display = "block";
+        const icons = { warning: "!", info: "i", neutral: "~" };
+        const emojis = {
+          warning: "\u26A0\uFE0F",
+          info: "\uD83D\uDCA1",
+          neutral: "\uD83D\uDCC5",
+        };
 
-  document.getElementById('insightsList').innerHTML = insights.map((ins, i) => {
-    const detailHtml = ins.description ? `<div class="insight-detail">${escapeHtml(ins.description)}</div>` : '';
-    const actionHtml = ins.action ? `<div class="insight-action-tip">${escapeHtml(ins.action)}</div>` : '';
-    return `<div class="insight-card ${ins.type} animate delay-${Math.min(i + 2, 5)}" onclick="this.classList.toggle('expanded')">
+        document.getElementById("insightsList").innerHTML = insights
+          .map((ins, i) => {
+            const detailHtml = ins.description
+              ? `<div class="insight-detail">${escapeHtml(ins.description)}</div>`
+              : "";
+            const actionHtml = ins.action
+              ? `<div class="insight-action-tip">${escapeHtml(ins.action)}</div>`
+              : "";
+            return `<div class="insight-card ${ins.type} animate delay-${Math.min(i + 2, 5)}" onclick="this.classList.toggle('expanded')">
       <div class="insight-top">
-        <div class="insight-indicator">${emojis[ins.type] || ''}</div>
+        <div class="insight-indicator">${emojis[ins.type] || ""}</div>
         <div class="insight-title">${escapeHtml(ins.title)}</div>
         <div class="insight-arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5L6 7.5L9 4.5"/></svg></div>
       </div>
@@ -863,294 +2213,538 @@ function renderInsights() {
         ${actionHtml}
       </div>
     </div>`;
-  }).join('');
-}
+          })
+          .join("");
+      }
 
-// Daily chart
-function renderDailyChart() {
-  const canvas = document.getElementById('dailyChart');
-  const ctx = canvas.getContext('2d');
-  const data = DATA.dailyUsage;
-  if (!data.length) return;
+      // Daily chart
+      function renderDailyChart() {
+        const canvas = document.getElementById("dailyChart");
+        const ctx = canvas.getContext("2d");
+        const data = FILTERED_DATA.dailyUsage;
+        if (!data.length) return;
 
-  const dpr = window.devicePixelRatio || 1;
-  const w = canvas.parentElement.clientWidth - 48;
-  const h = 200;
-  canvas.width = w * dpr; canvas.height = h * dpr;
-  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
-  ctx.scale(dpr, dpr);
-  ctx.clearRect(0, 0, w, h);
+        const dpr = window.devicePixelRatio || 1;
+        const w = canvas.parentElement.clientWidth - 48;
+        const h = 200;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + "px";
+        canvas.style.height = h + "px";
+        ctx.scale(dpr, dpr);
+        ctx.clearRect(0, 0, w, h);
 
-  const maxTotal = Math.max(...data.map(d => d.totalTokens));
-  const barW = Math.max(8, Math.min(32, (w - 52) / data.length - 3));
-  const gap = 3;
-  const chartH = h - 36;
-  const startX = 48;
+        const maxTotal = Math.max(...data.map((d) => d.totalTokens));
+        const barW = Math.max(8, Math.min(32, (w - 52) / data.length - 3));
+        const gap = 3;
+        const chartH = h - 36;
+        const startX = 48;
 
-  // Grid
-  ctx.font = '500 10px Inter, system-ui';
-  ctx.fillStyle = '#94A3B8';
-  ctx.textAlign = 'right';
-  for (let i = 0; i <= 4; i++) {
-    const val = (maxTotal / 4) * i;
-    const y = chartH - (chartH * i / 4) + 8;
-    ctx.fillText(fmt(val), startX - 10, y + 3);
-    ctx.strokeStyle = 'rgba(0,0,0,0.04)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(startX, y); ctx.lineTo(w, y); ctx.stroke();
-  }
+        // Grid
+        ctx.font = "500 10px Inter, system-ui";
+        ctx.fillStyle = "#94A3B8";
+        ctx.textAlign = "right";
+        for (let i = 0; i <= 4; i++) {
+          const val = (maxTotal / 4) * i;
+          const y = chartH - (chartH * i) / 4 + 8;
+          ctx.fillText(fmt(val), startX - 10, y + 3);
+          ctx.strokeStyle = "rgba(0,0,0,0.04)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(startX, y);
+          ctx.lineTo(w, y);
+          ctx.stroke();
+        }
 
-  // Bars with gradient
-  const inGrad = ctx.createLinearGradient(0, chartH + 8, 0, 0);
-  inGrad.addColorStop(0, '#818CF8'); inGrad.addColorStop(1, '#6366F1');
-  const outGrad = ctx.createLinearGradient(0, chartH + 8, 0, 0);
-  outGrad.addColorStop(0, '#2DD4BF'); outGrad.addColorStop(1, '#14B8A6');
+        // Bars with gradient
+        const inGrad = ctx.createLinearGradient(0, chartH + 8, 0, 0);
+        inGrad.addColorStop(0, "#818CF8");
+        inGrad.addColorStop(1, "#6366F1");
+        const outGrad = ctx.createLinearGradient(0, chartH + 8, 0, 0);
+        outGrad.addColorStop(0, "#2DD4BF");
+        outGrad.addColorStop(1, "#14B8A6");
 
-  data.forEach((d, i) => {
-    const x = startX + i * (barW + gap);
-    const baseY = chartH + 8;
-    const r = Math.min(4, barW / 2);
+        data.forEach((d, i) => {
+          const x = startX + i * (barW + gap);
+          const baseY = chartH + 8;
+          const r = Math.min(4, barW / 2);
 
-    const outH = (d.outputTokens / maxTotal) * chartH;
-    if (outH > 0) {
-      ctx.fillStyle = outGrad;
-      ctx.beginPath(); roundedRect(ctx, x, baseY - outH, barW, outH, r); ctx.fill();
-    }
+          const outH = (d.outputTokens / maxTotal) * chartH;
+          if (outH > 0) {
+            ctx.fillStyle = outGrad;
+            ctx.beginPath();
+            roundedRect(ctx, x, baseY - outH, barW, outH, r);
+            ctx.fill();
+          }
 
-    const inH = (d.inputTokens / maxTotal) * chartH;
-    if (inH > 0) {
-      ctx.fillStyle = inGrad;
-      ctx.beginPath(); roundedRect(ctx, x, baseY - outH - inH, barW, inH, r); ctx.fill();
-    }
-  });
+          const inH = (d.inputTokens / maxTotal) * chartH;
+          if (inH > 0) {
+            ctx.fillStyle = inGrad;
+            ctx.beginPath();
+            roundedRect(ctx, x, baseY - outH - inH, barW, inH, r);
+            ctx.fill();
+          }
+        });
 
-  // X labels
-  ctx.fillStyle = '#94A3B8'; ctx.textAlign = 'center';
-  ctx.font = '500 10px Inter, system-ui';
-  const step = Math.max(1, Math.floor(data.length / 7));
-  data.forEach((d, i) => {
-    if (i % step === 0 || i === data.length - 1) {
-      const x = startX + i * (barW + gap) + barW / 2;
-      ctx.fillText(formatDate(d.date), x, chartH + 24);
-    }
-  });
-}
+        // X labels
+        ctx.fillStyle = "#94A3B8";
+        ctx.textAlign = "center";
+        ctx.font = "500 10px Inter, system-ui";
+        const step = Math.max(1, Math.floor(data.length / 7));
+        data.forEach((d, i) => {
+          if (i % step === 0 || i === data.length - 1) {
+            const x = startX + i * (barW + gap) + barW / 2;
+            ctx.fillText(formatDate(d.date), x, chartH + 24);
+          }
+        });
 
-function roundedRect(ctx, x, y, w, h, r) {
-  if (h <= 0) return;
-  r = Math.min(r, h / 2, w / 2);
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
+        // 7-day moving average overlay
+        if (data.length >= 7) {
+          document.getElementById('avgLegendItem').style.display = 'flex';
+          ctx.beginPath();
+          ctx.strokeStyle = "#F43F5E"; // Rose color
+          ctx.lineWidth = 2;
+          ctx.lineJoin = "round";
+          
+          let hasStarted = false;
+          data.forEach((d, i) => {
+            let sum = 0, count = 0;
+            for (let j = Math.max(0, i - 6); j <= i; j++) {
+              sum += data[j].totalTokens;
+              count++;
+            }
+            const avg = sum / count;
+            
+            const x = startX + i * (barW + gap) + barW / 2;
+            const y = chartH + 8 - (avg / maxTotal) * chartH;
+            
+            if (!hasStarted) {
+              ctx.moveTo(x, y);
+              hasStarted = true;
+            } else {
+              ctx.lineTo(x, y);
+            }
+          });
+          ctx.stroke();
+        } else {
+          const avgLeg = document.getElementById('avgLegendItem');
+          if (avgLeg) avgLeg.style.display = 'none';
+        }
+      }
 
-// Model donut
-function renderModelChart() {
-  const canvas = document.getElementById('modelChart');
-  const ctx = canvas.getContext('2d');
-  const data = DATA.modelBreakdown;
-  if (!data.length) return;
+      function renderCumulativeChart() {
+        const canvas = document.getElementById("cumulativeChart");
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const data = FILTERED_DATA.dailyUsage;
+        if (!data.length) return;
 
-  const dpr = window.devicePixelRatio || 1;
-  const size = Math.min(180, canvas.parentElement.clientWidth - 48);
-  canvas.width = size * dpr; canvas.height = size * dpr;
-  canvas.style.width = size + 'px'; canvas.style.height = size + 'px';
-  ctx.scale(dpr, dpr);
+        const dpr = window.devicePixelRatio || 1;
+        const w = canvas.parentElement.clientWidth;
+        const h = 200;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + "px";
+        canvas.style.height = h + "px";
+        ctx.scale(dpr, dpr);
+        ctx.clearRect(0, 0, w, h);
 
-  const cx = size/2, cy = size/2, r = size/2 - 6, innerR = r * 0.6;
-  const total = data.reduce((s, d) => s + d.totalTokens, 0);
+        const chartH = h - 24;
+        const startX = 48;
 
-  const modelColors = { opus: ['#6366F1','#818CF8'], sonnet: ['#10B981','#34D399'], haiku: ['#F97316','#FB923C'] };
-  function getColors(m) {
-    for (const [k, c] of Object.entries(modelColors)) { if (m.includes(k)) return c; }
-    return ['#94A3B8','#CBD5E1'];
-  }
+        let cumulativeCost = 0;
+        const cumulativeData = data.map(d => {
+          cumulativeCost += (d.estimatedCost || 0);
+          return { date: d.date, cost: cumulativeCost };
+        });
 
-  let angle = -Math.PI / 2;
-  const slices = [...data].sort((a, b) => b.totalTokens - a.totalTokens);
+        // 7-day run rate for projection
+        let projectionRate = 0;
+        if (data.length >= 7) {
+          const last7 = data.slice(-7);
+          const sum7 = last7.reduce((s, x) => s + (x.estimatedCost || 0), 0);
+          projectionRate = sum7 / 7;
+        } else if (data.length > 0) {
+          projectionRate = cumulativeCost / data.length;
+        }
 
-  slices.forEach(d => {
-    const sa = (d.totalTokens / total) * Math.PI * 2;
-    const [c1, c2] = getColors(d.model);
-    const grad = ctx.createConicGradient(angle, cx, cy);
-    grad.addColorStop(0, c1); grad.addColorStop(1, c2);
+        // Project to end of current month
+        const lastDate = new Date(data[data.length - 1].date);
+        const endOfMonth = new Date(lastDate.getFullYear(), lastDate.getMonth() + 1, 0);
+        let diffDays = Math.ceil((endOfMonth - lastDate) / (1000 * 60 * 60 * 24));
+        if (diffDays < 0) diffDays = 0;
+        const projectedTotal = cumulativeCost + (projectionRate * diffDays);
 
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, angle, angle + sa);
-    ctx.arc(cx, cy, innerR, angle + sa, angle, true);
-    ctx.closePath();
-    ctx.fillStyle = c1;
-    ctx.fill();
+        const subEl = document.getElementById('trajectorySub');
+        if (subEl) subEl.textContent = `Projecting ~${fmtCost(projectedTotal)} by month end`;
 
-    // Gap between slices
-    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.stroke();
-    angle += sa;
-  });
+        const maxCost = Math.max(projectedTotal, cumulativeCost, 1);
+        
+        // Grid
+        ctx.font = "500 10px Inter, system-ui";
+        ctx.fillStyle = "#94A3B8";
+        ctx.textAlign = "right";
+        for (let i = 0; i <= 4; i++) {
+          const val = (maxCost / 4) * i;
+          const y = chartH - (chartH * i) / 4 + 8;
+          ctx.fillText(fmtCost(val), startX - 10, y + 3);
+          ctx.strokeStyle = "rgba(0,0,0,0.04)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(startX, y);
+          ctx.lineTo(w, y);
+          ctx.stroke();
+        }
 
-  ctx.fillStyle = '#0F172A'; ctx.textAlign = 'center';
-  ctx.font = '800 17px Inter, system-ui';
-  ctx.fillText(fmt(total), cx, cy + 2);
-  ctx.font = '500 10px Inter, system-ui';
-  ctx.fillStyle = '#94A3B8';
-  ctx.fillText('total', cx, cy + 16);
+        const pointSpacing = (w - startX - 10) / Math.max((data.length + diffDays - 1), 1);
 
-  document.getElementById('modelLegend').innerHTML = slices.map(d => {
-    const pct = ((d.totalTokens / total) * 100).toFixed(1);
-    return `<div class="legend-item">
+        // Draw actual cumulative line & fill
+        ctx.beginPath();
+        ctx.strokeStyle = "#6366F1";
+        ctx.lineWidth = 3;
+        ctx.lineJoin = "round";
+        let lastX = startX, lastY = chartH + 8;
+        cumulativeData.forEach((d, i) => {
+          const x = startX + (i * pointSpacing);
+          const y = chartH + 8 - (d.cost / maxCost) * chartH;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+          lastX = x; lastY = y;
+        });
+        ctx.stroke();
+
+        // Fill
+        if (cumulativeData.length > 0) {
+          ctx.lineTo(lastX, chartH + 8);
+          ctx.lineTo(startX, chartH + 8);
+          ctx.fillStyle = "rgba(99,102,241,0.1)";
+          ctx.fill();
+        }
+
+        // Draw projection line
+        if (diffDays > 0 && cumulativeData.length > 0) {
+          ctx.beginPath();
+          ctx.strokeStyle = "#94A3B8";
+          ctx.lineWidth = 2;
+          ctx.setLineDash([4, 4]);
+          
+          // Start from the exact last point of the actual line
+          const lastActualPoint = cumulativeData[cumulativeData.length - 1];
+          const lastActualX = startX + ((cumulativeData.length - 1) * pointSpacing);
+          const lastActualY = chartH + 8 - (lastActualPoint.cost / maxCost) * chartH;
+          
+          ctx.moveTo(lastActualX, lastActualY);
+          const projX = startX + ((data.length - 1 + diffDays) * pointSpacing);
+          const projY = chartH + 8 - (projectedTotal / maxCost) * chartH;
+          ctx.lineTo(projX, projY);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          
+          // Label at end of projection
+          ctx.fillStyle = "#64748B";
+          ctx.textAlign = "right";
+          ctx.fillText("Month End", projX, chartH + 24);
+        }
+      }
+
+      function roundedRect(ctx, x, y, w, h, r) {
+        if (h <= 0) return;
+        r = Math.min(r, h / 2, w / 2);
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      // Model donut
+      function renderModelChart() {
+        const canvas = document.getElementById("modelChart");
+        const ctx = canvas.getContext("2d");
+        const data = DATA.modelBreakdown;
+        if (!data.length) return;
+
+        const dpr = window.devicePixelRatio || 1;
+        const size = Math.min(180, canvas.parentElement.clientWidth - 48);
+        canvas.width = size * dpr;
+        canvas.height = size * dpr;
+        canvas.style.width = size + "px";
+        canvas.style.height = size + "px";
+        ctx.scale(dpr, dpr);
+
+        const cx = size / 2,
+          cy = size / 2,
+          r = size / 2 - 6,
+          innerR = r * 0.6;
+        const total = data.reduce((s, d) => s + d.totalTokens, 0);
+
+        const modelColors = {
+          opus: ["#6366F1", "#818CF8"],
+          sonnet: ["#10B981", "#34D399"],
+          haiku: ["#F97316", "#FB923C"],
+        };
+        function getColors(m) {
+          for (const [k, c] of Object.entries(modelColors)) {
+            if (m.includes(k)) return c;
+          }
+          return ["#94A3B8", "#CBD5E1"];
+        }
+
+        let angle = -Math.PI / 2;
+        const slices = [...data].sort((a, b) => b.totalTokens - a.totalTokens);
+
+        slices.forEach((d) => {
+          const sa = (d.totalTokens / total) * Math.PI * 2;
+          const [c1, c2] = getColors(d.model);
+          const grad = ctx.createConicGradient(angle, cx, cy);
+          grad.addColorStop(0, c1);
+          grad.addColorStop(1, c2);
+
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, angle, angle + sa);
+          ctx.arc(cx, cy, innerR, angle + sa, angle, true);
+          ctx.closePath();
+          ctx.fillStyle = c1;
+          ctx.fill();
+
+          // Gap between slices
+          ctx.strokeStyle = "#FFFFFF";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          angle += sa;
+        });
+
+        ctx.fillStyle = "#0F172A";
+        ctx.textAlign = "center";
+        ctx.font = "800 17px Inter, system-ui";
+        ctx.fillText(fmt(total), cx, cy + 2);
+        ctx.font = "500 10px Inter, system-ui";
+        ctx.fillStyle = "#94A3B8";
+        ctx.fillText("total", cx, cy + 16);
+
+        document.getElementById('modelLegend').innerHTML = slices.map((d) => {
+          const pct = ((d.totalTokens / total) * 100).toFixed(1);
+          const costPart = (d.estimatedCost || 0) > 0
+            ? ` &middot; <span class="cost-badge" style="font-size:11px">${fmtCost(d.estimatedCost)}</span>`
+            : '';
+          return `<div class="legend-item">
       <div class="legend-dot" style="background:${getColors(d.model)[0]}"></div>
-      <span><strong>${modelShort(d.model)}</strong> &ndash; ${fmt(d.totalTokens)} (${pct}%)</span>
+      <span><strong>${modelShort(d.model)}</strong> &ndash; ${fmt(d.totalTokens)} (${pct}%)${costPart}</span>
     </div>`;
-  }).join('');
-}
+        }).join('');
+      }
 
-// Project accordion
-function toggleProjectDrawer(i) {
-  const row = document.getElementById('proj-row-' + i);
-  const drawer = document.getElementById('proj-drawer-' + i);
-  const isOpen = drawer.classList.contains('open');
-  row.classList.toggle('expanded', !isOpen);
-  drawer.classList.toggle('open', !isOpen);
-}
+      // Project accordion
+      function toggleProjectDrawer(i) {
+        const row = document.getElementById("proj-row-" + i);
+        const drawer = document.getElementById("proj-drawer-" + i);
+        const isOpen = drawer.classList.contains("open");
+        row.classList.toggle("expanded", !isOpen);
+        drawer.classList.toggle("open", !isOpen);
+      }
 
-function buildDrawerContent(p) {
-  if (!p.topPrompts || p.topPrompts.length === 0) {
-    return '<div class="drawer-empty">No prompt data available</div>';
-  }
-  const items = p.topPrompts.map((pr, i) => {
-    const toolEntries = Object.entries(pr.toolCounts || {}).sort((a, b) => b[1] - a[1]);
-    const chips = toolEntries.map(([name, count]) =>
-      '<span class="tool-chip">' + count + '\u00d7\u00a0' + escapeHtml(name) + '</span>'
-    ).join('') + (pr.continuations > 0 ? '<span class="tool-chip">+' + pr.continuations + ' turns</span>' : '');
-    const badge = '<span class="model-badge ' + modelClass(pr.model) + '"><span class="model-dot"></span>' + modelShort(pr.model) + '</span>';
-    const tokVal = fmt(pr.totalTokens);
-    const tokSub = fmt(pr.inputTokens) + ' / ' + fmt(pr.outputTokens);
-    const promptText = escapeHtml(pr.prompt);
-    const sid = pr.sessionId;
-    return [
-      '<div class="drawer-prompt-row" onclick="openDrilldown(\'' + sid + '\')">',
-      '<div class="drawer-rank">' + (i + 1) + '</div>',
-      '<div>',
-      '<div class="drawer-prompt-text">' + promptText + '</div>',
-      '<div class="drawer-prompt-meta">' + badge + chips + '</div>',
-      '</div>',
-      '<div class="drawer-tokens"><div class="value">' + tokVal + '</div><div class="sub">' + tokSub + '</div></div>',
-      '</div>',
-    ].join('');
-  });
-  return '<div class="drawer-prompt-list">' + items.join('') + '</div>';
-}
+      function buildDrawerContent(p) {
+        if (!p.topPrompts || p.topPrompts.length === 0) {
+          return '<div class="drawer-empty">No prompt data available</div>';
+        }
+        const items = p.topPrompts.map((pr, i) => {
+          const toolEntries = Object.entries(pr.toolCounts || {}).sort(
+            (a, b) => b[1] - a[1],
+          );
+          const chips =
+            toolEntries
+              .map(
+                ([name, count]) =>
+                  '<span class="tool-chip">' +
+                  count +
+                  "\u00d7\u00a0" +
+                  escapeHtml(name) +
+                  "</span>",
+              )
+              .join("") +
+            (pr.continuations > 0
+              ? '<span class="tool-chip">+' + pr.continuations + " turns</span>"
+              : "");
+          const badge =
+            '<span class="model-badge ' +
+            modelClass(pr.model) +
+            '"><span class="model-dot"></span>' +
+            modelShort(pr.model) +
+            "</span>";
+          const tokVal = fmt(pr.totalTokens);
+          const tokSub = fmt(pr.inputTokens) + " / " + fmt(pr.outputTokens);
+          const promptText = escapeHtml(pr.prompt);
+          const sid = pr.sessionId;
+          return [
+            '<div class="drawer-prompt-row" onclick="openDrilldown(\'' +
+              sid +
+              "')\">",
+            '<div class="drawer-rank">' + (i + 1) + "</div>",
+            "<div>",
+            '<div class="drawer-prompt-text">' + promptText + "</div>",
+            '<div class="drawer-prompt-meta">' + badge + chips + "</div>",
+            "</div>",
+            '<div class="drawer-tokens"><div class="value">' +
+              tokVal +
+              '</div><div class="sub">' +
+              tokSub +
+              "</div></div>",
+            "</div>",
+          ].join("");
+        });
+        return '<div class="drawer-prompt-list">' + items.join("") + "</div>";
+      }
 
-// Project breakdown
-function renderProjectBreakdown() {
-  const projects = DATA.projectBreakdown;
-  if (!projects || !projects.length) return;
+      // Project breakdown
+      function renderProjectBreakdown() {
+        const projects = FILTERED_DATA.projectBreakdown;
+        if (!projects || !projects.length) {
+          document.getElementById("projectsBody").innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-tertiary)">No projects found in this date range.</td></tr>';
+          document.getElementById("projectsCount").textContent = "0 projects";
+          return;
+        }
 
-  const countEl = document.getElementById('projectsCount');
-  countEl.textContent = projects.length + ' project' + (projects.length === 1 ? '' : 's');
+        const countEl = document.getElementById("projectsCount");
+        countEl.textContent =
+          projects.length + " project" + (projects.length === 1 ? "" : "s");
 
-  const maxTokens = projects[0].totalTokens;
-  const chevron = '<svg class="proj-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l4 4-4 4"/></svg>';
-  const rows = [];
-  projects.forEach((p, i) => {
-    const barPct = (p.totalTokens / maxTokens * 100).toFixed(1);
-    const ariaLabel = p.modelBreakdown.map(m => modelShort(m.model) + ': ' + fmt(m.inputTokens) + ' input, ' + fmt(m.outputTokens) + ' output').join(', ');
-    const pillItems = p.modelBreakdown.map(m =>
-      '<li><span class="model-badge ' + modelClass(m.model) +
-      '" aria-label="' + modelShort(m.model) + ': ' + fmt(m.inputTokens) + ' input, ' + fmt(m.outputTokens) + ' output">' +
-      '<span class="model-dot" aria-hidden="true"></span>' +
-      modelShort(m.model) +
-      ' <span class="token-detail"><span aria-hidden="true">\u2193</span><span class="sr-only">in </span>' + fmt(m.inputTokens) + '</span>' +
-      ' <span class="token-detail"><span aria-hidden="true">\u2191</span><span class="sr-only">out </span>' + fmt(m.outputTokens) + '</span>' +
-      '</span></li>'
-    ).join('');
-    const summaryRow = [
-      '<tr class="proj-row" id="proj-row-' + i + '" onclick="toggleProjectDrawer(' + i + ')">',
-      '<td style="padding:10px 16px">',
-      '<div style="display:flex;align-items:center;gap:6px">',
-      chevron,
-      '<div>',
-      '<div class="proj-name" title="' + projectFull(p.project) + '">' + escapeHtml(projectShort(p.project)) + '</div>',
-      '<ul class="model-pills" aria-label="Models used: ' + ariaLabel + '">' + pillItems + '</ul>',
-      '</div></div></td>',
-      '<td class="token-num" style="font-weight:700;vertical-align:top;padding-top:12px">',
-      '<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">',
-      '<div style="flex:1;max-width:60px;height:3px;background:var(--bg);border-radius:4px;overflow:hidden">',
-      '<div style="width:' + barPct + '%;height:100%;background:var(--indigo);border-radius:4px"></div>',
-      '</div><div><div>' + fmt(p.totalTokens) + '</div><div style="font-size:11px;font-weight:500;color:var(--text-tertiary);margin-top:1px">' + fmt(p.inputTokens) + ' in\u00a0\u00b7\u00a0' + fmt(p.outputTokens) + ' out</div></div></div></td>',
-      '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.sessionCount + '</td>',
-      '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.queryCount + '</td>',
-      '</tr>',
-    ].join('');
-    const drawerRow = [
-      '<tr class="proj-drawer" id="proj-drawer-' + i + '">',
-      '<td colspan="4"><div class="proj-drawer-inner"><div class="proj-drawer-content">',
-      buildDrawerContent(p),
-      '</div></div></td></tr>',
-    ].join('');
-    rows.push(summaryRow, drawerRow);
-  });
-  document.getElementById('projectsBody').innerHTML = rows.join('');
-}
+        const maxTokens = projects[0].totalTokens;
+        const chevron =
+          '<svg class="proj-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l4 4-4 4"/></svg>';
+        const rows = [];
+        projects.forEach((p, i) => {
+          const barPct = ((p.totalTokens / maxTokens) * 100).toFixed(1);
+          const ariaLabel = p.modelBreakdown
+            .map(
+              (m) =>
+                modelShort(m.model) +
+                ": " +
+                fmt(m.inputTokens) +
+                " input, " +
+                fmt(m.outputTokens) +
+                " output",
+            )
+            .join(", ");
+          const pillItems = p.modelBreakdown
+            .map(
+              (m) =>
+                '<li><span class="model-badge ' +
+                modelClass(m.model) +
+                '" aria-label="' +
+                modelShort(m.model) +
+                ": " +
+                fmt(m.inputTokens) +
+                " input, " +
+                fmt(m.outputTokens) +
+                ' output">' +
+                '<span class="model-dot" aria-hidden="true"></span>' +
+                modelShort(m.model) +
+                ' <span class="token-detail"><span aria-hidden="true">\u2193</span><span class="sr-only">in </span>' +
+                fmt(m.inputTokens) +
+                "</span>" +
+                ' <span class="token-detail"><span aria-hidden="true">\u2191</span><span class="sr-only">out </span>' +
+                fmt(m.outputTokens) +
+                "</span>" +
+                "</span></li>",
+            )
+            .join("");
+          const summaryRow = [
+            '<tr class="proj-row" id="proj-row-' +
+              i +
+              '" onclick="toggleProjectDrawer(' +
+              i +
+              ')">',
+            '<td style="padding:10px 16px">',
+            '<div style="display:flex;align-items:center;gap:6px">',
+            chevron,
+            "<div>",
+            '<div class="proj-name" title="' +
+              projectFull(p.project) +
+              '">' +
+              escapeHtml(projectShort(p.project)) +
+              "</div>",
+            '<ul class="model-pills" aria-label="Models used: ' +
+              ariaLabel +
+              '">' +
+              pillItems +
+              "</ul>",
+            "</div></div></td>",
+            '<td style="text-align:right;vertical-align:top;padding-top:12px">',
+            '<span class="cost-badge">' + fmtCost(p.estimatedCost || 0) + '</span>',
+            '</td>',
+            '<td class="token-num" style="font-weight:700;vertical-align:top;padding-top:12px">',
+            '<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">',
+            '<div style="flex:1;max-width:60px;height:3px;background:var(--bg);border-radius:4px;overflow:hidden">',
+            '<div style="width:' + barPct + '%;height:100%;background:var(--indigo);border-radius:4px"></div>',
+            '</div><div><div>' + fmt(p.totalTokens) + '</div><div style="font-size:11px;font-weight:500;color:var(--text-tertiary);margin-top:1px">' + fmt(p.inputTokens) + ' in\u00a0\u00b7\u00a0' + fmt(p.outputTokens) + ' out</div></div></div></td>',
+            '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.sessionCount + '</td>',
+            '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.queryCount + '</td>',
+            '</tr>',
+          ].join("");
+          const drawerRow = [
+            '<tr class="proj-drawer" id="proj-drawer-' + i + '">',
+            '<td colspan="5"><div class="proj-drawer-inner"><div class="proj-drawer-content">',
+            buildDrawerContent(p),
+            '</div></div></td></tr>',
+          ].join("");
+          rows.push(summaryRow, drawerRow);
+        });
+        document.getElementById("projectsBody").innerHTML = rows.join("");
+      }
 
-// Top prompts
-function renderTopPrompts() {
-  const prompts = DATA.topPrompts;
-  if (!prompts.length) return;
-  const maxTokens = prompts[0].totalTokens;
+      // Top prompts
+      function renderTopPrompts() {
+        const prompts = FILTERED_DATA.topPrompts;
+        if (!prompts || !prompts.length) {
+          document.getElementById('topPromptsList').innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-tertiary)">No prompt data in this date range.</div>';
+          return;
+        }
+        const maxTokens = prompts[0].totalTokens;
 
-  document.getElementById('topPromptsList').innerHTML = prompts.map((p, i) => {
-    const inPct = (p.inputTokens / p.totalTokens) * 100;
-    return `<div class="prompt-row" onclick="openDrilldown('${p.sessionId}')">
-      <div class="prompt-rank">${i + 1}</div>
-      <div>
-        <div class="prompt-text">${escapeHtml(p.prompt)}</div>
-        <div class="prompt-meta">${formatDate(p.date)} &middot; ${modelShort(p.model)}</div>
-        <div class="token-bar-wrap" style="width:${Math.max(10, (p.totalTokens / maxTokens) * 100)}%">
-          <div class="token-bar-in" style="width:${inPct}%"></div>
-          <div class="token-bar-out" style="width:${100 - inPct}%"></div>
-        </div>
-      </div>
-      <div class="prompt-tokens">
-        <div class="value">${fmt(p.totalTokens)}</div>
-        <div class="sub">${fmt(p.inputTokens)} read &middot; ${fmt(p.outputTokens)} written</div>
-      </div>
-    </div>`;
-  }).join('');
-}
+        document.getElementById('topPromptsList').innerHTML = prompts.map((p, i) => {
+          const inPct = (p.inputTokens / p.totalTokens) * 100;
+          const costHtml = (p.estimatedCost || 0) > 0
+            ? `<span class="cost-badge">${fmtCost(p.estimatedCost)}</span>`
+            : '';
+          return `<div class="prompt-row" onclick="openDrilldown('${p.sessionId}')">\n      <div class="prompt-rank">${i + 1}</div>\n      <div>\n        <div class="prompt-text">${escapeHtml(p.prompt)}</div>\n        <div class="prompt-meta">${formatDate(p.date)} &middot; ${modelShort(p.model)}</div>\n        <div class="token-bar-wrap" style="width:${Math.max(10, (p.totalTokens / maxTokens) * 100)}%">\n          <div class="token-bar-in" style="width:${inPct}%"></div>\n          <div class="token-bar-out" style="width:${100 - inPct}%"></div>\n        </div>\n      </div>\n      <div class="prompt-tokens">\n        <div class="value">${costHtml} ${fmt(p.totalTokens)}</div>\n        <div class="sub">${fmt(p.inputTokens)} read &middot; ${fmt(p.outputTokens)} written</div>\n      </div>\n    </div>`;
+        }).join('');
+      }
 
-// Sessions
-function renderSessions() {
-  let sessions = [...DATA.sessions];
-  if (searchQuery) {
-    const q = searchQuery.toLowerCase();
-    sessions = sessions.filter(s =>
-      s.firstPrompt.toLowerCase().includes(q) ||
-      s.model.toLowerCase().includes(q) ||
-      projectShort(s.project).toLowerCase().includes(q)
-    );
-  }
 
-  const sortFns = {
-    date: (a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''),
-    prompt: (a, b) => a.firstPrompt.localeCompare(b.firstPrompt),
-    model: (a, b) => a.model.localeCompare(b.model),
-    queries: (a, b) => a.queryCount - b.queryCount,
-    total: (a, b) => a.totalTokens - b.totalTokens,
-    input: (a, b) => a.inputTokens - b.inputTokens,
-    output: (a, b) => a.outputTokens - b.outputTokens,
-  };
-  const fn = sortFns[currentSort.key] || sortFns.total;
-  sessions.sort((a, b) => currentSort.dir === 'desc' ? fn(b, a) : fn(a, b));
+      // Sessions
+      function renderSessions() {
+        let sessions = FILTERED_DATA ? [...FILTERED_DATA.sessions] : [];
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          sessions = sessions.filter(
+            (s) =>
+              s.firstPrompt.toLowerCase().includes(q) ||
+              s.model.toLowerCase().includes(q) ||
+              projectShort(s.project).toLowerCase().includes(q),
+          );
+        }
 
-  document.getElementById('sessionCount').textContent = `${sessions.length} sessions`;
+        const sortFns = {
+          date:    (a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''),
+          prompt:  (a, b) => a.firstPrompt.localeCompare(b.firstPrompt),
+          model:   (a, b) => a.model.localeCompare(b.model),
+          cost:    (a, b) => (a.estimatedCost || 0) - (b.estimatedCost || 0),
+          queries: (a, b) => a.queryCount - b.queryCount,
+          total:   (a, b) => a.totalTokens - b.totalTokens,
+          input:   (a, b) => a.inputTokens - b.inputTokens,
+          output:  (a, b) => a.outputTokens - b.outputTokens,
+        };
+        const fn = sortFns[currentSort.key] || sortFns.total;
+        sessions.sort((a, b) => currentSort.dir === 'desc' ? fn(b, a) : fn(a, b));
 
-  document.getElementById('sessionsBody').innerHTML = sessions.map(s => `
+        document.getElementById('sessionCount').textContent = `${sessions.length} sessions`;
+
+        document.getElementById('sessionsBody').innerHTML = sessions.map((s) => `
     <tr onclick="openDrilldown('${s.sessionId}')">
       <td class="date-cell">
         ${formatDate(s.date)}
@@ -1158,78 +2752,353 @@ function renderSessions() {
       </td>
       <td><div class="prompt-preview" title="${escapeHtml(s.firstPrompt)}">${escapeHtml(s.firstPrompt)}</div></td>
       <td><span class="model-badge ${modelClass(s.model)}"><span class="model-dot"></span>${modelShort(s.model)}</span></td>
+      <td style="text-align:right"><span class="cost-badge">${fmtCost(s.estimatedCost || 0)}</span></td>
       <td class="token-num">${s.queryCount}</td>
       <td class="token-num" style="font-weight:700">${fmt(s.totalTokens)}</td>
       <td class="token-num">${fmt(s.inputTokens)}</td>
       <td class="token-num">${fmt(s.outputTokens)}</td>
     </tr>
   `).join('');
-}
+      }
 
-// Sort
-document.querySelectorAll('.sessions-table th[data-sort]').forEach(th => {
-  th.addEventListener('click', () => {
-    const key = th.dataset.sort;
-    if (currentSort.key === key) { currentSort.dir = currentSort.dir === 'desc' ? 'asc' : 'desc'; }
-    else { currentSort = { key, dir: 'desc' }; }
-    document.querySelectorAll('.sessions-table th').forEach(t => t.classList.remove('sorted'));
-    th.classList.add('sorted');
-    renderSessions();
-  });
-});
+      // Sort
+      document
+        .querySelectorAll(".sessions-table th[data-sort]")
+        .forEach((th) => {
+          th.addEventListener("click", () => {
+            const key = th.dataset.sort;
+            if (currentSort.key === key) {
+              currentSort.dir = currentSort.dir === "desc" ? "asc" : "desc";
+            } else {
+              currentSort = { key, dir: "desc" };
+            }
+            document
+              .querySelectorAll(".sessions-table th")
+              .forEach((t) => t.classList.remove("sorted"));
+            th.classList.add("sorted");
+            renderSessions();
+          });
+        });
 
-document.getElementById('searchInput').addEventListener('input', e => {
-  searchQuery = e.target.value;
-  renderSessions();
-});
+      document.getElementById("searchInput").addEventListener("input", (e) => {
+        searchQuery = e.target.value;
+        renderSessions();
+      });
 
-// Drill-down
-function openDrilldown(sessionId) {
-  const session = DATA.sessions.find(s => s.sessionId === sessionId);
-  if (!session) return;
+      // Drill-down
+      // Drill-down coaching renderer
+      function renderCoachingOverview(session) {
+        const target = document.getElementById('sessionCoaching');
+        if (!session.snowballData || session.snowballData.length < 2) {
+            target.style.display = 'none';
+            return;
+        }
+        
+        target.style.display = 'block';
+        
+        // 1. Snowball Overview (F12)
+        let whatIfHtml = '';
+        if (session.breakEvenPoint && session.breakEvenPoint.savings > 0) {
+            whatIfHtml = `
+            <div class="what-if-panel">
+                <div class="coaching-title" style="justify-content:center;margin-bottom:4px;">💡 Context Snowball Detected</div>
+                <div class="what-if-sub">If you had started a new conversation at turn ${session.breakEvenPoint.turn}, you would have saved:</div>
+                <div class="what-if-val">${fmt(session.breakEvenPoint.savings)} tokens</div>
+                <div class="what-if-sub">in repeated context</div>
+            </div>`;
+        }
+        
+        // 2. Tool Overview Heatmap (F13)
+        let heatmapHtml = '';
+        if (session.toolAnalysis && Object.keys(session.toolAnalysis.fileAccessMap || {}).length > 0) {
+             const files = Object.entries(session.toolAnalysis.fileAccessMap).sort((a,b) => (b[1].reads + b[1].writes) - (a[1].reads + a[1].writes)).slice(0, 5);
+             const maxAccess = Math.max(...files.map(f => f[1].reads + f[1].writes));
+             
+             heatmapHtml = `
+             <div style="flex:1;">
+               <div class="coaching-title">🔥 File Access Heatmap</div>
+               <div class="heatmap-grid">
+               ${files.map(([file, counts]) => {
+                  const rW = (counts.reads / maxAccess) * 100;
+                  const wW = (counts.writes / maxAccess) * 100;
+                  const name = file.includes('/') ? file.split('/').pop() : file.substring(0, 25);
+                  return `<div class="heatmap-row">
+                    <div style="width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);" title="${escapeHtml(file)}">${escapeHtml(name)}</div>
+                    <div style="flex:1;display:flex;height:12px;background:var(--bg);border-radius:2px;overflow:hidden;">
+                        ${counts.reads > 0 ? '<div class="heatmap-bar read" style="width:' + rW + '%" title="' + counts.reads + ' reads"></div>' : ''}
+                        ${counts.writes > 0 ? '<div class="heatmap-bar write" style="width:' + wW + '%" title="' + counts.writes + ' writes"></div>' : ''}
+                    </div>
+                    <div style="width:30px;text-align:right;color:var(--text-tertiary);font-size:10px;">${counts.reads}R ${counts.writes}W</div>
+                  </div>`
+               }).join('')}
+               </div>
+             </div>`;
+        }
+        
+        target.innerHTML = `
+          <div class="snowball-container">
+            <div class="snowball-chart-wrap">
+               <div class="coaching-title has-tooltip has-tooltip-below" style="display:inline-flex;">Context Growth<span class="help-icon">?</span><div class="tooltip">Tokens sent on each turn. This naturally strictly increases as conversation history gets longer.</div></div>
+               <div style="position:relative;width:100%;height:140px;"><canvas id="snowballCanvas"></canvas></div>
+            </div>
+            ${heatmapHtml}
+            ${whatIfHtml}
+          </div>
+        `;
+        
+        // Draw snowball chart
+        const canvas = document.getElementById("snowballCanvas");
+        if (canvas) {
+            const ctx = canvas.getContext("2d");
+            const dpr = window.devicePixelRatio || 1;
+            const w = canvas.parentElement.clientWidth;
+            const h = 140;
+            canvas.width = w * dpr;
+            canvas.height = h * dpr;
+            canvas.style.width = w + "px";
+            canvas.style.height = h + "px";
+            ctx.scale(dpr, dpr);
+            
+            ctx.clearRect(0,0,w,h);
+            const sd = session.snowballData;
+            const maxVal = Math.max(...sd.map(d => d.inputTokens));
+            
+            ctx.beginPath();
+            ctx.strokeStyle = "#8b5cf6";
+            ctx.lineWidth = 2;
+            ctx.lineJoin = "round";
+            const step = w / Math.max(sd.length - 1, 1);
+            sd.forEach((d, i) => {
+                const x = i * step;
+                const y = h - (d.inputTokens / maxVal) * h * 0.9;
+                if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+            });
+            ctx.stroke();
+            
+            // Fill area
+            ctx.lineTo(w, h);
+            ctx.lineTo(0, h);
+            ctx.fillStyle = "rgba(139, 92, 246, 0.1)";
+            ctx.fill();
+        }
+      }
 
-  document.getElementById('drilldownTitle').textContent = session.firstPrompt.substring(0, 140);
-  document.getElementById('drilldownMeta').textContent =
-    `${formatDate(session.date)} \u00B7 ${modelShort(session.model)} \u00B7 ${session.queryCount} messages \u00B7 ${fmt(session.totalTokens)} tokens used`;
+      // F4: Token Waterfall
+      function renderWaterfall(grouped, session) {
+        const section = document.getElementById('waterfallSection');
+        if (!section || !grouped || grouped.length < 2) {
+          if (section) section.style.display = 'none';
+          return;
+        }
+        section.style.display = 'block';
 
-  const grouped = [];
-  let current = null;
-  for (const q of session.queries) {
-    if (q.userPrompt) {
-      if (current) grouped.push(current);
-      current = { prompt: q.userPrompt, inputTokens: q.inputTokens, outputTokens: q.outputTokens, totalTokens: q.totalTokens, continuations: 0 };
-    } else if (current) {
-      current.inputTokens += q.inputTokens;
-      current.outputTokens += q.outputTokens;
-      current.totalTokens += q.totalTokens;
-      current.continuations++;
-    }
-  }
-  if (current) grouped.push(current);
+        const maxTokens = Math.max(...grouped.map(g => g.totalTokens), 1);
+        const sessionAvg = grouped.reduce((s, g) => s + g.totalTokens, 0) / grouped.length;
 
-  document.getElementById('queryList').innerHTML = grouped.map((q, i) => {
-    const cont = q.continuations > 0 ? ` + ${q.continuations} tool uses` : '';
-    return `<div class="query-item">
+        const rows = grouped.map((g, i) => {
+          const isSpike = g.totalTokens > sessionAvg * 2 && sessionAvg > 500;
+          const inputPct  = Math.min(100, (g.inputTokens  / maxTokens) * 100).toFixed(1);
+          const outputPct = Math.min(100 - parseFloat(inputPct), (g.outputTokens / maxTokens) * 100).toFixed(1);
+          const label = g.prompt.length > 35 ? g.prompt.substring(0, 35) + '…' : g.prompt;
+          return `
+            <div class="waterfall-row${isSpike ? ' spike-highlight' : ''}">
+              <div class="waterfall-label" title="${escapeHtml(g.prompt)}">${i + 1}. ${escapeHtml(label)}</div>
+              <div class="waterfall-track">
+                <div class="waterfall-bar-input"  style="width:${inputPct}%"></div>
+                <div class="waterfall-bar-output" style="width:${outputPct}%"></div>
+              </div>
+              <div class="waterfall-stat${isSpike ? ' spike' : ''}">${fmt(g.totalTokens)}${isSpike ? '<span class="spike-badge">⚡</span>' : ''}</div>
+            </div>`;
+        }).join('');
+
+        section.innerHTML = `
+          <div class="waterfall-container">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+              <div class="coaching-title" style="margin-bottom:0;">📊 Token Waterfall — bars grow wider as context accumulates</div>
+              <div class="wf-legend">
+                <span class="wf-legend-dot" style="background:#6366f1"></span> Input (read)
+                <span class="wf-legend-dot" style="background:#14b8a6;margin-left:8px"></span> Output (written)
+                <span style="margin-left:8px;background:#fef3c7;padding:1px 5px;border-radius:3px;font-size:10px;color:#92400e;font-weight:600;">⚡ = token spike (&gt;2× avg)</span>
+              </div>
+            </div>
+            <div class="waterfall-bars">${rows}</div>
+          </div>`;
+      }
+
+      function openDrilldown(sessionId) {
+        const session = DATA.sessions.find((s) => s.sessionId === sessionId);
+        if (!session) return;
+
+        document.getElementById('drilldownTitle').textContent = session.firstPrompt.substring(0, 140);
+        const costPart = (session.estimatedCost || 0) > 0
+          ? ` · ${fmtCost(session.estimatedCost)}`
+          : '';
+        document.getElementById('drilldownMeta').textContent =
+          `${formatDate(session.date)} · ${modelShort(session.model)} · ${session.queryCount} messages · ${fmt(session.totalTokens)} tokens${costPart}`;
+        const grouped = [];
+        let current = null;
+        let cumulativeContext = 0;
+        for (const q of session.queries) {
+          if (q.userPrompt) {
+            if (current) grouped.push(current);
+            current = {
+              prompt: q.userPrompt,
+              inputTokens: q.inputTokens,
+              outputTokens: q.outputTokens,
+              totalTokens: q.totalTokens,
+              estimatedCost: q.estimatedCost || 0,
+              continuations: 0,
+              tools: [...(q.tools || [])],
+              contextAtTurn: cumulativeContext,
+            };
+          } else if (current) {
+            current.inputTokens += q.inputTokens;
+            current.outputTokens += q.outputTokens;
+            current.totalTokens += q.totalTokens;
+            current.estimatedCost += (q.estimatedCost || 0);
+            current.continuations++;
+            if (q.tools) current.tools.push(...q.tools);
+          }
+          cumulativeContext += q.inputTokens;
+        }
+        if (current) grouped.push(current);
+
+        document.getElementById('queryList').innerHTML = grouped.map((q, i) => {
+          const cont = q.continuations > 0 ? ` + ${q.continuations} tool uses` : '';
+          const costBadge = q.estimatedCost > 0
+            ? `<span class="cost-badge" style="font-size:11px">${fmtCost(q.estimatedCost)}</span> `
+            : '';
+            
+          // F13: Tool Chain Pipeline
+          let toolHtml = '';
+          if (q.tools && q.tools.length > 0) {
+              const nodes = q.tools.map(t => {
+                  let icon = '🔧', cls = '';
+                  const n = t.name || t;
+                  if (n.includes('Search') || n.includes('List')) { icon = '🔍'; cls = 'search'; }
+                  else if (n.includes('Read')) { icon = '📄'; cls = 'read'; }
+                  else if (n.includes('Write') || n.includes('Replace')) { icon = '✏️'; cls = 'write'; }
+                  else if (n.includes('Bash') || n.includes('Command')) { icon = '>_'; cls = 'bash'; }
+                  return `<span class="tool-node ${cls}">${icon} ${escapeHtml(n.split('_')[0])}</span>`;
+              });
+              toolHtml = `<div class="tool-pipeline">${nodes.join('<span class="tool-arrow">→</span>')}</div>`;
+          }
+          
+          // F11: Cost Driver Analysis Tag
+          let driverHtml = '';
+          if (q.contextAtTurn > 50000 || (q.tools && q.tools.length > 3) || q.prompt.length < 30) {
+             driverHtml = '<div class="coaching-panel" style="margin-top:16px;">';
+             driverHtml += '<div class="coaching-title">Cost Drivers</div><div class="driver-tags">';
+             if (q.contextAtTurn > 50000) driverHtml += `<span class="driver-tag high">⚠️ Deep Context (${fmt(q.contextAtTurn)} prior tokens)</span>`;
+             let searchCount = q.tools.filter(t => (t.name||t).includes('Search') || (t.name||t).includes('List')).length;
+             if (searchCount > 2) driverHtml += `<span class="driver-tag med">🔍 High Search Fanout (${searchCount} calls)</span>`;
+             let writeCount = q.tools.filter(t => (t.name||t).includes('Write')).length;
+             if (writeCount > 1) driverHtml += `<span class="driver-tag med">🔁 Multiple Rewrites (${writeCount} writes)</span>`;
+             if (q.prompt.length < 30 && q.totalTokens > 10000) driverHtml += `<span class="driver-tag high">🤔 Very Short Prompt (${q.prompt.length} chars)</span>`;
+             driverHtml += '</div>';
+             
+             if (searchCount > 2 && q.prompt.length < 50) {
+                driverHtml += `<div class="prompt-suggestion">💡 Tip: Avoid vague prompts. Mention exact file paths or give more context to skip expensive search loops.</div>`;
+             } else if (writeCount > 1) {
+                driverHtml += `<div class="prompt-suggestion">💡 Tip: Claude rewrote files multiple times. Include clearer acceptance criteria upfront.</div>`;
+             } else if (q.contextAtTurn > 50000 && q.continuations === 0) {
+                driverHtml += `<div class="prompt-suggestion">💡 Tip: This conversation is getting very long and expensive to continue. Consider wrapping it up and starting fresh.</div>`;
+             }
+             
+             driverHtml += '</div>';
+          }
+
+          return `<div class="query-item">
       <div class="query-num">${i + 1}</div>
-      <div class="query-prompt">${escapeHtml(q.prompt.substring(0, 500))}</div>
+      <div style="flex:1;">
+          <div class="query-prompt">${escapeHtml(q.prompt.substring(0, 500))}</div>
+          ${toolHtml}
+          ${driverHtml}
+      </div>
       <div class="query-tokens-col">
-        <div class="total">${fmt(q.totalTokens)}</div>
+        <div class="total">${costBadge}${fmt(q.totalTokens)}</div>
         <div class="detail">${fmt(q.inputTokens)} read / ${fmt(q.outputTokens)} written${cont}</div>
       </div>
     </div>`;
-  }).join('');
+        }).join('');
 
-  const panel = document.getElementById('drilldown');
-  panel.classList.add('open');
-  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
+        renderWaterfall(grouped, session);
+        renderCoachingOverview(session);
 
-function closeDrilldown() {
-  document.getElementById('drilldown').classList.remove('open');
-}
+        const panel = document.getElementById('drilldown');
+        panel.classList.add('open');
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
 
-fetchData();
-window.addEventListener('resize', () => { if (DATA) { renderDailyChart(); renderModelChart(); } });
-</script>
-</body>
+
+      function closeDrilldown() {
+        document.getElementById("drilldown").classList.remove("open");
+      }
+
+      // ---- F7: LIVE MODE ----
+      let liveMode = localStorage.getItem('claude-spend-live') === 'true';
+      let liveEventSource = null;
+
+      function updateLiveModeUI() {
+        const btn = document.getElementById('liveToggleBtn');
+        const dot = document.getElementById('liveDot');
+        if (!btn || !dot) return;
+        if (liveMode) {
+          dot.classList.add('active');
+          btn.style.color = '#059669';
+          btn.style.borderColor = '#10b981';
+        } else {
+          dot.classList.remove('active');
+          btn.style.color = '';
+          btn.style.borderColor = '';
+        }
+      }
+
+      function connectLiveMode() {
+        if (liveEventSource) liveEventSource.close();
+        liveEventSource = new EventSource('/api/events');
+        liveEventSource.onmessage = async (e) => {
+          try {
+            const msg = JSON.parse(e.data);
+            if (msg.type === 'update') {
+              await refreshData();
+              // Flash stat cards to indicate fresh data
+              document.querySelectorAll('.stat-card').forEach(card => {
+                card.classList.add('card-flash');
+                setTimeout(() => card.classList.remove('card-flash'), 600);
+              });
+            }
+          } catch { /* ignore parse errors */ }
+        };
+        liveEventSource.onerror = () => {
+          // Connection dropped — keep liveMode state but stop trying silently
+          updateLiveModeUI();
+        };
+      }
+
+      function disconnectLiveMode() {
+        if (liveEventSource) { liveEventSource.close(); liveEventSource = null; }
+      }
+
+      function toggleLiveMode() {
+        liveMode = !liveMode;
+        localStorage.setItem('claude-spend-live', liveMode);
+        updateLiveModeUI();
+        if (liveMode) connectLiveMode(); else disconnectLiveMode();
+      }
+
+      function initLiveMode() {
+        updateLiveModeUI();
+        if (liveMode) connectLiveMode();
+      }
+
+      fetchData().then(() => initLiveMode());
+      window.addEventListener("resize", () => {
+        if (DATA) {
+          renderDailyChart();
+          renderModelChart();
+        }
+      });
+    </script>
+  </body>
 </html>
