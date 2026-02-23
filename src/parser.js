@@ -78,147 +78,66 @@ function extractSessionData(entries) {
   return queries;
 }
 
-async function parseAllSessions() {
-  const claudeDir = getClaudeDir();
-  const projectsDir = path.join(claudeDir, 'projects');
-
-  if (!fs.existsSync(projectsDir)) {
-    return { sessions: [], dailyUsage: [], modelBreakdown: [], topPrompts: [], totals: {} };
-  }
-
-  // Read history.jsonl for prompt display text
-  const historyPath = path.join(claudeDir, 'history.jsonl');
-  const historyEntries = fs.existsSync(historyPath) ? await parseJSONLFile(historyPath) : [];
-
-  // Build a map: sessionId -> first meaningful prompt
-  const sessionFirstPrompt = {};
-  for (const entry of historyEntries) {
-    if (entry.sessionId && entry.display && !sessionFirstPrompt[entry.sessionId]) {
-      const display = entry.display.trim();
-      if (display.startsWith('/') && display.length < 30) continue;
-      sessionFirstPrompt[entry.sessionId] = display;
-    }
-  }
-
-  const projectDirs = fs.readdirSync(projectsDir).filter(d => {
-    return fs.statSync(path.join(projectsDir, d)).isDirectory();
-  });
-
-  const sessions = [];
+function buildAggregates(sessions) {
   const dailyMap = {};
   const modelMap = {};
-  const allPrompts = []; // for "most expensive prompts" across all sessions
+  const allPrompts = [];
 
-  for (const projectDir of projectDirs) {
-    const dir = path.join(projectsDir, projectDir);
-    const files = fs.readdirSync(dir).filter(f => f.endsWith('.jsonl'));
+  for (const session of sessions) {
+    const { sessionId, project, date, model: primaryModel, queries, inputTokens, outputTokens, totalTokens, queryCount } = session;
 
-    for (const file of files) {
-      const filePath = path.join(dir, file);
-      const sessionId = path.basename(file, '.jsonl');
-
-      let entries;
-      try {
-        entries = await parseJSONLFile(filePath);
-      } catch {
-        continue;
+    // Collect per-prompt data for "most expensive prompts"
+    let currentPrompt = null;
+    let promptInput = 0, promptOutput = 0;
+    const flushPrompt = () => {
+      if (currentPrompt && (promptInput + promptOutput) > 0) {
+        allPrompts.push({
+          prompt: currentPrompt.substring(0, 300),
+          inputTokens: promptInput,
+          outputTokens: promptOutput,
+          totalTokens: promptInput + promptOutput,
+          date,
+          sessionId,
+          model: primaryModel,
+        });
       }
-      if (entries.length === 0) continue;
-
-      const queries = extractSessionData(entries);
-      if (queries.length === 0) continue;
-
-      let inputTokens = 0, outputTokens = 0;
-      for (const q of queries) {
-        inputTokens += q.inputTokens;
-        outputTokens += q.outputTokens;
+    };
+    for (const q of queries) {
+      if (q.userPrompt && q.userPrompt !== currentPrompt) {
+        flushPrompt();
+        currentPrompt = q.userPrompt;
+        promptInput = 0;
+        promptOutput = 0;
       }
-      const totalTokens = inputTokens + outputTokens;
+      promptInput += q.inputTokens;
+      promptOutput += q.outputTokens;
+    }
+    flushPrompt();
 
-      const firstTimestamp = entries.find(e => e.timestamp)?.timestamp;
-      const date = firstTimestamp ? firstTimestamp.split('T')[0] : 'unknown';
-
-      // Primary model
-      const modelCounts = {};
-      for (const q of queries) {
-        modelCounts[q.model] = (modelCounts[q.model] || 0) + 1;
+    // Daily
+    if (date !== 'unknown') {
+      if (!dailyMap[date]) {
+        dailyMap[date] = { date, inputTokens: 0, outputTokens: 0, totalTokens: 0, sessions: 0, queries: 0 };
       }
-      const primaryModel = Object.entries(modelCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'unknown';
+      dailyMap[date].inputTokens += inputTokens;
+      dailyMap[date].outputTokens += outputTokens;
+      dailyMap[date].totalTokens += totalTokens;
+      dailyMap[date].sessions += 1;
+      dailyMap[date].queries += queryCount;
+    }
 
-      const firstPrompt = sessionFirstPrompt[sessionId]
-        || queries.find(q => q.userPrompt)?.userPrompt
-        || '(no prompt)';
-
-      // Collect per-prompt data for "most expensive prompts"
-      // Group consecutive queries under the same user prompt
-      let currentPrompt = null;
-      let promptInput = 0, promptOutput = 0;
-      const flushPrompt = () => {
-        if (currentPrompt && (promptInput + promptOutput) > 0) {
-          allPrompts.push({
-            prompt: currentPrompt.substring(0, 300),
-            inputTokens: promptInput,
-            outputTokens: promptOutput,
-            totalTokens: promptInput + promptOutput,
-            date,
-            sessionId,
-            model: primaryModel,
-          });
-        }
-      };
-      for (const q of queries) {
-        if (q.userPrompt && q.userPrompt !== currentPrompt) {
-          flushPrompt();
-          currentPrompt = q.userPrompt;
-          promptInput = 0;
-          promptOutput = 0;
-        }
-        promptInput += q.inputTokens;
-        promptOutput += q.outputTokens;
+    // Model
+    for (const q of queries) {
+      if (q.model === '<synthetic>' || q.model === 'unknown') continue;
+      if (!modelMap[q.model]) {
+        modelMap[q.model] = { model: q.model, inputTokens: 0, outputTokens: 0, totalTokens: 0, queryCount: 0 };
       }
-      flushPrompt();
-
-      sessions.push({
-        sessionId,
-        project: projectDir,
-        date,
-        timestamp: firstTimestamp,
-        firstPrompt: firstPrompt.substring(0, 200),
-        model: primaryModel,
-        queryCount: queries.length,
-        queries,
-        inputTokens,
-        outputTokens,
-        totalTokens,
-      });
-
-      // Daily
-      if (date !== 'unknown') {
-        if (!dailyMap[date]) {
-          dailyMap[date] = { date, inputTokens: 0, outputTokens: 0, totalTokens: 0, sessions: 0, queries: 0 };
-        }
-        dailyMap[date].inputTokens += inputTokens;
-        dailyMap[date].outputTokens += outputTokens;
-        dailyMap[date].totalTokens += totalTokens;
-        dailyMap[date].sessions += 1;
-        dailyMap[date].queries += queries.length;
-      }
-
-      // Model
-      for (const q of queries) {
-        if (q.model === '<synthetic>' || q.model === 'unknown') continue;
-        if (!modelMap[q.model]) {
-          modelMap[q.model] = { model: q.model, inputTokens: 0, outputTokens: 0, totalTokens: 0, queryCount: 0 };
-        }
-        modelMap[q.model].inputTokens += q.inputTokens;
-        modelMap[q.model].outputTokens += q.outputTokens;
-        modelMap[q.model].totalTokens += q.totalTokens;
-        modelMap[q.model].queryCount += 1;
-      }
+      modelMap[q.model].inputTokens += q.inputTokens;
+      modelMap[q.model].outputTokens += q.outputTokens;
+      modelMap[q.model].totalTokens += q.totalTokens;
+      modelMap[q.model].queryCount += 1;
     }
   }
-
-  sessions.sort((a, b) => b.totalTokens - a.totalTokens);
 
   // Build per-project aggregation
   const projectMap = {};
@@ -301,7 +220,6 @@ async function parseAllSessions() {
 
   const dailyUsage = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
 
-  // Top 20 most expensive individual prompts
   allPrompts.sort((a, b) => b.totalTokens - a.totalTokens);
   const topPrompts = allPrompts.slice(0, 20);
 
@@ -324,7 +242,6 @@ async function parseAllSessions() {
     grandTotals.avgTokensPerSession = Math.round(grandTotals.totalTokens / grandTotals.totalSessions);
   }
 
-  // Generate insights
   const insights = generateInsights(sessions, allPrompts, grandTotals);
 
   return {
@@ -336,6 +253,104 @@ async function parseAllSessions() {
     totals: grandTotals,
     insights,
   };
+}
+
+function filterByDateRange(data, from, to) {
+  const filtered = data.sessions.filter(s => {
+    if (s.date === 'unknown') return false;
+    if (from && s.date < from) return false;
+    if (to && s.date > to) return false;
+    return true;
+  });
+  return buildAggregates(filtered);
+}
+
+async function parseAllSessions() {
+  const claudeDir = getClaudeDir();
+  const projectsDir = path.join(claudeDir, 'projects');
+
+  if (!fs.existsSync(projectsDir)) {
+    return buildAggregates([]);
+  }
+
+  // Read history.jsonl for prompt display text
+  const historyPath = path.join(claudeDir, 'history.jsonl');
+  const historyEntries = fs.existsSync(historyPath) ? await parseJSONLFile(historyPath) : [];
+
+  // Build a map: sessionId -> first meaningful prompt
+  const sessionFirstPrompt = {};
+  for (const entry of historyEntries) {
+    if (entry.sessionId && entry.display && !sessionFirstPrompt[entry.sessionId]) {
+      const display = entry.display.trim();
+      if (display.startsWith('/') && display.length < 30) continue;
+      sessionFirstPrompt[entry.sessionId] = display;
+    }
+  }
+
+  const projectDirs = fs.readdirSync(projectsDir).filter(d => {
+    return fs.statSync(path.join(projectsDir, d)).isDirectory();
+  });
+
+  const sessions = [];
+
+  for (const projectDir of projectDirs) {
+    const dir = path.join(projectsDir, projectDir);
+    const files = fs.readdirSync(dir).filter(f => f.endsWith('.jsonl'));
+
+    for (const file of files) {
+      const filePath = path.join(dir, file);
+      const sessionId = path.basename(file, '.jsonl');
+
+      let entries;
+      try {
+        entries = await parseJSONLFile(filePath);
+      } catch {
+        continue;
+      }
+      if (entries.length === 0) continue;
+
+      const queries = extractSessionData(entries);
+      if (queries.length === 0) continue;
+
+      let inputTokens = 0, outputTokens = 0;
+      for (const q of queries) {
+        inputTokens += q.inputTokens;
+        outputTokens += q.outputTokens;
+      }
+      const totalTokens = inputTokens + outputTokens;
+
+      const firstTimestamp = entries.find(e => e.timestamp)?.timestamp;
+      const date = firstTimestamp ? firstTimestamp.split('T')[0] : 'unknown';
+
+      // Primary model
+      const modelCounts = {};
+      for (const q of queries) {
+        modelCounts[q.model] = (modelCounts[q.model] || 0) + 1;
+      }
+      const primaryModel = Object.entries(modelCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'unknown';
+
+      const firstPrompt = sessionFirstPrompt[sessionId]
+        || queries.find(q => q.userPrompt)?.userPrompt
+        || '(no prompt)';
+
+      sessions.push({
+        sessionId,
+        project: projectDir,
+        date,
+        timestamp: firstTimestamp,
+        firstPrompt: firstPrompt.substring(0, 200),
+        model: primaryModel,
+        queryCount: queries.length,
+        queries,
+        inputTokens,
+        outputTokens,
+        totalTokens,
+      });
+    }
+  }
+
+  sessions.sort((a, b) => b.totalTokens - a.totalTokens);
+  return buildAggregates(sessions);
 }
 
 function generateInsights(sessions, allPrompts, totals) {
@@ -547,4 +562,4 @@ function fmt(n) {
   return n.toLocaleString();
 }
 
-module.exports = { parseAllSessions };
+module.exports = { parseAllSessions, filterByDateRange };
