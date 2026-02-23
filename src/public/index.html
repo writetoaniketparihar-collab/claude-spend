@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>(function() {
+  const saved = localStorage.getItem('theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (saved === 'dark' || (!saved && prefersDark)) {
+    document.documentElement.dataset.theme = 'dark';
+  }
+})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Claude Spend</title>
@@ -130,9 +137,10 @@
 
   /* ---- STAT CARDS ---- */
   .stats-row {
-    display: grid; grid-template-columns: repeat(4, 1fr);
+    display: grid; grid-template-columns: repeat(5, 1fr);
     gap: 16px; margin-bottom: 32px;
   }
+  @media (max-width: 1100px) { .stats-row { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 780px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
 
   .stat-card {
@@ -167,8 +175,8 @@
     bottom: calc(100% + 10px);
     left: 50%;
     transform: translateX(-50%);
-    background: var(--text);
-    color: #F8FAFC;
+    background: #1E293B;
+    color: #E2E8F0;
     font-size: 12px;
     font-weight: 500;
     line-height: 1.5;
@@ -194,7 +202,7 @@
     left: 50%;
     transform: translateX(-50%);
     border: 6px solid transparent;
-    border-top-color: var(--text);
+    border-top-color: #1E293B;
   }
   .has-tooltip:hover .tooltip {
     opacity: 1;
@@ -209,7 +217,7 @@
     top: auto;
     bottom: 100%;
     border-top-color: transparent;
-    border-bottom-color: var(--text);
+    border-bottom-color: #1E293B;
   }
   /* Help icon next to labels */
   .help-icon {
@@ -370,15 +378,16 @@
   .proj-row { cursor: pointer; }
   .proj-row:hover td { background: #FAFBFF; }
   .proj-row.expanded .proj-chevron { transform: rotate(90deg); }
-  .proj-drawer td { padding: 0; border-bottom: 1px solid var(--border); }
-  .proj-drawer-inner { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; background: #FAFBFC; }
+  .proj-drawer td { padding: 0; border-bottom: none; }
+  .proj-drawer.open td { border-bottom: 1px solid var(--border); }
+  .proj-drawer-inner { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
   .proj-drawer.open .proj-drawer-inner { max-height: 600px; }
-  .proj-drawer-content { padding: 12px 16px 16px; }
+  .proj-drawer-content { padding: 16px; border-top: 1px solid var(--border); }
   .drawer-prompt-list { display: flex; flex-direction: column; gap: 8px; }
   .drawer-prompt-row {
     display: grid; grid-template-columns: 24px 1fr auto;
     gap: 10px; padding: 10px 14px; align-items: start;
-    background: white; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--white); border: 1px solid var(--border); border-radius: 10px;
     cursor: pointer; transition: box-shadow 0.15s;
   }
   .drawer-prompt-row:hover { box-shadow: var(--shadow-md); }
@@ -433,6 +442,8 @@
     cursor: pointer; user-select: none; white-space: nowrap;
     background: #FAFBFC;
   }
+  .sessions-table thead th:first-child { border-top-left-radius: calc(var(--radius) - 1px); }
+  .sessions-table thead th:last-child { border-top-right-radius: calc(var(--radius) - 1px); }
   .sessions-table th:hover { color: var(--text-secondary); }
   .sessions-table th.sorted { color: var(--indigo); }
   .sessions-table td {
@@ -465,25 +476,39 @@
   .model-opus .model-dot { background: #4F46E5; }
   .model-sonnet .model-dot { background: #10B981; }
   .model-haiku .model-dot { background: #F97316; }
-  /* Sub-line pills in project rows — compact variant */
-  .model-pills {
-    list-style: none; padding: 0; margin: 5px 0 0;
-    display: flex; flex-wrap: wrap; gap: 4px;
+  /* Model grid in project rows — compact aligned columns */
+  .model-grid {
+    display: grid;
+    grid-template-columns: auto auto auto auto auto;
+    gap: 1px 12px;
+    margin: 6px 0 0;
+    font-size: 12px;
+    align-items: baseline;
   }
-  .model-pills li { display: flex; }
-  .model-pills .model-badge {
-    padding: 2px 8px; font-size: 11px; border-radius: 10px;
+  .model-grid-name {
+    display: flex; align-items: center; gap: 5px;
+    font-weight: 600; white-space: nowrap;
+  }
+  .model-grid-val {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 11px;
+    text-align: right;
+    white-space: nowrap;
+    color: var(--text-secondary);
+  }
+  .model-grid-prompts {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    text-align: right;
+    white-space: nowrap;
   }
   /* Screen-reader-only label (WCAG 2.1 compliant) */
   .sr-only {
     position: absolute; width: 1px; height: 1px; padding: 0;
     margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
     white-space: nowrap; border-width: 0;
-  }
-  /* Inline ↓in ↑out token pair inside a model badge */
-  .token-detail {
-    display: inline-flex; align-items: center; gap: 2px;
-    font-size: 10px; font-weight: 600; opacity: 0.9;
   }
   /* Project name styled as path */
   .proj-name {
@@ -568,10 +593,68 @@
     font-size: 15px; color: var(--text-secondary); font-weight: 500;
     max-width: 600px; margin: 0 auto; line-height: 1.7;
   }
+
+  /* ---- DARK THEME ---- */
+  [data-theme="dark"] {
+    --bg: #0D1117;
+    --bg-mesh-1: #1A1B3A;
+    --bg-mesh-2: #0D2420;
+    --white: #161B22;
+    --text: #E2E8F0;
+    --text-secondary: #94A3B8;
+    --text-tertiary: #8B95A5;
+    --border: rgba(255,255,255,0.07);
+    --border-strong: rgba(255,255,255,0.12);
+    --indigo: #818CF8;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+    --shadow-glow: 0 0 40px rgba(99,102,241,0.25);
+  }
+  [data-theme="dark"] body::before {
+    background:
+      radial-gradient(ellipse 80% 60% at 10% 0%, rgba(99,102,241,0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 90% 10%, rgba(139,92,246,0.14) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 40% at 50% 20%, rgba(20,184,166,0.10) 0%, transparent 50%);
+  }
+  /* Toggle button */
+  .theme-toggle {
+    background: var(--white); border: 1px solid var(--border);
+    color: var(--text-secondary); width: 34px; height: 34px;
+    border-radius: 20px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .theme-toggle:hover { border-color: var(--indigo); color: var(--indigo); box-shadow: 0 2px 8px rgba(99,102,241,0.12); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--indigo); outline-offset: 2px; }
+  .theme-toggle svg { width: 15px; height: 15px; }
+  /* Selector-specific dark overrides */
+  [data-theme="dark"] .prompt-row:hover { background: rgba(255,255,255,0.08); }
+  [data-theme="dark"] .proj-row:hover td { background: rgba(255,255,255,0.08); }
+  [data-theme="dark"] .sessions-table th { background: rgba(255,255,255,0.08); }
+  [data-theme="dark"] .sessions-table tbody tr:hover td { background: rgba(255,255,255,0.08); }
+  [data-theme="dark"] .query-item:hover { background: rgba(255,255,255,0.08); }
+  [data-theme="dark"] .drilldown-close:hover { background: #1E2A5E; color: var(--indigo); }
+  [data-theme="dark"] .privacy-notice { background: rgba(99,102,241,0.12); border-color: rgba(99,102,241,0.2); }
+  [data-theme="dark"] .model-opus   { background: #1E2A5E; color: #A5B4FC; }
+  [data-theme="dark"] .model-sonnet { background: #0D2E1F; color: #4EE993; }
+  [data-theme="dark"] .model-haiku  { background: #2A1A0A; color: #FBBF24; }
+  [data-theme="dark"] .model-unknown{ background: #1E293B; color: #CBD5E1; }
+  [data-theme="dark"] .insight-card.warning .insight-indicator { background: linear-gradient(135deg, #78350F, #92400E); }
+  [data-theme="dark"] .insight-card.info .insight-indicator { background: linear-gradient(135deg, #1E2A5E, #2D3A8C); }
+  [data-theme="dark"] .insight-card.neutral .insight-indicator { background: linear-gradient(135deg, #1E293B, #334155); }
+  [data-theme="dark"] .help-icon { background: rgba(255,255,255,0.12); color: var(--text-secondary); }
+  [data-theme="dark"] .section-icon-insights { background: linear-gradient(135deg, #78350F, #92400E) !important; }
+  [data-theme="dark"] .section-icon-prompts  { background: linear-gradient(135deg, #1E2A5E, #2D3A8C) !important; }
+  [data-theme="dark"] .section-icon-sessions { background: linear-gradient(135deg, #0D2E1F, #14532D) !important; }
+  [data-theme="dark"] .section-icon-sessions svg { stroke: #4ADE80; }
+  [data-theme="dark"] .section-icon-projects { background: linear-gradient(135deg, #4C1D95, #6D28D9) !important; }
+  [data-theme="dark"] .section-icon-projects svg { stroke: #C4B5FD; }
 </style>
 </head>
 <body>
 
+<main>
 <div id="loading" class="loading">
   <div class="spinner"></div>
   <div class="loading-text">Reading your Claude Code sessions...</div>
@@ -593,6 +676,7 @@
       <h1>Claude Spend</h1>
     </div>
     <div class="header-right">
+      <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode"></button>
       <span id="dateRange" class="date-range"></span>
       <button class="refresh-btn" onclick="refreshData()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
@@ -610,13 +694,13 @@
   <!-- Stats -->
   <div class="stats-row" id="statsRow"></div>
   <div id="tokenExplainer" class="token-explainer animate delay-2">
-    Tokens are how AI measures text -- roughly 1 token = 1 word. Hover over any label with a <span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:rgba(0,0,0,0.08);font-size:10px;font-weight:700;vertical-align:middle;">?</span> for an explanation.
+    Tokens are how AI measures text -- roughly 1 token = 1 word. Hover over any label with a <span class="help-icon">?</span> for an explanation.
   </div>
 
   <!-- Insights -->
   <div id="insightsSection" class="insights-section" style="display:none">
     <div class="section-header animate">
-      <div class="section-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A)">
+      <div class="section-icon section-icon-insights" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A)">
         <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round"><path d="M12 2a7 7 0 0 1 4 12.75V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.25A7 7 0 0 1 12 2z"/><path d="M9 21h6"/></svg>
       </div>
       <div class="section-title">Insights</div>
@@ -644,7 +728,7 @@
   <!-- Projects -->
   <div class="projects-section animate delay-4">
     <div class="section-header">
-      <div class="section-icon" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE)">
+      <div class="section-icon section-icon-projects" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE)">
         <svg viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M12 3v18"/><path d="M3 7l9 4 9-4"/></svg>
       </div>
       <div class="section-title">Projects</div>
@@ -655,9 +739,11 @@
         <thead>
           <tr>
             <th>Project</th>
+            <th style="text-align:right" class="has-tooltip has-tooltip-below">Est. Cost<div class="tooltip">Estimated API cost with caching discount applied. Hover a row to see cost without cache.</div></th>
             <th style="text-align:right">Total Tokens</th>
             <th style="text-align:right">Sessions</th>
             <th style="text-align:right">Queries</th>
+            <th style="text-align:right">Your Prompts</th>
           </tr>
         </thead>
         <tbody id="projectsBody"></tbody>
@@ -668,7 +754,7 @@
   <!-- Most Expensive Prompts -->
   <div class="top-prompts animate delay-4">
     <div class="section-header">
-      <div class="section-icon" style="background:linear-gradient(135deg,#E0E7FF,#C7D2FE)">
+      <div class="section-icon section-icon-prompts" style="background:linear-gradient(135deg,#E0E7FF,#C7D2FE)">
         <svg viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
       </div>
       <div class="section-title has-tooltip has-tooltip-below" style="display:inline-flex">Most Expensive Prompts<div class="tooltip">Your top 20 individual messages ranked by how many tokens they used. Short vague messages like "Yes" often rank highest because they trigger long chains of tool calls where Claude tries to figure out what you meant.</div></div>
@@ -691,7 +777,7 @@
   <!-- All Sessions -->
   <div class="sessions-section animate delay-5">
     <div class="section-header">
-      <div class="section-icon" style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5)">
+      <div class="section-icon section-icon-sessions" style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5)">
         <svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
       </div>
       <div class="section-title">All Sessions</div>
@@ -722,11 +808,24 @@
     Made with <a href="https://claude.ai/code" target="_blank">Claude Code</a> and &#10084; by <a href="https://www.linkedin.com/in/aniketparihar/" target="_blank">Aniket</a>
   </div>
 </div>
+</main>
 
 <script>
 let DATA = null;
 let currentSort = { key: 'total', dir: 'desc' };
 let searchQuery = '';
+
+function isDark() { return document.documentElement.dataset.theme === 'dark'; }
+function getChartColors() {
+  const dark = isDark();
+  return {
+    gridLine:   dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+    axisText:   dark ? '#8B95A5' : '#94A3B8',
+    centerText: dark ? '#E2E8F0' : '#0F172A',
+    centerSub:  dark ? '#8B95A5' : '#94A3B8',
+    donutGap:   dark ? '#161B22' : '#FFFFFF',
+  };
+}
 
 function fmt(n) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -735,6 +834,13 @@ function fmt(n) {
   return n.toLocaleString();
 }
 function fmtFull(n) { return n.toLocaleString(); }
+function fmtCost(n) {
+  if (n >= 100) return '$' + n.toFixed(0);
+  if (n >= 10) return '$' + n.toFixed(1);
+  if (n >= 1) return '$' + n.toFixed(2);
+  if (n >= 0.01) return '$' + n.toFixed(2);
+  return '<$0.01';
+}
 
 function modelClass(m) {
   if (m.includes('opus')) return 'model-opus';
@@ -820,15 +926,20 @@ function renderStats() {
   const range = t.dateRange ? `${formatDate(t.dateRange.from)} - ${formatDate(t.dateRange.to)}` : '';
   document.getElementById('dateRange').textContent = range;
 
+  const cacheSavings = t.costWithoutCache - t.costWithCache;
+  const cacheSavingsPct = t.costWithoutCache > 0 ? ((cacheSavings / t.costWithoutCache) * 100).toFixed(0) : 0;
+
   const cards = [
+    { label: 'Estimated Cost', value: fmtCost(t.costWithCache), sub: `${fmtCost(t.costWithoutCache)} without caching (saved ${cacheSavingsPct}%)`,
+      tip: 'Estimated API cost based on Anthropic\'s published pricing. "With cache" uses the discounted rate for cached tokens. "Without cache" shows what it would cost if every token were billed at the base input rate.' },
     { label: 'Total Usage', value: fmt(t.totalTokens), sub: `${fmt(t.totalInputTokens)} read by Claude + ${fmt(t.totalOutputTokens)} written back`,
       tip: 'The total number of tokens used across all your conversations. This includes everything Claude reads (your messages, conversation history, files) plus everything Claude writes back.' },
     { label: 'Conversations', value: fmtFull(t.totalSessions), sub: `Each one used ~${fmt(t.avgTokensPerSession)} tokens on average`,
       tip: 'Each time you start Claude Code and begin chatting, that counts as one conversation. A new conversation starts fresh with no prior context.' },
-    { label: 'Messages Sent', value: fmtFull(t.totalQueries), sub: `Each message cost ~${fmt(t.avgTokensPerQuery)} tokens on average`,
+    { label: 'Messages Sent', value: fmtFull(t.totalQueries), sub: `Includes Claude's auto tool-call rounds; ~${fmt(t.avgTokensPerQuery)} tokens each`,
       tip: 'Every time you hit Enter and send something to Claude, that is one message. This includes follow-up tool calls Claude makes automatically behind the scenes.' },
-    { label: 'Claude Wrote', value: fmt(t.totalOutputTokens), sub: `Only ${((t.totalOutputTokens / Math.max(t.totalTokens, 1)) * 100).toFixed(1)}% of total -- most usage is from re-reading context`,
-      tip: 'The tokens Claude spent writing responses, code, and explanations. This is usually a tiny fraction of total usage because most tokens go toward re-reading your conversation history.' },
+    { label: 'Your Prompts', value: fmtFull(t.userPromptCount), sub: `${((t.userPromptCount / Math.max(t.totalQueries, 1)) * 100).toFixed(0)}% of all messages were typed by you`,
+      tip: 'The number of messages you actually typed and sent. Excludes automatic tool-call continuation rounds that Claude initiates behind the scenes.' },
   ];
 
   document.getElementById('statsRow').innerHTML = cards.map((c, i) => `
@@ -881,6 +992,7 @@ function renderDailyChart() {
   ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, w, h);
 
+  const c = getChartColors();
   const maxTotal = Math.max(...data.map(d => d.totalTokens));
   const barW = Math.max(8, Math.min(32, (w - 52) / data.length - 3));
   const gap = 3;
@@ -889,13 +1001,13 @@ function renderDailyChart() {
 
   // Grid
   ctx.font = '500 10px Inter, system-ui';
-  ctx.fillStyle = '#94A3B8';
+  ctx.fillStyle = c.axisText;
   ctx.textAlign = 'right';
   for (let i = 0; i <= 4; i++) {
     const val = (maxTotal / 4) * i;
     const y = chartH - (chartH * i / 4) + 8;
     ctx.fillText(fmt(val), startX - 10, y + 3);
-    ctx.strokeStyle = 'rgba(0,0,0,0.04)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = c.gridLine; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(startX, y); ctx.lineTo(w, y); ctx.stroke();
   }
 
@@ -924,7 +1036,7 @@ function renderDailyChart() {
   });
 
   // X labels
-  ctx.fillStyle = '#94A3B8'; ctx.textAlign = 'center';
+  ctx.fillStyle = c.axisText; ctx.textAlign = 'center';
   ctx.font = '500 10px Inter, system-ui';
   const step = Math.max(1, Math.floor(data.length / 7));
   data.forEach((d, i) => {
@@ -963,6 +1075,7 @@ function renderModelChart() {
   canvas.style.width = size + 'px'; canvas.style.height = size + 'px';
   ctx.scale(dpr, dpr);
 
+  const c = getChartColors();
   const cx = size/2, cy = size/2, r = size/2 - 6, innerR = r * 0.6;
   const total = data.reduce((s, d) => s + d.totalTokens, 0);
 
@@ -989,22 +1102,23 @@ function renderModelChart() {
     ctx.fill();
 
     // Gap between slices
-    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = c.donutGap; ctx.lineWidth = 2; ctx.stroke();
     angle += sa;
   });
 
-  ctx.fillStyle = '#0F172A'; ctx.textAlign = 'center';
+  ctx.fillStyle = c.centerText; ctx.textAlign = 'center';
   ctx.font = '800 17px Inter, system-ui';
   ctx.fillText(fmt(total), cx, cy + 2);
   ctx.font = '500 10px Inter, system-ui';
-  ctx.fillStyle = '#94A3B8';
+  ctx.fillStyle = c.centerSub;
   ctx.fillText('total', cx, cy + 16);
 
   document.getElementById('modelLegend').innerHTML = slices.map(d => {
     const pct = ((d.totalTokens / total) * 100).toFixed(1);
+    const cost = d.costWithCache != null ? ' &ndash; ' + fmtCost(d.costWithCache) : '';
     return `<div class="legend-item">
       <div class="legend-dot" style="background:${getColors(d.model)[0]}"></div>
-      <span><strong>${modelShort(d.model)}</strong> &ndash; ${fmt(d.totalTokens)} (${pct}%)</span>
+      <span><strong>${modelShort(d.model)}</strong> &ndash; ${fmt(d.totalTokens)} (${pct}%)${cost}</span>
     </div>`;
   }).join('');
 }
@@ -1059,15 +1173,15 @@ function renderProjectBreakdown() {
   const rows = [];
   projects.forEach((p, i) => {
     const barPct = (p.totalTokens / maxTokens * 100).toFixed(1);
-    const ariaLabel = p.modelBreakdown.map(m => modelShort(m.model) + ': ' + fmt(m.inputTokens) + ' input, ' + fmt(m.outputTokens) + ' output').join(', ');
-    const pillItems = p.modelBreakdown.map(m =>
-      '<li><span class="model-badge ' + modelClass(m.model) +
-      '" aria-label="' + modelShort(m.model) + ': ' + fmt(m.inputTokens) + ' input, ' + fmt(m.outputTokens) + ' output">' +
-      '<span class="model-dot" aria-hidden="true"></span>' +
-      modelShort(m.model) +
-      ' <span class="token-detail"><span aria-hidden="true">\u2193</span><span class="sr-only">in </span>' + fmt(m.inputTokens) + '</span>' +
-      ' <span class="token-detail"><span aria-hidden="true">\u2191</span><span class="sr-only">out </span>' + fmt(m.outputTokens) + '</span>' +
-      '</span></li>'
+    const ariaLabel = p.modelBreakdown.map(m => modelShort(m.model) + ': ' + fmt(m.inputTokens) + ' input, ' + fmt(m.outputTokens) + ' output, ' + (m.userPromptCount || 0) + ' prompts').join(', ');
+    const gridItems = p.modelBreakdown.map(m =>
+      '<span class="model-grid-name ' + modelClass(m.model) + '" style="background:none;padding:0;border-radius:0">' +
+        '<span class="model-dot" aria-hidden="true"></span>' + modelShort(m.model) +
+      '</span>' +
+      '<span class="model-grid-val">' + fmtCost(m.costWithCache) + '</span>' +
+      '<span class="model-grid-val"><span class="sr-only">in </span>' + fmt(m.inputTokens) + ' <span aria-hidden="true">\u2193</span></span>' +
+      '<span class="model-grid-val"><span class="sr-only">out </span>' + fmt(m.outputTokens) + ' <span aria-hidden="true">\u2191</span></span>' +
+      '<span class="model-grid-prompts">' + (m.userPromptCount || 0) + ' prompts</span>'
     ).join('');
     const summaryRow = [
       '<tr class="proj-row" id="proj-row-' + i + '" onclick="toggleProjectDrawer(' + i + ')">',
@@ -1076,8 +1190,12 @@ function renderProjectBreakdown() {
       chevron,
       '<div>',
       '<div class="proj-name" title="' + projectFull(p.project) + '">' + escapeHtml(projectShort(p.project)) + '</div>',
-      '<ul class="model-pills" aria-label="Models used: ' + ariaLabel + '">' + pillItems + '</ul>',
+      '<div class="model-grid" aria-label="Models used: ' + ariaLabel + '">' + gridItems + '</div>',
       '</div></div></td>',
+      '<td class="token-num" style="font-weight:700;vertical-align:top;padding-top:12px">' +
+      '<div>' + fmtCost(p.costWithCache) + '</div>' +
+      '<div style="font-size:11px;font-weight:500;color:var(--text-tertiary);margin-top:1px">' + fmtCost(p.costWithoutCache) + ' w/o cache</div>' +
+      '</td>',
       '<td class="token-num" style="font-weight:700;vertical-align:top;padding-top:12px">',
       '<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">',
       '<div style="flex:1;max-width:60px;height:3px;background:var(--bg);border-radius:4px;overflow:hidden">',
@@ -1085,11 +1203,12 @@ function renderProjectBreakdown() {
       '</div><div><div>' + fmt(p.totalTokens) + '</div><div style="font-size:11px;font-weight:500;color:var(--text-tertiary);margin-top:1px">' + fmt(p.inputTokens) + ' in\u00a0\u00b7\u00a0' + fmt(p.outputTokens) + ' out</div></div></div></td>',
       '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.sessionCount + '</td>',
       '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.queryCount + '</td>',
+      '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.userPromptCount + '</td>',
       '</tr>',
     ].join('');
     const drawerRow = [
       '<tr class="proj-drawer" id="proj-drawer-' + i + '">',
-      '<td colspan="4"><div class="proj-drawer-inner"><div class="proj-drawer-content">',
+      '<td colspan="6"><div class="proj-drawer-inner"><div class="proj-drawer-content">',
       buildDrawerContent(p),
       '</div></div></td></tr>',
     ].join('');
@@ -1228,6 +1347,21 @@ function closeDrilldown() {
   document.getElementById('drilldown').classList.remove('open');
 }
 
+const SUN_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+const MOON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+
+function updateThemeIcon() {
+  document.getElementById('themeToggle').innerHTML = isDark() ? SUN_SVG : MOON_SVG;
+}
+function toggleTheme() {
+  const next = isDark() ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem('theme', next);
+  if (typeof DATA !== 'undefined' && DATA) { renderDailyChart(); renderModelChart(); }
+  updateThemeIcon();
+}
+
+updateThemeIcon();
 fetchData();
 window.addEventListener('resize', () => { if (DATA) { renderDailyChart(); renderModelChart(); } });
 </script>

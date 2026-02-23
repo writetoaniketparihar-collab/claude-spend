@@ -7,6 +7,11 @@ function getClaudeDir() {
   return path.join(os.homedir(), '.claude');
 }
 
+function pathToProjectDir(absPath) {
+  // "D:\GitHub\iracing-stats" → "D--GitHub-iracing-stats"
+  return absPath.replace(/^([A-Za-z]):\\/, '$1--').replace(/\\/g, '-');
+}
+
 async function parseJSONLFile(filePath) {
   const lines = [];
   const stream = fs.createReadStream(filePath, { encoding: 'utf-8' });
@@ -23,11 +28,16 @@ async function parseJSONLFile(filePath) {
   return lines;
 }
 
-function extractSessionData(entries) {
+function extractSessionData(entries, projectDir) {
   const queries = [];
   let pendingUserMessage = null;
+  const wdCounts = {};
 
   for (const entry of entries) {
+    if (typeof entry.message?.content === 'string') {
+      const m = entry.message.content.match(/<working_directory>([^<]+)<\/working_directory>/);
+      if (m) wdCounts[m[1]] = (wdCounts[m[1]] || 0) + 1;
+    }
     if (entry.type === 'user' && entry.message?.role === 'user') {
       const content = entry.message.content;
       if (entry.isMeta) continue;
@@ -50,9 +60,10 @@ function extractSessionData(entries) {
       const model = entry.message.model || 'unknown';
       if (model === '<synthetic>') continue;
 
-      const inputTokens = (usage.input_tokens || 0)
-        + (usage.cache_creation_input_tokens || 0)
-        + (usage.cache_read_input_tokens || 0);
+      const baseInputTokens = usage.input_tokens || 0;
+      const cacheWriteTokens = usage.cache_creation_input_tokens || 0;
+      const cacheReadTokens = usage.cache_read_input_tokens || 0;
+      const inputTokens = baseInputTokens + cacheWriteTokens + cacheReadTokens;
       const outputTokens = usage.output_tokens || 0;
 
       const tools = [];
@@ -68,6 +79,9 @@ function extractSessionData(entries) {
         assistantTimestamp: entry.timestamp,
         model,
         inputTokens,
+        baseInputTokens,
+        cacheWriteTokens,
+        cacheReadTokens,
         outputTokens,
         totalTokens: inputTokens + outputTokens,
         tools,
@@ -75,7 +89,177 @@ function extractSessionData(entries) {
     }
   }
 
-  return queries;
+  const detectedWd = Object.entries(wdCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
+  const effectiveProject = (detectedWd && pathToProjectDir(detectedWd).toLowerCase() !== projectDir.toLowerCase())
+    ? pathToProjectDir(detectedWd)
+    : projectDir;
+
+  return { queries, effectiveProject };
+}
+
+// Pricing: $ per million tokens
+// Keyed by "family-major.minor" — getPricing() extracts this from model IDs
+const VERSION_PRICING = {
+  'opus-4.6':   { baseInput: 5,  cacheWrite: 6.25,  cacheRead: 0.50, output: 25 },
+  'opus-4.5':   { baseInput: 5,  cacheWrite: 6.25,  cacheRead: 0.50, output: 25 },
+  'opus-4.1':   { baseInput: 15, cacheWrite: 18.75, cacheRead: 1.50, output: 75 },
+  'opus-4':     { baseInput: 15, cacheWrite: 18.75, cacheRead: 1.50, output: 75 },
+  'opus-3':     { baseInput: 15, cacheWrite: 18.75, cacheRead: 1.50, output: 75 },
+  'sonnet-4.6': { baseInput: 3,  cacheWrite: 3.75,  cacheRead: 0.30, output: 15 },
+  'sonnet-4.5': { baseInput: 3,  cacheWrite: 3.75,  cacheRead: 0.30, output: 15 },
+  'sonnet-4':   { baseInput: 3,  cacheWrite: 3.75,  cacheRead: 0.30, output: 15 },
+  'sonnet-3.7': { baseInput: 3,  cacheWrite: 3.75,  cacheRead: 0.30, output: 15 },
+  'sonnet-3.5': { baseInput: 3,  cacheWrite: 3.75,  cacheRead: 0.30, output: 15 },
+  'haiku-4.5':  { baseInput: 1,  cacheWrite: 1.25,  cacheRead: 0.10, output: 5 },
+  'haiku-3.5':  { baseInput: 0.80, cacheWrite: 1.00, cacheRead: 0.08, output: 4 },
+  'haiku-3':    { baseInput: 0.25, cacheWrite: 0.30, cacheRead: 0.03, output: 1.25 },
+};
+
+// Fallback pricing by family
+const FAMILY_PRICING = {
+  opus:   { baseInput: 15, cacheWrite: 18.75, cacheRead: 1.50, output: 75 },
+  sonnet: { baseInput: 3,  cacheWrite: 3.75,  cacheRead: 0.30, output: 15 },
+  haiku:  { baseInput: 1,  cacheWrite: 1.25,  cacheRead: 0.10, output: 5 },
+};
+
+// Dynamic pricing cache (fetched from Anthropic's pricing page)
+const PRICING_CACHE_PATH = path.join(os.homedir(), '.claude', 'pricing-cache.json');
+let dynamicPricing = null; // loaded lazily
+
+function loadDynamicPricing() {
+  if (dynamicPricing !== null) return;
+  try {
+    if (fs.existsSync(PRICING_CACHE_PATH)) {
+      const raw = JSON.parse(fs.readFileSync(PRICING_CACHE_PATH, 'utf-8'));
+      // Cache valid for 7 days
+      if (raw.fetchedAt && (Date.now() - raw.fetchedAt) < 7 * 24 * 60 * 60 * 1000) {
+        dynamicPricing = raw.models || {};
+        return;
+      }
+    }
+  } catch {}
+  dynamicPricing = {};
+}
+
+function fetchPricingFromWeb() {
+  return new Promise((resolve) => {
+    const https = require('https');
+    const url = 'https://platform.claude.com/docs/en/about-claude/pricing';
+    https.get(url, { headers: { 'User-Agent': 'claude-spend/1.0' } }, (res) => {
+      if (res.statusCode !== 200) { resolve(null); res.resume(); return; }
+      let body = '';
+      res.on('data', chunk => { body += chunk; });
+      res.on('end', () => {
+        try {
+          const models = parsePricingHtml(body);
+          if (Object.keys(models).length > 0) {
+            const cache = { fetchedAt: Date.now(), models };
+            fs.mkdirSync(path.dirname(PRICING_CACHE_PATH), { recursive: true });
+            fs.writeFileSync(PRICING_CACHE_PATH, JSON.stringify(cache, null, 2));
+            dynamicPricing = models;
+          }
+          resolve(models);
+        } catch { resolve(null); }
+      });
+    }).on('error', () => resolve(null));
+  });
+}
+
+function parsePricingHtml(html) {
+  const models = {};
+  // Match HTML table rows: <td>Claude Opus 4.6</td><td>$5 / MTok</td>...
+  const rowRe = /<td[^>]*>\s*Claude\s+(Opus|Sonnet|Haiku)\s+([\d.]+)\s*(?:<[^>]*>)*(?:\(deprecated\))?\s*<\/td>\s*<td[^>]*>\s*\$([\d.]+)\s*\/\s*MTok\s*<\/td>\s*<td[^>]*>\s*\$([\d.]+)\s*\/\s*MTok\s*<\/td>\s*<td[^>]*>\s*\$([\d.]+)\s*\/\s*MTok\s*<\/td>\s*<td[^>]*>\s*\$([\d.]+)\s*\/\s*MTok\s*<\/td>\s*<td[^>]*>\s*\$([\d.]+)\s*\/\s*MTok\s*<\/td>/gi;
+  let match;
+  while ((match = rowRe.exec(html)) !== null) {
+    const family = match[1].toLowerCase();
+    const version = match[2];
+    const key = family + '-' + version;
+    models[key] = {
+      baseInput: parseFloat(match[3]),
+      cacheWrite: parseFloat(match[4]),
+      // match[5] is 1h cache write — skip
+      cacheRead: parseFloat(match[6]),
+      output: parseFloat(match[7]),
+    };
+  }
+  // Also try markdown pipe format as fallback
+  if (Object.keys(models).length === 0) {
+    const mdRe = /\|\s*Claude\s+(Opus|Sonnet|Haiku)\s+([\d.]+)[^|]*\|\s*\$([\d.]+)\s*\/\s*MTok\s*\|\s*\$([\d.]+)\s*\/\s*MTok\s*\|\s*\$([\d.]+)\s*\/\s*MTok\s*\|\s*\$([\d.]+)\s*\/\s*MTok\s*\|\s*\$([\d.]+)\s*\/\s*MTok\s*\|/gi;
+    while ((match = mdRe.exec(html)) !== null) {
+      const family = match[1].toLowerCase();
+      const version = match[2];
+      const key = family + '-' + version;
+      models[key] = {
+        baseInput: parseFloat(match[3]),
+        cacheWrite: parseFloat(match[4]),
+        cacheRead: parseFloat(match[6]),
+        output: parseFloat(match[7]),
+      };
+    }
+  }
+  return models;
+}
+
+// Set of models we've already attempted to fetch pricing for
+const _fetchAttempted = new Set();
+
+function getPricing(model) {
+  loadDynamicPricing();
+
+  // Extract family + version key from model ID
+  const key = modelToKey(model);
+  if (key && VERSION_PRICING[key]) return VERSION_PRICING[key];
+  if (key && dynamicPricing[key]) return dynamicPricing[key];
+
+  // Family fallback
+  for (const [family, pricing] of Object.entries(FAMILY_PRICING)) {
+    if (model.toLowerCase().includes(family)) return pricing;
+  }
+  return FAMILY_PRICING.sonnet; // default fallback
+}
+
+function modelToKey(model) {
+  // New format: claude-{family}-{major}-{minor}[-date]
+  let m = model.match(/(?:claude-)?(opus|sonnet|haiku)-(\d+)-(\d+)/i);
+  if (m) {
+    const key = m[1].toLowerCase() + '-' + m[2] + '.' + m[3];
+    // Check it's not a date suffix (6+ digit minor = date)
+    if (m[3].length < 6) return key;
+  }
+  // Base version: claude-opus-4-20250514
+  m = model.match(/(?:claude-)?(opus|sonnet|haiku)-(\d+)(?:-\d{6,}|$)/i);
+  if (m) return m[1].toLowerCase() + '-' + m[2];
+  // Old: claude-3-5-sonnet-20241022
+  m = model.match(/claude-(\d+)-(\d+)-(opus|sonnet|haiku)/i);
+  if (m) return m[3].toLowerCase() + '-' + m[1] + '.' + m[2];
+  // Old: claude-3-opus
+  m = model.match(/claude-(\d+)-(opus|sonnet|haiku)/i);
+  if (m) return m[2].toLowerCase() + '-' + m[1];
+  return null;
+}
+
+// Attempt to auto-fetch pricing for unknown models (called once per parseAllSessions)
+async function ensurePricingForModels(modelIds) {
+  loadDynamicPricing();
+  const unknown = [];
+  for (const id of modelIds) {
+    const key = modelToKey(id);
+    if (key && !VERSION_PRICING[key] && !dynamicPricing[key]) {
+      // Check family fallback exists — still worth fetching for accuracy
+      unknown.push(id);
+    }
+  }
+  if (unknown.length > 0 && !_fetchAttempted.has('done')) {
+    _fetchAttempted.add('done');
+    await fetchPricingFromWeb();
+  }
+}
+
+function computeCost(model, baseInputTokens, cacheWriteTokens, cacheReadTokens, outputTokens) {
+  const p = getPricing(model);
+  const withCache = (baseInputTokens * p.baseInput + cacheWriteTokens * p.cacheWrite + cacheReadTokens * p.cacheRead + outputTokens * p.output) / 1_000_000;
+  const withoutCache = ((baseInputTokens + cacheWriteTokens + cacheReadTokens) * p.baseInput + outputTokens * p.output) / 1_000_000;
+  return { withCache, withoutCache };
 }
 
 async function parseAllSessions() {
@@ -125,13 +309,16 @@ async function parseAllSessions() {
       }
       if (entries.length === 0) continue;
 
-      const queries = extractSessionData(entries);
+      const { queries, effectiveProject } = extractSessionData(entries, projectDir);
       if (queries.length === 0) continue;
 
-      let inputTokens = 0, outputTokens = 0;
+      let inputTokens = 0, outputTokens = 0, baseInputTokens = 0, cacheWriteTokens = 0, cacheReadTokens = 0;
       for (const q of queries) {
         inputTokens += q.inputTokens;
         outputTokens += q.outputTokens;
+        baseInputTokens += q.baseInputTokens;
+        cacheWriteTokens += q.cacheWriteTokens;
+        cacheReadTokens += q.cacheReadTokens;
       }
       const totalTokens = inputTokens + outputTokens;
 
@@ -180,14 +367,18 @@ async function parseAllSessions() {
 
       sessions.push({
         sessionId,
-        project: projectDir,
+        project: effectiveProject,
         date,
         timestamp: firstTimestamp,
         firstPrompt: firstPrompt.substring(0, 200),
         model: primaryModel,
         queryCount: queries.length,
+        userPromptCount: queries.filter(q => q.userPrompt !== null).length,
         queries,
         inputTokens,
+        baseInputTokens,
+        cacheWriteTokens,
+        cacheReadTokens,
         outputTokens,
         totalTokens,
       });
@@ -208,9 +399,12 @@ async function parseAllSessions() {
       for (const q of queries) {
         if (q.model === '<synthetic>' || q.model === 'unknown') continue;
         if (!modelMap[q.model]) {
-          modelMap[q.model] = { model: q.model, inputTokens: 0, outputTokens: 0, totalTokens: 0, queryCount: 0 };
+          modelMap[q.model] = { model: q.model, inputTokens: 0, baseInputTokens: 0, cacheWriteTokens: 0, cacheReadTokens: 0, outputTokens: 0, totalTokens: 0, queryCount: 0 };
         }
         modelMap[q.model].inputTokens += q.inputTokens;
+        modelMap[q.model].baseInputTokens += q.baseInputTokens;
+        modelMap[q.model].cacheWriteTokens += q.cacheWriteTokens;
+        modelMap[q.model].cacheReadTokens += q.cacheReadTokens;
         modelMap[q.model].outputTokens += q.outputTokens;
         modelMap[q.model].totalTokens += q.totalTokens;
         modelMap[q.model].queryCount += 1;
@@ -227,29 +421,37 @@ async function parseAllSessions() {
     if (!projectMap[proj]) {
       projectMap[proj] = {
         project: proj,
-        inputTokens: 0, outputTokens: 0, totalTokens: 0,
-        sessionCount: 0, queryCount: 0,
+        inputTokens: 0, baseInputTokens: 0, cacheWriteTokens: 0, cacheReadTokens: 0, outputTokens: 0, totalTokens: 0,
+        sessionCount: 0, queryCount: 0, userPromptCount: 0,
         modelMap: {},
         allPrompts: [],
       };
     }
     const p = projectMap[proj];
     p.inputTokens += session.inputTokens;
+    p.baseInputTokens += session.baseInputTokens;
+    p.cacheWriteTokens += session.cacheWriteTokens;
+    p.cacheReadTokens += session.cacheReadTokens;
     p.outputTokens += session.outputTokens;
     p.totalTokens += session.totalTokens;
     p.sessionCount += 1;
     p.queryCount += session.queryCount;
+    p.userPromptCount += session.userPromptCount;
 
     for (const q of session.queries) {
       if (q.model === '<synthetic>' || q.model === 'unknown') continue;
       if (!p.modelMap[q.model]) {
-        p.modelMap[q.model] = { model: q.model, inputTokens: 0, outputTokens: 0, totalTokens: 0, queryCount: 0 };
+        p.modelMap[q.model] = { model: q.model, inputTokens: 0, baseInputTokens: 0, cacheWriteTokens: 0, cacheReadTokens: 0, outputTokens: 0, totalTokens: 0, queryCount: 0, userPromptCount: 0 };
       }
       const m = p.modelMap[q.model];
       m.inputTokens += q.inputTokens;
+      m.baseInputTokens += q.baseInputTokens;
+      m.cacheWriteTokens += q.cacheWriteTokens;
+      m.cacheReadTokens += q.cacheReadTokens;
       m.outputTokens += q.outputTokens;
       m.totalTokens += q.totalTokens;
       m.queryCount += 1;
+      if (q.userPrompt !== null) m.userPromptCount += 1;
     }
 
     // Per-project prompt grouping with tool tracking
@@ -288,16 +490,33 @@ async function parseAllSessions() {
     flushProjectPrompt();
   }
 
-  const projectBreakdown = Object.values(projectMap).map(p => ({
-    project: p.project,
-    inputTokens: p.inputTokens,
-    outputTokens: p.outputTokens,
-    totalTokens: p.totalTokens,
-    sessionCount: p.sessionCount,
-    queryCount: p.queryCount,
-    modelBreakdown: Object.values(p.modelMap).sort((a, b) => b.totalTokens - a.totalTokens),
-    topPrompts: (p.allPrompts || []).sort((a, b) => b.totalTokens - a.totalTokens).slice(0, 10),
-  })).sort((a, b) => b.totalTokens - a.totalTokens);
+  const projectBreakdown = Object.values(projectMap).map(p => {
+    // Compute per-model cost within project
+    const modelBd = Object.values(p.modelMap).map(m => {
+      const cost = computeCost(m.model, m.baseInputTokens, m.cacheWriteTokens, m.cacheReadTokens, m.outputTokens);
+      return { ...m, costWithCache: cost.withCache, costWithoutCache: cost.withoutCache };
+    }).sort((a, b) => b.totalTokens - a.totalTokens);
+
+    const projectCostWith = modelBd.reduce((s, m) => s + m.costWithCache, 0);
+    const projectCostWithout = modelBd.reduce((s, m) => s + m.costWithoutCache, 0);
+
+    return {
+      project: p.project,
+      inputTokens: p.inputTokens,
+      baseInputTokens: p.baseInputTokens,
+      cacheWriteTokens: p.cacheWriteTokens,
+      cacheReadTokens: p.cacheReadTokens,
+      outputTokens: p.outputTokens,
+      totalTokens: p.totalTokens,
+      sessionCount: p.sessionCount,
+      queryCount: p.queryCount,
+      userPromptCount: p.userPromptCount,
+      costWithCache: projectCostWith,
+      costWithoutCache: projectCostWithout,
+      modelBreakdown: modelBd,
+      topPrompts: (p.allPrompts || []).sort((a, b) => b.totalTokens - a.totalTokens).slice(0, 10),
+    };
+  }).sort((a, b) => b.totalTokens - a.totalTokens);
 
   const dailyUsage = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
 
@@ -305,12 +524,27 @@ async function parseAllSessions() {
   allPrompts.sort((a, b) => b.totalTokens - a.totalTokens);
   const topPrompts = allPrompts.slice(0, 20);
 
+  // Auto-fetch pricing for any unknown models
+  await ensurePricingForModels(Object.keys(modelMap));
+
+  // Add cost to model breakdown
+  const modelBreakdownWithCost = Object.values(modelMap).map(m => {
+    const cost = computeCost(m.model, m.baseInputTokens, m.cacheWriteTokens, m.cacheReadTokens, m.outputTokens);
+    return { ...m, costWithCache: cost.withCache, costWithoutCache: cost.withoutCache };
+  });
+
+  const totalCostWith = modelBreakdownWithCost.reduce((s, m) => s + m.costWithCache, 0);
+  const totalCostWithout = modelBreakdownWithCost.reduce((s, m) => s + m.costWithoutCache, 0);
+
   const grandTotals = {
     totalSessions: sessions.length,
     totalQueries: sessions.reduce((sum, s) => sum + s.queryCount, 0),
+    userPromptCount: sessions.reduce((sum, s) => sum + s.userPromptCount, 0),
     totalTokens: sessions.reduce((sum, s) => sum + s.totalTokens, 0),
     totalInputTokens: sessions.reduce((sum, s) => sum + s.inputTokens, 0),
     totalOutputTokens: sessions.reduce((sum, s) => sum + s.outputTokens, 0),
+    costWithCache: totalCostWith,
+    costWithoutCache: totalCostWithout,
     avgTokensPerQuery: 0,
     avgTokensPerSession: 0,
     dateRange: dailyUsage.length > 0
@@ -330,7 +564,7 @@ async function parseAllSessions() {
   return {
     sessions,
     dailyUsage,
-    modelBreakdown: Object.values(modelMap),
+    modelBreakdown: modelBreakdownWithCost,
     projectBreakdown,
     topPrompts,
     totals: grandTotals,
