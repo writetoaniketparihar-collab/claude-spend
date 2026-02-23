@@ -1,11 +1,14 @@
 {
-  "name": "claude-spend",
+  "name": "claude-spent",
   "version": "1.0.0",
   "description": "See where your Claude Code tokens go. One command, zero setup.",
   "main": "src/index.js",
   "bin": {
-    "claude-spend": "src/index.js"
+    "claude-spent": "src/index.js"
   },
+  "files": [
+    "src/"
+  ],
   "scripts": {
     "start": "node src/index.js"
   },
@@ -21,10 +24,6 @@
   ],
   "author": "Himanshu Jhawar",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/writetoaniketparihar-collab/claude-spend.git"
-  },
   "dependencies": {
     "express": "^4.21.0",
     "open": "^10.1.0"

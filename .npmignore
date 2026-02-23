@@ -1,0 +1,9 @@
+node_modules/
+.env
+.DS_Store
+*.log
+server.log
+update_parser.js
+.gitignore
+.npmignore
+README.md
