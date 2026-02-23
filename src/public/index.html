@@ -691,6 +691,7 @@
         line-height: 1.5;
         display: -webkit-box;
         -webkit-line-clamp: 2;
+        line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
       }
@@ -736,14 +737,44 @@
         margin-top: 2px;
       }
 
-      /* ---- COLLAPSIBLE SECTIONS ---- */
-      details summary { cursor: pointer; user-select: none; outline: none; list-style: none; }
-      details summary::-webkit-details-marker { display: none; }
-      .collapse-icon {
-        width: 18px; height: 18px; stroke: var(--text-tertiary); margin-left: auto;
-        transition: transform 0.2s;
+      /* ---- TAB NAVIGATION ---- */
+      .tab-bar {
+        display: flex; align-items: stretch; gap: 4px;
+        background: var(--white); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 5px;
+        margin-bottom: 24px; box-shadow: var(--shadow-sm);
       }
-      details[open] > summary .collapse-icon { transform: rotate(180deg); }
+      .tab-btn {
+        display: flex; align-items: center; justify-content: center; gap: 7px;
+        padding: 10px 20px; border-radius: 10px; border: none;
+        background: transparent; font-family: inherit; font-size: 14px;
+        font-weight: 600; color: var(--text-secondary);
+        cursor: pointer; transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+        flex: 1;
+      }
+      .tab-btn:hover { background: var(--bg); color: var(--text); }
+      .tab-btn .tab-icon { width: 16px; height: 16px; flex-shrink: 0; }
+      .tab-btn.active.tab-projects {
+        background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+        color: #7C3AED; box-shadow: var(--shadow-sm);
+      }
+      .tab-btn.active.tab-analyzer {
+        background: var(--gradient-main); color: white;
+        box-shadow: 0 2px 8px rgba(99,102,241,0.35);
+      }
+      .tab-btn.active.tab-sessions {
+        background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+        color: #059669; box-shadow: var(--shadow-sm);
+      }
+      .tab-pane { display: none; }
+      .tab-pane.active { display: block; }
+      .analyzer-intro {
+        display: flex; align-items: flex-start; gap: 10px;
+        background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+        border: 1px solid #c7d2fe; border-radius: 12px;
+        padding: 14px 18px; margin-bottom: 16px;
+        font-size: 13px; color: #4338CA; line-height: 1.55; font-weight: 500;
+      }
 
       /* ---- PROJECTS ---- */
       .projects-section {
@@ -825,6 +856,7 @@
         line-height: 1.5;
         display: -webkit-box;
         -webkit-line-clamp: 2;
+        line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
         word-break: break-word;
@@ -1078,19 +1110,36 @@
         white-space: nowrap;
       }
 
-      /* ---- DRILLDOWN ---- */
+      /* ---- DRILLDOWN MODAL ---- */
+      .drilldown-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 999;
+        display: none;
+        overflow-y: auto;
+        padding: 40px 20px;
+      }
+      .drilldown-overlay.open {
+        display: block;
+        animation: fadeIn 0.2s ease-out;
+      }
       .drilldown {
         background: var(--white);
-        border-radius: var(--radius);
-        padding: 28px;
-        margin-bottom: 32px;
-        display: none;
+        border-radius: var(--radius-lg);
+        padding: 32px;
+        max-width: 900px;
+        margin: 0 auto;
         border: 1px solid var(--border);
-        box-shadow: var(--shadow-lg);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        transform: translateY(20px);
+        opacity: 0;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
       }
-      .drilldown.open {
-        display: block;
-        animation: fadeUp 0.3s ease-out;
+      .drilldown-overlay.open .drilldown {
+        transform: translateY(0);
+        opacity: 1;
       }
       .drilldown-header {
         display: flex;
@@ -1267,11 +1316,6 @@
       .prompt-suggestion { margin-top: 10px; font-size: 13px; color: #047857; background: #ecfdf5; padding: 8px 12px; border-radius: 6px; border: 1px solid #a7f3d0; display: inline-block; font-weight: 500; }
       
       /* F12: Snowball Chart */
-      .snowball-container { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px dashed var(--border); flex-wrap: wrap; }
-      .snowball-chart-wrap { flex: 1; min-width: 300px; height: 160px; }
-      .what-if-panel { width: 250px; background: linear-gradient(135deg, #f0fdf4, #ecfdf5); border: 1px solid #a7f3d0; border-radius: 12px; padding: 16px; text-align: center; }
-      .what-if-val { font-size: 24px; font-weight: 800; color: #059669; margin: 8px 0 4px; }
-      .what-if-sub { font-size: 12px; color: #047857; line-height: 1.4; font-weight: 500; }
       
       /* F13: Tool Chain Pipeline */
       .tool-pipeline { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
@@ -1348,7 +1392,6 @@
           <h1>Claude Spend</h1>
         </div>
         <div class="header-right">
-          <span id="dateRange" class="date-range"></span>
           <a href="/features.html" class="refresh-btn" style="text-decoration:none">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
               <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
@@ -1494,7 +1537,7 @@
       </div>
 
       <!-- Cumulative Trend -->
-      <div class="chart-card animate delay-3" style="margin-top: 24px;">
+      <div class="chart-card animate delay-3" style="margin-top: 24px; margin-bottom: 24px;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
           <div>
             <h3 class="has-tooltip has-tooltip-below" style="display: inline-block; margin-bottom: 4px;">
@@ -1510,37 +1553,30 @@
       </div>
 
 
-      <!-- Projects -->
-      <details class="projects-section animate delay-4" open>
-        <summary class="section-header">
-          <div
-            class="section-icon"
-            style="background: linear-gradient(135deg, #ede9fe, #ddd6fe)"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#7C3AED"
-              stroke-width="2.5"
-              stroke-linecap="round"
-            >
-              <path d="M3 7l9-4 9 4v10l-9 4-9-4z" />
-              <path d="M12 3v18" />
-              <path d="M3 7l9 4 9-4" />
-            </svg>
-          </div>
-          <div class="section-title">Projects</div>
-          <span
-            id="projectsCount"
-            style="
-              font-size: 13px;
-              color: var(--text-tertiary);
-              font-weight: 600;
-              margin-left: 12px;
-            "
-          ></span>
-          <svg class="collapse-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8l4 4 4-4"/></svg>
-        </summary>
+      <!-- Tab Navigation -->
+      <div class="tab-bar animate delay-4">
+        <button class="tab-btn tab-projects active" onclick="switchTab('projects')" id="tab-btn-projects">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M12 3v18"/><path d="M3 7l9 4 9-4"/>
+          </svg>
+          Projects
+        </button>
+        <button class="tab-btn tab-analyzer" onclick="switchTab('analyzer')" id="tab-btn-analyzer">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+          Prompt Analyzer
+        </button>
+        <button class="tab-btn tab-sessions" onclick="switchTab('sessions')" id="tab-btn-sessions">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>
+          </svg>
+          Sessions
+        </button>
+      </div>
+
+      <!-- Pane: Projects -->
+      <div class="tab-pane active" id="pane-projects">
         <div class="sessions-card">
           <table class="sessions-table">
             <thead>
@@ -1555,82 +1591,40 @@
             <tbody id="projectsBody"></tbody>
           </table>
         </div>
-      </details>
-
-      <!-- Most Expensive Prompts -->
-      <details class="top-prompts animate delay-4" open>
-        <summary class="section-header">
-          <div
-            class="section-icon"
-            style="background: linear-gradient(135deg, #e0e7ff, #c7d2fe)"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#6366F1"
-              stroke-width="2.5"
-              stroke-linecap="round"
-            >
-              <path d="M12 20V10" />
-              <path d="M18 20V4" />
-              <path d="M6 20v-4" />
-            </svg>
-          </div>
-          <div
-            class="section-title has-tooltip has-tooltip-below"
-            style="display: inline-flex"
-          >
-            Most Expensive Prompts
-            <div class="tooltip">
-              Your top 20 individual messages ranked by how many tokens they
-              used. Short vague messages like "Yes" often rank highest because
-              they trigger long chains of tool calls where Claude tries to
-              figure out what you meant.
-            </div>
-          </div>
-          <svg class="collapse-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8l4 4 4-4"/></svg>
-        </summary>
-        <div class="prompts-card" id="topPromptsList"></div>
-      </details>
-      <!-- Drill-down -->
-      <div id="drilldown" class="drilldown">
-        <div class="drilldown-header">
-          <div>
-            <div id="drilldownTitle" class="drilldown-title"></div>
-            <div id="drilldownMeta" class="drilldown-meta"></div>
-          </div>
-          <button class="drilldown-close" onclick="closeDrilldown()">
-            &times;
-          </button>
+        <div style="margin-top:8px;padding:0 4px">
+          <span id="projectsCount" style="font-size:13px;color:var(--text-tertiary);font-weight:600;"></span>
         </div>
-        <div id="sessionCoaching" style="display:none;margin-bottom:24px;"></div>
-        <div id="waterfallSection" style="display:none;margin-bottom:20px;"></div>
-        <div id="queryList" class="query-list"></div>
       </div>
 
-      <!-- All Sessions -->
-      <details class="sessions-section animate delay-5" open>
-        <summary class="section-header">
-          <div
-            class="section-icon"
-            style="background: linear-gradient(135deg, #ecfdf5, #d1fae5)"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#059669"
-              stroke-width="2.5"
-              stroke-linecap="round"
-            >
-              <rect x="3" y="4" width="18" height="18" rx="2" />
-              <path d="M16 2v4" />
-              <path d="M8 2v4" />
-              <path d="M3 10h18" />
-            </svg>
+      <!-- Pane: Prompt Analyzer -->
+      <div class="tab-pane" id="pane-analyzer">
+        <div class="analyzer-intro">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:16px;height:16px;flex-shrink:0;margin-top:1px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          Your top 20 most expensive messages, ranked by token cost. Short or vague prompts often rank highest — they trigger large tool-call fanouts where Claude has to figure out what you meant.
+        </div>
+        <div class="prompts-card" id="topPromptsList"></div>
+      </div>
+
+      <!-- Drill-down Overlay (shared across all tabs) -->
+      <div id="drilldownOverlay" class="drilldown-overlay" onclick="closeDrilldown()">
+        <div id="drilldown" class="drilldown" onclick="event.stopPropagation()">
+          <div class="drilldown-header">
+            <div>
+              <div id="drilldownTitle" class="drilldown-title"></div>
+              <div id="drilldownMeta" class="drilldown-meta"></div>
+            </div>
+            <button class="drilldown-close" onclick="closeDrilldown()">
+              &times;
+            </button>
           </div>
-          <div class="section-title">All Sessions</div>
-          <svg class="collapse-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8l4 4 4-4"/></svg>
-        </summary>
+          <div id="sessionCoaching" style="display:none;margin-bottom:24px;"></div>
+          <div id="waterfallSection" style="display:none;margin-bottom:20px;"></div>
+          <div id="queryList" class="query-list"></div>
+        </div>
+      </div>
+
+      <!-- Pane: Sessions -->
+      <div class="tab-pane" id="pane-sessions">
         <div class="sessions-toolbar">
           <input
             type="text"
@@ -1711,12 +1705,8 @@
       </div>
 
       <div class="footer">
-        Made with
-        <a href="https://claude.ai/code" target="_blank">Claude Code</a> and
-        &#10084; by
-        <a href="https://www.linkedin.com/in/himanshujhawar/" target="_blank"
-          >Himanshu Jhawar</a
-        >
+        Made with &#10084; and
+        <a href="https://claude.ai/code" target="_blank">Claude Code</a>
       </div>
     </div>
 
@@ -1724,6 +1714,68 @@
       let DATA = null;
       let currentSort = { key: "total", dir: "desc" };
       let searchQuery = "";
+
+      let paginationOpts = {
+        projects: { page: 1, pageSize: 5, sort: {} },
+        prompts: { page: 1, pageSize: 5 },
+        sessions: { page: 1, pageSize: 5 }
+      };
+
+      function renderPaginationControls(type, totalItems, colspan = 1) {
+          const opts = paginationOpts[type];
+          const totalPages = Math.ceil(totalItems / opts.pageSize) || 1;
+          if (totalItems <= opts.pageSize && opts.page === 1) return '';
+          
+          const isTable = type !== 'prompts';
+          const innerHtml = `
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 12px 16px; background: var(--bg); border-top: 1px solid var(--border);">
+              <div>
+                Show 
+                <select onchange="changePageSize('${type}', parseInt(this.value))" style="padding: 2px 4px; border-radius: 4px; border: 1px solid var(--border);">
+                  <option value="5" ${opts.pageSize === 5 ? 'selected' : ''}>5</option>
+                  <option value="10" ${opts.pageSize === 10 ? 'selected' : ''}>10</option>
+                  <option value="20" ${opts.pageSize === 20 ? 'selected' : ''}>20</option>
+                </select>
+                 entries
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button onclick="changePage('${type}', ${opts.page - 1})" ${opts.page <= 1 ? 'disabled' : ''} style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--white); cursor: pointer;">Prev</button>
+                <span>Page ${opts.page} of ${totalPages}</span>
+                <button onclick="changePage('${type}', ${opts.page + 1})" ${opts.page >= totalPages ? 'disabled' : ''} style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); background: var(--white); cursor: pointer;">Next</button>
+              </div>
+            </div>
+          `;
+
+          if (isTable) {
+              return `<tr><td colspan="${colspan}" style="padding: 0;">${innerHtml}</td></tr>`;
+          }
+          return innerHtml;
+      }
+
+      function changePageSize(type, size) {
+          paginationOpts[type].pageSize = size;
+          paginationOpts[type].page = 1;
+          if (type === 'projects') renderProjectBreakdown();
+          if (type === 'prompts') renderTopPrompts();
+          if (type === 'sessions') renderSessions();
+      }
+
+      function changePage(type, page) {
+          paginationOpts[type].page = page;
+          if (type === 'projects') renderProjectBreakdown();
+          if (type === 'prompts') renderTopPrompts();
+          if (type === 'sessions') renderSessions();
+      }
+
+      function sortProjectDrawer(projectIndex, sortType) {
+         paginationOpts.projects.sort[projectIndex] = sortType;
+         const start = (paginationOpts.projects.page - 1) * paginationOpts.projects.pageSize;
+         const rowIndex = projectIndex - start;
+         const p = FILTERED_DATA.projectBreakdown[projectIndex];
+         if (p) {
+             document.getElementById('proj-drawer-content-' + rowIndex).innerHTML = buildDrawerContent(p, projectIndex);
+         }
+      }
 
       function fmt(n) {
         if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
@@ -1918,6 +1970,10 @@
         const countEl = document.getElementById('filteredCount');
         countEl.textContent = `${FILTERED_DATA.sessions.length} session${FILTERED_DATA.sessions.length !== 1 ? 's' : ''}`;
 
+        paginationOpts.projects.page = 1;
+        paginationOpts.prompts.page = 1;
+        paginationOpts.sessions.page = 1;
+
         render();
       }
 
@@ -2048,11 +2104,20 @@
         DATA = await res.json();
         initFilters();
       }
-      async function refreshData() {
-        document.getElementById("loading").style.display = "flex";
-        document.getElementById("app").style.display = "none";
-        await fetch("/api/refresh");
-        await fetchData();
+      let isRefreshing = false;
+      async function refreshData(silent = false) {
+        if (isRefreshing) return;
+        isRefreshing = true;
+        try {
+          if (!silent) {
+            document.getElementById("loading").style.display = "flex";
+            document.getElementById("app").style.display = "none";
+          }
+          await fetch("/api/refresh");
+          await fetchData();
+        } finally {
+          isRefreshing = false;
+        }
       }
 
       function render() {
@@ -2073,11 +2138,6 @@
       function renderStats() {
         const t = FILTERED_DATA.totals;
         const pt = PREV_FILTERED_DATA ? PREV_FILTERED_DATA.totals : null;
-
-        const range = t.dateRange
-          ? `${formatDate(t.dateRange.from)} – ${formatDate(t.dateRange.to)}`
-          : '';
-        document.getElementById('dateRange').textContent = range;
 
         const cacheHitPct = ((t.cacheHitRate || 0) * 100).toFixed(1);
         const hasCacheSavings = (t.cacheSavingsDollars || 0) > 0.005;
@@ -2548,11 +2608,24 @@
         drawer.classList.toggle("open", !isOpen);
       }
 
-      function buildDrawerContent(p) {
-        if (!p.topPrompts || p.topPrompts.length === 0) {
+      function buildDrawerContent(p, projectIndex) {
+        let prompts = p.allPrompts || p.topPrompts;
+        if (!prompts || prompts.length === 0) {
           return '<div class="drawer-empty">No prompt data available</div>';
         }
-        const items = p.topPrompts.map((pr, i) => {
+        
+        let sortType = paginationOpts.projects.sort[projectIndex] || 'tokens';
+        let sorted = [...prompts];
+        if (sortType === 'tokens') {
+            sorted.sort((a, b) => b.totalTokens - a.totalTokens);
+        } else if (sortType === 'time-asc') {
+            sorted.sort((a, b) => a.globalIndex - b.globalIndex);
+        } else if (sortType === 'time-desc') {
+            sorted.sort((a, b) => b.globalIndex - a.globalIndex);
+        }
+        sorted = sorted.slice(0, 50);
+
+        const items = sorted.map((pr, i) => {
           const toolEntries = Object.entries(pr.toolCounts || {}).sort(
             (a, b) => b[1] - a[1],
           );
@@ -2587,7 +2660,7 @@
             '<div class="drawer-rank">' + (i + 1) + "</div>",
             "<div>",
             '<div class="drawer-prompt-text">' + promptText + "</div>",
-            '<div class="drawer-prompt-meta">' + badge + chips + "</div>",
+            '<div class="drawer-prompt-meta">' + formatDate(pr.date) + ' &middot; ' + badge + chips + "</div>",
             "</div>",
             '<div class="drawer-tokens"><div class="value">' +
               tokVal +
@@ -2597,10 +2670,20 @@
             "</div>",
           ].join("");
         });
-        return '<div class="drawer-prompt-list">' + items.join("") + "</div>";
+        
+        const header = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding: 0 4px;">
+            <div style="font-size:12px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Prompts (${prompts.length})</div>
+            <select onchange="sortProjectDrawer(${projectIndex}, this.value)" style="font-size:12px; padding:2px 6px; border-radius:4px; border:1px solid var(--border); background:white; color:var(--text); outline:none; cursor:pointer;">
+               <option value="tokens" ${sortType === 'tokens' ? 'selected' : ''}>Sort: Highest Cost</option>
+               <option value="time-asc" ${sortType === 'time-asc' ? 'selected' : ''}>Sort: Oldest First</option>
+               <option value="time-desc" ${sortType === 'time-desc' ? 'selected' : ''}>Sort: Newest First</option>
+            </select>
+          </div>
+        `;
+        return header + '<div class="drawer-prompt-list">' + items.join("") + "</div>";
       }
 
-      // Project breakdown
       function renderProjectBreakdown() {
         const projects = FILTERED_DATA.projectBreakdown;
         if (!projects || !projects.length) {
@@ -2617,7 +2700,12 @@
         const chevron =
           '<svg class="proj-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l4 4-4 4"/></svg>';
         const rows = [];
-        projects.forEach((p, i) => {
+        
+        const start = (paginationOpts.projects.page - 1) * paginationOpts.projects.pageSize;
+        const pagedProjects = projects.slice(start, start + paginationOpts.projects.pageSize);
+
+        pagedProjects.forEach((p, rowIndex) => {
+          const projectIndex = start + rowIndex;
           const barPct = ((p.totalTokens / maxTokens) * 100).toFixed(1);
           const ariaLabel = p.modelBreakdown
             .map(
@@ -2655,9 +2743,9 @@
             .join("");
           const summaryRow = [
             '<tr class="proj-row" id="proj-row-' +
-              i +
+              rowIndex +
               '" onclick="toggleProjectDrawer(' +
-              i +
+              rowIndex +
               ')">',
             '<td style="padding:10px 16px">',
             '<div style="display:flex;align-items:center;gap:6px">',
@@ -2687,14 +2775,16 @@
             '</tr>',
           ].join("");
           const drawerRow = [
-            '<tr class="proj-drawer" id="proj-drawer-' + i + '">',
-            '<td colspan="5"><div class="proj-drawer-inner"><div class="proj-drawer-content">',
-            buildDrawerContent(p),
+            '<tr class="proj-drawer" id="proj-drawer-' + rowIndex + '">',
+            '<td colspan="5"><div class="proj-drawer-inner"><div class="proj-drawer-content" id="proj-drawer-content-' + rowIndex + '">',
+            buildDrawerContent(p, projectIndex),
             '</div></div></td></tr>',
           ].join("");
           rows.push(summaryRow, drawerRow);
         });
-        document.getElementById("projectsBody").innerHTML = rows.join("");
+        
+        const pag = renderPaginationControls('projects', projects.length, 5);
+        document.getElementById("projectsBody").innerHTML = rows.join("") + pag;
       }
 
       // Top prompts
@@ -2705,14 +2795,21 @@
           return;
         }
         const maxTokens = prompts[0].totalTokens;
+        
+        const start = (paginationOpts.prompts.page - 1) * paginationOpts.prompts.pageSize;
+        const pagedPrompts = prompts.slice(start, start + paginationOpts.prompts.pageSize);
 
-        document.getElementById('topPromptsList').innerHTML = prompts.map((p, i) => {
+        const html = pagedPrompts.map((p, i) => {
+          const rank = start + i + 1;
           const inPct = (p.inputTokens / p.totalTokens) * 100;
           const costHtml = (p.estimatedCost || 0) > 0
             ? `<span class="cost-badge">${fmtCost(p.estimatedCost)}</span>`
             : '';
-          return `<div class="prompt-row" onclick="openDrilldown('${p.sessionId}')">\n      <div class="prompt-rank">${i + 1}</div>\n      <div>\n        <div class="prompt-text">${escapeHtml(p.prompt)}</div>\n        <div class="prompt-meta">${formatDate(p.date)} &middot; ${modelShort(p.model)}</div>\n        <div class="token-bar-wrap" style="width:${Math.max(10, (p.totalTokens / maxTokens) * 100)}%">\n          <div class="token-bar-in" style="width:${inPct}%"></div>\n          <div class="token-bar-out" style="width:${100 - inPct}%"></div>\n        </div>\n      </div>\n      <div class="prompt-tokens">\n        <div class="value">${costHtml} ${fmt(p.totalTokens)}</div>\n        <div class="sub">${fmt(p.inputTokens)} read &middot; ${fmt(p.outputTokens)} written</div>\n      </div>\n    </div>`;
+          return `<div class="prompt-row" onclick="openDrilldown('${p.sessionId}')">\n      <div class="prompt-rank">${rank}</div>\n      <div>\n        <div class="prompt-text">${escapeHtml(p.prompt)}</div>\n        <div class="prompt-meta">${formatDate(p.date)} &middot; ${modelShort(p.model)}</div>\n        <div class="token-bar-wrap" style="width:${Math.max(10, (p.totalTokens / maxTokens) * 100)}%">\n          <div class="token-bar-in" style="width:${inPct}%"></div>\n          <div class="token-bar-out" style="width:${100 - inPct}%"></div>\n        </div>\n      </div>\n      <div class="prompt-tokens">\n        <div class="value">${costHtml} ${fmt(p.totalTokens)}</div>\n        <div class="sub">${fmt(p.inputTokens)} read &middot; ${fmt(p.outputTokens)} written</div>\n      </div>\n    </div>`;
         }).join('');
+        
+        const pag = renderPaginationControls('prompts', prompts.length);
+        document.getElementById('topPromptsList').innerHTML = html + pag;
       }
 
 
@@ -2743,8 +2840,11 @@
         sessions.sort((a, b) => currentSort.dir === 'desc' ? fn(b, a) : fn(a, b));
 
         document.getElementById('sessionCount').textContent = `${sessions.length} sessions`;
+        
+        const start = (paginationOpts.sessions.page - 1) * paginationOpts.sessions.pageSize;
+        const pagedSessions = sessions.slice(start, start + paginationOpts.sessions.pageSize);
 
-        document.getElementById('sessionsBody').innerHTML = sessions.map((s) => `
+        const html = pagedSessions.map((s) => `
     <tr onclick="openDrilldown('${s.sessionId}')">
       <td class="date-cell">
         ${formatDate(s.date)}
@@ -2759,6 +2859,9 @@
       <td class="token-num">${fmt(s.outputTokens)}</td>
     </tr>
   `).join('');
+        
+        const pag = renderPaginationControls('sessions', sessions.length, 8);
+        document.getElementById('sessionsBody').innerHTML = html + pag;
       }
 
       // Sort
@@ -2776,12 +2879,14 @@
               .querySelectorAll(".sessions-table th")
               .forEach((t) => t.classList.remove("sorted"));
             th.classList.add("sorted");
+            paginationOpts.sessions.page = 1;
             renderSessions();
           });
         });
 
       document.getElementById("searchInput").addEventListener("input", (e) => {
         searchQuery = e.target.value;
+        paginationOpts.sessions.page = 1;
         renderSessions();
       });
 
@@ -2789,98 +2894,43 @@
       // Drill-down coaching renderer
       function renderCoachingOverview(session) {
         const target = document.getElementById('sessionCoaching');
-        if (!session.snowballData || session.snowballData.length < 2) {
-            target.style.display = 'none';
-            return;
+        const fileMap = session.toolAnalysis && session.toolAnalysis.fileAccessMap || {};
+        if (Object.keys(fileMap).length === 0) {
+          target.style.display = 'none';
+          return;
         }
-        
+
+        const files = Object.entries(fileMap)
+          .sort((a,b) => (b[1].reads + b[1].writes) - (a[1].reads + a[1].writes))
+          .slice(0, 5);
+        const maxAccess = Math.max(...files.map(f => f[1].reads + f[1].writes));
+
         target.style.display = 'block';
-        
-        // 1. Snowball Overview (F12)
-        let whatIfHtml = '';
-        if (session.breakEvenPoint && session.breakEvenPoint.savings > 0) {
-            whatIfHtml = `
-            <div class="what-if-panel">
-                <div class="coaching-title" style="justify-content:center;margin-bottom:4px;">💡 Context Snowball Detected</div>
-                <div class="what-if-sub">If you had started a new conversation at turn ${session.breakEvenPoint.turn}, you would have saved:</div>
-                <div class="what-if-val">${fmt(session.breakEvenPoint.savings)} tokens</div>
-                <div class="what-if-sub">in repeated context</div>
-            </div>`;
-        }
-        
-        // 2. Tool Overview Heatmap (F13)
-        let heatmapHtml = '';
-        if (session.toolAnalysis && Object.keys(session.toolAnalysis.fileAccessMap || {}).length > 0) {
-             const files = Object.entries(session.toolAnalysis.fileAccessMap).sort((a,b) => (b[1].reads + b[1].writes) - (a[1].reads + a[1].writes)).slice(0, 5);
-             const maxAccess = Math.max(...files.map(f => f[1].reads + f[1].writes));
-             
-             heatmapHtml = `
-             <div style="flex:1;">
-               <div class="coaching-title">🔥 File Access Heatmap</div>
-               <div class="heatmap-grid">
-               ${files.map(([file, counts]) => {
-                  const rW = (counts.reads / maxAccess) * 100;
-                  const wW = (counts.writes / maxAccess) * 100;
-                  const name = file.includes('/') ? file.split('/').pop() : file.substring(0, 25);
-                  return `<div class="heatmap-row">
-                    <div style="width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);" title="${escapeHtml(file)}">${escapeHtml(name)}</div>
-                    <div style="flex:1;display:flex;height:12px;background:var(--bg);border-radius:2px;overflow:hidden;">
-                        ${counts.reads > 0 ? '<div class="heatmap-bar read" style="width:' + rW + '%" title="' + counts.reads + ' reads"></div>' : ''}
-                        ${counts.writes > 0 ? '<div class="heatmap-bar write" style="width:' + wW + '%" title="' + counts.writes + ' writes"></div>' : ''}
-                    </div>
-                    <div style="width:30px;text-align:right;color:var(--text-tertiary);font-size:10px;">${counts.reads}R ${counts.writes}W</div>
-                  </div>`
-               }).join('')}
-               </div>
-             </div>`;
-        }
-        
         target.innerHTML = `
-          <div class="snowball-container">
-            <div class="snowball-chart-wrap">
-               <div class="coaching-title has-tooltip has-tooltip-below" style="display:inline-flex;">Context Growth<span class="help-icon">?</span><div class="tooltip">Tokens sent on each turn. This naturally strictly increases as conversation history gets longer.</div></div>
-               <div style="position:relative;width:100%;height:140px;"><canvas id="snowballCanvas"></canvas></div>
+          <div class="coaching-title has-tooltip has-tooltip-below" style="display:inline-flex;margin-bottom:10px;">
+            🔥 File Access Heatmap
+            <span class="help-icon">?</span>
+            <div class="tooltip" style="width:260px;font-weight:500;">
+              Top 5 files accessed in this session.<br/><br/>
+              <span style="color:#60a5fa">■ Blue</span>: reads &nbsp;
+              <span style="color:#f472b6">■ Pink</span>: writes
             </div>
-            ${heatmapHtml}
-            ${whatIfHtml}
           </div>
-        `;
-        
-        // Draw snowball chart
-        const canvas = document.getElementById("snowballCanvas");
-        if (canvas) {
-            const ctx = canvas.getContext("2d");
-            const dpr = window.devicePixelRatio || 1;
-            const w = canvas.parentElement.clientWidth;
-            const h = 140;
-            canvas.width = w * dpr;
-            canvas.height = h * dpr;
-            canvas.style.width = w + "px";
-            canvas.style.height = h + "px";
-            ctx.scale(dpr, dpr);
-            
-            ctx.clearRect(0,0,w,h);
-            const sd = session.snowballData;
-            const maxVal = Math.max(...sd.map(d => d.inputTokens));
-            
-            ctx.beginPath();
-            ctx.strokeStyle = "#8b5cf6";
-            ctx.lineWidth = 2;
-            ctx.lineJoin = "round";
-            const step = w / Math.max(sd.length - 1, 1);
-            sd.forEach((d, i) => {
-                const x = i * step;
-                const y = h - (d.inputTokens / maxVal) * h * 0.9;
-                if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-            });
-            ctx.stroke();
-            
-            // Fill area
-            ctx.lineTo(w, h);
-            ctx.lineTo(0, h);
-            ctx.fillStyle = "rgba(139, 92, 246, 0.1)";
-            ctx.fill();
-        }
+          <div class="heatmap-grid">
+            ${files.map(([file, counts]) => {
+              const rW = (counts.reads / maxAccess) * 100;
+              const wW = (counts.writes / maxAccess) * 100;
+              const name = file.includes('/') ? file.split('/').pop() : file.substring(0, 25);
+              return `<div class="heatmap-row">
+                <div style="width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);" title="${escapeHtml(file)}">${escapeHtml(name)}</div>
+                <div style="flex:1;display:flex;height:12px;background:var(--bg);border-radius:2px;overflow:hidden;">
+                  ${counts.reads  > 0 ? '<div class="heatmap-bar read"  style="width:' + rW + '%" title="' + counts.reads  + ' reads"></div>'  : ''}
+                  ${counts.writes > 0 ? '<div class="heatmap-bar write" style="width:' + wW + '%" title="' + counts.writes + ' writes"></div>' : ''}
+                </div>
+                <div style="width:44px;text-align:right;color:var(--text-tertiary);font-size:10px;">${counts.reads}R ${counts.writes}W</div>
+              </div>`;
+            }).join('')}
+          </div>`;
       }
 
       // F4: Token Waterfall
@@ -3025,14 +3075,15 @@
         renderWaterfall(grouped, session);
         renderCoachingOverview(session);
 
-        const panel = document.getElementById('drilldown');
-        panel.classList.add('open');
-        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const overlay = document.getElementById('drilldownOverlay');
+        overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
       }
 
 
       function closeDrilldown() {
-        document.getElementById("drilldown").classList.remove("open");
+        document.getElementById("drilldownOverlay").classList.remove("open");
+        document.body.style.overflow = '';
       }
 
       // ---- F7: LIVE MODE ----
@@ -3061,7 +3112,7 @@
           try {
             const msg = JSON.parse(e.data);
             if (msg.type === 'update') {
-              await refreshData();
+              await refreshData(true); // silent: don't show loading spinner
               // Flash stat cards to indicate fresh data
               document.querySelectorAll('.stat-card').forEach(card => {
                 card.classList.add('card-flash');
@@ -3092,7 +3143,25 @@
         if (liveMode) connectLiveMode();
       }
 
-      fetchData().then(() => initLiveMode());
+      function switchTab(name) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        const btn = document.getElementById('tab-btn-' + name);
+        const pane = document.getElementById('pane-' + name);
+        if (btn) btn.classList.add('active');
+        if (pane) pane.classList.add('active');
+        localStorage.setItem('claude-spend-tab', name);
+      }
+
+      // Restore last active tab
+      const _savedTab = localStorage.getItem('claude-spend-tab') || 'projects';
+      switchTab(_savedTab);
+
+      fetchData().then(() => initLiveMode()).catch(err => {
+        console.error('Failed to load data:', err);
+        const loadEl = document.getElementById("loading");
+        if (loadEl) loadEl.innerHTML = '<div class="loading-text" style="color:#ef4444">Failed to load data. Try refreshing the page.</div>';
+      });
       window.addEventListener("resize", () => {
         if (DATA) {
           renderDailyChart();
