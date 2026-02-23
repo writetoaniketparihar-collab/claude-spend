@@ -2,6 +2,14 @@
 
 See where your Claude Code tokens go. One command, zero setup.
 
+## Just run this
+
+```
+npx claude-spent
+```
+
+No installation. No config. No account. Just run it and your dashboard opens in the browser — instantly.
+
 ## Problem
 
 Been using Claude Code every day? Hit the usage limit but have zero visibility into which prompts are eating your tokens. claude-spent fixes that. One command, zero setup.
