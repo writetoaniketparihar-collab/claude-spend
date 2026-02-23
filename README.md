@@ -16,13 +16,17 @@ Been using Claude Code every day? Hit the usage limit but have zero visibility i
 
 ## How does it look
 
-<img width="1910" height="966" alt="Screenshot 2026-02-18 092727" src="https://github.com/user-attachments/assets/11cc7149-d4dd-4e44-a3a0-0b48e935b7bc" />
+<img src="https://github.com/user-attachments/assets/898526e6-cf06-4a55-8e4f-07b6da0f40e7" />
 
-<img width="1906" height="966" alt="Screenshot 2026-02-18 093529" src="https://github.com/user-attachments/assets/537c3611-5794-41d2-864e-e368e6949812" />
+<img src="https://github.com/user-attachments/assets/5a97c605-6fba-4d33-91f4-643abddd6318" />
 
-<img width="1908" height="969" alt="Screenshot 2026-02-18 093647" src="https://github.com/user-attachments/assets/aaaa8ce5-2025-407d-8596-ea1965748691" />
+<img src="https://github.com/user-attachments/assets/2ce109b2-8ef3-4f19-ab4b-c27e2d396153" />
 
-<img width="1908" height="969" alt="Screenshot 2026-02-18 093647" src="https://github.com/user-attachments/assets/a9fde5e2-6e52-4bae-9b96-03655109aef6" />
+<img src="https://github.com/user-attachments/assets/93ffe785-aace-4b6c-aba7-f623ee4a9a18" />
+
+<img src="https://github.com/user-attachments/assets/b6069642-59c4-4e3a-a89e-1327e19ea1ce" />
+
+<img src="https://github.com/user-attachments/assets/46676b31-13aa-4ce9-842e-6f020dae916b" />
 
 ## Install
 
