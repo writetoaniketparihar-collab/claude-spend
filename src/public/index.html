@@ -137,9 +137,10 @@
 
   /* ---- STAT CARDS ---- */
   .stats-row {
-    display: grid; grid-template-columns: repeat(4, 1fr);
+    display: grid; grid-template-columns: repeat(5, 1fr);
     gap: 16px; margin-bottom: 32px;
   }
+  @media (max-width: 1100px) { .stats-row { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 780px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
 
   .stat-card {
@@ -475,25 +476,39 @@
   .model-opus .model-dot { background: #4F46E5; }
   .model-sonnet .model-dot { background: #10B981; }
   .model-haiku .model-dot { background: #F97316; }
-  /* Sub-line pills in project rows — compact variant */
-  .model-pills {
-    list-style: none; padding: 0; margin: 5px 0 0;
-    display: flex; flex-wrap: wrap; gap: 4px;
+  /* Model grid in project rows — compact aligned columns */
+  .model-grid {
+    display: grid;
+    grid-template-columns: auto auto auto auto auto;
+    gap: 1px 12px;
+    margin: 6px 0 0;
+    font-size: 12px;
+    align-items: baseline;
   }
-  .model-pills li { display: flex; }
-  .model-pills .model-badge {
-    padding: 2px 8px; font-size: 11px; border-radius: 10px;
+  .model-grid-name {
+    display: flex; align-items: center; gap: 5px;
+    font-weight: 600; white-space: nowrap;
+  }
+  .model-grid-val {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 11px;
+    text-align: right;
+    white-space: nowrap;
+    color: var(--text-secondary);
+  }
+  .model-grid-prompts {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-tertiary);
+    text-align: right;
+    white-space: nowrap;
   }
   /* Screen-reader-only label (WCAG 2.1 compliant) */
   .sr-only {
     position: absolute; width: 1px; height: 1px; padding: 0;
     margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
     white-space: nowrap; border-width: 0;
-  }
-  /* Inline ↓in ↑out token pair inside a model badge */
-  .token-detail {
-    display: inline-flex; align-items: center; gap: 2px;
-    font-size: 10px; font-weight: 600; opacity: 0.9;
   }
   /* Project name styled as path */
   .proj-name {
@@ -724,9 +739,11 @@
         <thead>
           <tr>
             <th>Project</th>
+            <th style="text-align:right" class="has-tooltip has-tooltip-below">Est. Cost<div class="tooltip">Estimated API cost with caching discount applied. Hover a row to see cost without cache.</div></th>
             <th style="text-align:right">Total Tokens</th>
             <th style="text-align:right">Sessions</th>
             <th style="text-align:right">Queries</th>
+            <th style="text-align:right">Your Prompts</th>
           </tr>
         </thead>
         <tbody id="projectsBody"></tbody>
@@ -817,6 +834,13 @@ function fmt(n) {
   return n.toLocaleString();
 }
 function fmtFull(n) { return n.toLocaleString(); }
+function fmtCost(n) {
+  if (n >= 100) return '$' + n.toFixed(0);
+  if (n >= 10) return '$' + n.toFixed(1);
+  if (n >= 1) return '$' + n.toFixed(2);
+  if (n >= 0.01) return '$' + n.toFixed(2);
+  return '<$0.01';
+}
 
 function modelClass(m) {
   if (m.includes('opus')) return 'model-opus';
@@ -902,15 +926,20 @@ function renderStats() {
   const range = t.dateRange ? `${formatDate(t.dateRange.from)} - ${formatDate(t.dateRange.to)}` : '';
   document.getElementById('dateRange').textContent = range;
 
+  const cacheSavings = t.costWithoutCache - t.costWithCache;
+  const cacheSavingsPct = t.costWithoutCache > 0 ? ((cacheSavings / t.costWithoutCache) * 100).toFixed(0) : 0;
+
   const cards = [
+    { label: 'Estimated Cost', value: fmtCost(t.costWithCache), sub: `${fmtCost(t.costWithoutCache)} without caching (saved ${cacheSavingsPct}%)`,
+      tip: 'Estimated API cost based on Anthropic\'s published pricing. "With cache" uses the discounted rate for cached tokens. "Without cache" shows what it would cost if every token were billed at the base input rate.' },
     { label: 'Total Usage', value: fmt(t.totalTokens), sub: `${fmt(t.totalInputTokens)} read by Claude + ${fmt(t.totalOutputTokens)} written back`,
       tip: 'The total number of tokens used across all your conversations. This includes everything Claude reads (your messages, conversation history, files) plus everything Claude writes back.' },
     { label: 'Conversations', value: fmtFull(t.totalSessions), sub: `Each one used ~${fmt(t.avgTokensPerSession)} tokens on average`,
       tip: 'Each time you start Claude Code and begin chatting, that counts as one conversation. A new conversation starts fresh with no prior context.' },
-    { label: 'Messages Sent', value: fmtFull(t.totalQueries), sub: `Each message cost ~${fmt(t.avgTokensPerQuery)} tokens on average`,
+    { label: 'Messages Sent', value: fmtFull(t.totalQueries), sub: `Includes Claude's auto tool-call rounds; ~${fmt(t.avgTokensPerQuery)} tokens each`,
       tip: 'Every time you hit Enter and send something to Claude, that is one message. This includes follow-up tool calls Claude makes automatically behind the scenes.' },
-    { label: 'Claude Wrote', value: fmt(t.totalOutputTokens), sub: `Only ${((t.totalOutputTokens / Math.max(t.totalTokens, 1)) * 100).toFixed(1)}% of total -- most usage is from re-reading context`,
-      tip: 'The tokens Claude spent writing responses, code, and explanations. This is usually a tiny fraction of total usage because most tokens go toward re-reading your conversation history.' },
+    { label: 'Your Prompts', value: fmtFull(t.userPromptCount), sub: `${((t.userPromptCount / Math.max(t.totalQueries, 1)) * 100).toFixed(0)}% of all messages were typed by you`,
+      tip: 'The number of messages you actually typed and sent. Excludes automatic tool-call continuation rounds that Claude initiates behind the scenes.' },
   ];
 
   document.getElementById('statsRow').innerHTML = cards.map((c, i) => `
@@ -1086,9 +1115,10 @@ function renderModelChart() {
 
   document.getElementById('modelLegend').innerHTML = slices.map(d => {
     const pct = ((d.totalTokens / total) * 100).toFixed(1);
+    const cost = d.costWithCache != null ? ' &ndash; ' + fmtCost(d.costWithCache) : '';
     return `<div class="legend-item">
       <div class="legend-dot" style="background:${getColors(d.model)[0]}"></div>
-      <span><strong>${modelShort(d.model)}</strong> &ndash; ${fmt(d.totalTokens)} (${pct}%)</span>
+      <span><strong>${modelShort(d.model)}</strong> &ndash; ${fmt(d.totalTokens)} (${pct}%)${cost}</span>
     </div>`;
   }).join('');
 }
@@ -1143,15 +1173,15 @@ function renderProjectBreakdown() {
   const rows = [];
   projects.forEach((p, i) => {
     const barPct = (p.totalTokens / maxTokens * 100).toFixed(1);
-    const ariaLabel = p.modelBreakdown.map(m => modelShort(m.model) + ': ' + fmt(m.inputTokens) + ' input, ' + fmt(m.outputTokens) + ' output').join(', ');
-    const pillItems = p.modelBreakdown.map(m =>
-      '<li><span class="model-badge ' + modelClass(m.model) +
-      '" aria-label="' + modelShort(m.model) + ': ' + fmt(m.inputTokens) + ' input, ' + fmt(m.outputTokens) + ' output">' +
-      '<span class="model-dot" aria-hidden="true"></span>' +
-      modelShort(m.model) +
-      ' <span class="token-detail"><span aria-hidden="true">\u2193</span><span class="sr-only">in </span>' + fmt(m.inputTokens) + '</span>' +
-      ' <span class="token-detail"><span aria-hidden="true">\u2191</span><span class="sr-only">out </span>' + fmt(m.outputTokens) + '</span>' +
-      '</span></li>'
+    const ariaLabel = p.modelBreakdown.map(m => modelShort(m.model) + ': ' + fmt(m.inputTokens) + ' input, ' + fmt(m.outputTokens) + ' output, ' + (m.userPromptCount || 0) + ' prompts').join(', ');
+    const gridItems = p.modelBreakdown.map(m =>
+      '<span class="model-grid-name ' + modelClass(m.model) + '" style="background:none;padding:0;border-radius:0">' +
+        '<span class="model-dot" aria-hidden="true"></span>' + modelShort(m.model) +
+      '</span>' +
+      '<span class="model-grid-val">' + fmtCost(m.costWithCache) + '</span>' +
+      '<span class="model-grid-val"><span class="sr-only">in </span>' + fmt(m.inputTokens) + ' <span aria-hidden="true">\u2193</span></span>' +
+      '<span class="model-grid-val"><span class="sr-only">out </span>' + fmt(m.outputTokens) + ' <span aria-hidden="true">\u2191</span></span>' +
+      '<span class="model-grid-prompts">' + (m.userPromptCount || 0) + ' prompts</span>'
     ).join('');
     const summaryRow = [
       '<tr class="proj-row" id="proj-row-' + i + '" onclick="toggleProjectDrawer(' + i + ')">',
@@ -1160,8 +1190,12 @@ function renderProjectBreakdown() {
       chevron,
       '<div>',
       '<div class="proj-name" title="' + projectFull(p.project) + '">' + escapeHtml(projectShort(p.project)) + '</div>',
-      '<ul class="model-pills" aria-label="Models used: ' + ariaLabel + '">' + pillItems + '</ul>',
+      '<div class="model-grid" aria-label="Models used: ' + ariaLabel + '">' + gridItems + '</div>',
       '</div></div></td>',
+      '<td class="token-num" style="font-weight:700;vertical-align:top;padding-top:12px">' +
+      '<div>' + fmtCost(p.costWithCache) + '</div>' +
+      '<div style="font-size:11px;font-weight:500;color:var(--text-tertiary);margin-top:1px">' + fmtCost(p.costWithoutCache) + ' w/o cache</div>' +
+      '</td>',
       '<td class="token-num" style="font-weight:700;vertical-align:top;padding-top:12px">',
       '<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">',
       '<div style="flex:1;max-width:60px;height:3px;background:var(--bg);border-radius:4px;overflow:hidden">',
@@ -1169,11 +1203,12 @@ function renderProjectBreakdown() {
       '</div><div><div>' + fmt(p.totalTokens) + '</div><div style="font-size:11px;font-weight:500;color:var(--text-tertiary);margin-top:1px">' + fmt(p.inputTokens) + ' in\u00a0\u00b7\u00a0' + fmt(p.outputTokens) + ' out</div></div></div></td>',
       '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.sessionCount + '</td>',
       '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.queryCount + '</td>',
+      '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.userPromptCount + '</td>',
       '</tr>',
     ].join('');
     const drawerRow = [
       '<tr class="proj-drawer" id="proj-drawer-' + i + '">',
-      '<td colspan="4"><div class="proj-drawer-inner"><div class="proj-drawer-content">',
+      '<td colspan="6"><div class="proj-drawer-inner"><div class="proj-drawer-content">',
       buildDrawerContent(p),
       '</div></div></td></tr>',
     ].join('');
