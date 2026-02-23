@@ -425,6 +425,7 @@ async function parseAllSessions() {
           toolCounts: { ...curTools },
           date: session.date,
           sessionId: session.sessionId,
+          globalIndex: p.allPrompts.length,
         });
       }
     };
@@ -458,6 +459,7 @@ async function parseAllSessions() {
       sessionCount: p.sessionCount,
       queryCount: p.queryCount,
       modelBreakdown: Object.values(p.modelMap).sort((a, b) => b.totalTokens - a.totalTokens),
+      allPrompts: (p.allPrompts || []),
       topPrompts: (p.allPrompts || []).sort((a, b) => b.totalTokens - a.totalTokens).slice(0, 10),
     }))
     .sort((a, b) => b.totalTokens - a.totalTokens);
@@ -468,6 +470,7 @@ async function parseAllSessions() {
 
   // Top 20 most expensive individual prompts — accumulate cost per group too
   const allPromptsMap = {};
+  let globalPromptIndex = 0;
   for (const session of sessions) {
     let curPrompt = null, curInput = 0, curOutput = 0, curCost = 0;
     const flush = () => {
@@ -479,6 +482,7 @@ async function parseAllSessions() {
             inputTokens: 0, outputTokens: 0, totalTokens: 0,
             estimatedCost: 0,
             date: session.date, sessionId: session.sessionId, model: session.model,
+            globalIndex: globalPromptIndex++,
           };
         }
         allPromptsMap[key].inputTokens  += curInput;
@@ -1050,8 +1054,8 @@ function analyzeToolUsage(queries) {
       let file = t.input?.file_path || t.input?.path || t.input?.target || null;
       if (file) {
         if (!fileAccessMap[file]) fileAccessMap[file] = { reads: 0, writes: 0 };
-        if (t.name === 'Read File') fileAccessMap[file].reads++;
-        if (t.name === 'Write File') fileAccessMap[file].writes++;
+        if (t.name === 'Read File' || t.name === 'Read' || t.name === 'Search' || t.name === 'View') fileAccessMap[file].reads++;
+        if (t.name === 'Write File' || t.name === 'Write' || t.name === 'Edit' || t.name === 'TodoWrite' || t.name === 'Replace' || t.name === 'ReplaceItem') fileAccessMap[file].writes++;
       }
     }
   }
