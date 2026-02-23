@@ -111,11 +111,23 @@
   .logo-mark svg { width: 22px; height: 22px; }
   .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
   .header-right { display: flex; align-items: center; gap: 14px; }
-  .date-range {
-    color: var(--text-tertiary); font-size: 13px; font-weight: 500;
-    background: var(--white); padding: 6px 14px; border-radius: 20px;
+  .date-range-picker {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--white); padding: 5px 12px; border-radius: 20px;
     border: 1px solid var(--border);
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
+  .date-range-picker:focus-within {
+    border-color: var(--indigo);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+  }
+  .date-input {
+    border: none; outline: none; background: transparent;
+    font-family: var(--font); font-size: 13px; font-weight: 500;
+    color: var(--text-secondary); cursor: pointer; width: 112px;
+  }
+  .date-input::-webkit-calendar-picker-indicator { opacity: 0.45; cursor: pointer; }
+  .date-sep { color: var(--text-tertiary); font-size: 13px; user-select: none; }
   .refresh-btn {
     background: var(--white); border: 1px solid var(--border);
     color: var(--text-secondary); padding: 7px 16px; border-radius: 20px;
@@ -593,7 +605,11 @@
       <h1>Claude Spend</h1>
     </div>
     <div class="header-right">
-      <span id="dateRange" class="date-range"></span>
+      <div class="date-range-picker">
+        <input type="date" id="dateFrom" class="date-input" title="From date">
+        <span class="date-sep">&#8594;</span>
+        <input type="date" id="dateTo" class="date-input" title="To date">
+      </div>
       <button class="refresh-btn" onclick="refreshData()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
         Refresh
@@ -727,6 +743,7 @@
 let DATA = null;
 let currentSort = { key: 'total', dir: 'desc' };
 let searchQuery = '';
+let dateRangeInitialized = false;
 
 function fmt(n) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -790,16 +807,35 @@ function formatDate(d) {
   return `${months[parseInt(parts[1])-1]} ${parseInt(parts[2])}`;
 }
 
-async function fetchData() {
-  const res = await fetch('/api/data');
+async function fetchData(from, to) {
+  const params = new URLSearchParams();
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  const url = '/api/data' + (params.toString() ? '?' + params.toString() : '');
+  const res = await fetch(url);
   DATA = await res.json();
+  if (!dateRangeInitialized && DATA.totals.dateRange) {
+    dateRangeInitialized = true;
+    document.getElementById('dateFrom').value = DATA.totals.dateRange.from;
+    document.getElementById('dateTo').value = DATA.totals.dateRange.to;
+  }
   render();
 }
 async function refreshData() {
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
   await fetch('/api/refresh');
+  dateRangeInitialized = false;
+  document.getElementById('dateFrom').value = '';
+  document.getElementById('dateTo').value = '';
   await fetchData();
+}
+async function applyDateFilter() {
+  const from = document.getElementById('dateFrom').value;
+  const to = document.getElementById('dateTo').value;
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  await fetchData(from || null, to || null);
 }
 
 function render() {
@@ -817,8 +853,6 @@ function render() {
 // Stats
 function renderStats() {
   const t = DATA.totals;
-  const range = t.dateRange ? `${formatDate(t.dateRange.from)} - ${formatDate(t.dateRange.to)}` : '';
-  document.getElementById('dateRange').textContent = range;
 
   const cards = [
     { label: 'Total Usage', value: fmt(t.totalTokens), sub: `${fmt(t.totalInputTokens)} read by Claude + ${fmt(t.totalOutputTokens)} written back`,
@@ -1227,6 +1261,9 @@ function openDrilldown(sessionId) {
 function closeDrilldown() {
   document.getElementById('drilldown').classList.remove('open');
 }
+
+document.getElementById('dateFrom').addEventListener('change', applyDateFilter);
+document.getElementById('dateTo').addEventListener('change', applyDateFilter);
 
 fetchData();
 window.addEventListener('resize', () => { if (DATA) { renderDailyChart(); renderModelChart(); } });

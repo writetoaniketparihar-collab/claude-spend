@@ -11,6 +11,11 @@ function createServer() {
       if (!cachedData) {
         cachedData = await require('./parser').parseAllSessions();
       }
+      const { from, to } = req.query;
+      if (from || to) {
+        const filtered = require('./parser').filterByDateRange(cachedData, from || null, to || null);
+        return res.json(filtered);
+      }
       res.json(cachedData);
     } catch (err) {
       res.status(500).json({ error: err.message });
