@@ -22,7 +22,7 @@
     "spend",
     "cost"
   ],
-  "author": "Himanshu Jhawar",
+  "author": "",
   "license": "MIT",
   "dependencies": {
     "express": "^4.21.0",

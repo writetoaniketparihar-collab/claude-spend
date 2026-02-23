@@ -1,10 +1,10 @@
-# claude-spend
+# claude-spent
 
 See where your Claude Code tokens go. One command, zero setup.
 
 ## Problem
 
-I've been using Claude Code every day for 3 months. I hit the usage limit almost daily, but had zero visibility into which prompts were eating my tokens. So I built claude-spend. One command, zero setup.
+Been using Claude Code every day? Hit the usage limit but have zero visibility into which prompts are eating your tokens. claude-spent fixes that. One command, zero setup.
 
 ## How does it look
 
@@ -19,7 +19,7 @@ I've been using Claude Code every day for 3 months. I hit the usage limit almost
 ## Install
 
 ```
-npx claude-spend
+npx claude-spent
 ```
 
 That's it. Opens a dashboard in your browser.
@@ -33,13 +33,13 @@ That's it. Opens a dashboard in your browser.
 ## Options
 
 ```
-claude-spend --port 8080   # custom port (default: 3455)
-claude-spend --no-open     # don't auto-open browser
+claude-spent --port 8080   # custom port (default: 3455)
+claude-spent --no-open     # don't auto-open browser
 ```
 
 ## Privacy
 
-All data stays local. claude-spend reads files from `~/.claude/` on your machine and serves a dashboard on localhost. No data is sent anywhere.
+All data stays local. claude-spent reads files from `~/.claude/` on your machine and serves a dashboard on localhost. No data is sent anywhere.
 
 ## License
 
