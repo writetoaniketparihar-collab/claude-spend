@@ -7,6 +7,7 @@
     "claude-spend": "src/index.js"
   },
   "scripts": {
+    "build": "tsc && shx cp -r src/public dist/public",
     "start": "node src/index.js"
   },
   "keywords": [
@@ -28,5 +29,11 @@
   "dependencies": {
     "express": "^4.21.0",
     "open": "^10.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.25",
+    "@types/node": "^25.3.0",
+    "shx": "^0.4.0",
+    "typescript": "^5.9.3"
   }
 }
