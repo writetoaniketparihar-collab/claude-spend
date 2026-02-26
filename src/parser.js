@@ -442,7 +442,7 @@ function generateInsights(sessions, allPrompts, totals) {
       id: 'vague-prompts',
       type: 'warning',
       title: 'Short, vague messages are costing you the most',
-      description: `${shortExpensive.length} times you sent a short message like ${examples.map(e => '"' + e + '"').join(', ')} -- and each time, Claude burned through over 100K tokens before it figured out what you wanted. That adds up to ${fmt(totalWasted)} tokens total. Most of that isn't Claude writing back to you -- it's Claude re-reading your entire conversation, searching files, and making multiple attempts because the instruction was too vague.`,
+      description: `${shortExpensive.length} times you sent a short message like ${examples.map(e => '"' + e + '"').join(', ')} -- and each message burned at least 100K tokens just trying to figure out what you wanted. Across all ${shortExpensive.length} messages, that adds up to ${fmt(totalWasted)} tokens total -- spent re-reading your conversation, searching files, and making multiple attempts because the instruction was too vague.`,
       action: 'Try being specific. Instead of "Yes", say "Yes, update the login page and run the tests." It gives Claude a clear target, so it finishes faster and uses fewer tokens.',
     });
   }
