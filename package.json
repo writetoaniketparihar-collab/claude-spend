@@ -7,7 +7,8 @@
     "claude-spend": "src/index.js"
   },
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "download-fonts": "node scripts/download-fonts.js"
   },
   "keywords": [
     "claude",
