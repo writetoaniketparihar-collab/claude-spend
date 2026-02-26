@@ -3,6 +3,43 @@ const path = require('path');
 const os = require('os');
 const readline = require('readline');
 
+// Anthropic API pricing per token (from platform.claude.com/docs/en/about-claude/pricing)
+// Note: These are API-equivalent estimates. Claude Code subscription pricing differs.
+// Cache write = 1.25x base input (5-min TTL). Cache read = 0.1x base input.
+const MODEL_PRICING = {
+  // Opus 4.5, 4.6: $5/MTok in, $25/MTok out
+  'opus-4.5': { input: 5 / 1e6, output: 25 / 1e6, cacheWrite: 6.25 / 1e6, cacheRead: 0.50 / 1e6 },
+  'opus-4.6': { input: 5 / 1e6, output: 25 / 1e6, cacheWrite: 6.25 / 1e6, cacheRead: 0.50 / 1e6 },
+  // Opus 4.0, 4.1: $15/MTok in, $75/MTok out
+  'opus-4.0': { input: 15 / 1e6, output: 75 / 1e6, cacheWrite: 18.75 / 1e6, cacheRead: 1.50 / 1e6 },
+  'opus-4.1': { input: 15 / 1e6, output: 75 / 1e6, cacheWrite: 18.75 / 1e6, cacheRead: 1.50 / 1e6 },
+  // Sonnet 3.7, 4, 4.5, 4.6: $3/MTok in, $15/MTok out
+  sonnet: { input: 3 / 1e6, output: 15 / 1e6, cacheWrite: 3.75 / 1e6, cacheRead: 0.30 / 1e6 },
+  // Haiku 4.5: $1/MTok in, $5/MTok out
+  'haiku-4.5': { input: 1 / 1e6, output: 5 / 1e6, cacheWrite: 1.25 / 1e6, cacheRead: 0.10 / 1e6 },
+  // Haiku 3.5: $0.80/MTok in, $4/MTok out
+  'haiku-3.5': { input: 0.80 / 1e6, output: 4 / 1e6, cacheWrite: 1.00 / 1e6, cacheRead: 0.08 / 1e6 },
+};
+const DEFAULT_PRICING = MODEL_PRICING.sonnet;
+
+function getPricing(model) {
+  if (!model) return DEFAULT_PRICING;
+  const m = model.toLowerCase();
+  if (m.includes('opus')) {
+    // Opus 4.5/4.6 are cheaper than Opus 4.0/4.1
+    if (m.includes('4-6') || m.includes('4.6')) return MODEL_PRICING['opus-4.6'];
+    if (m.includes('4-5') || m.includes('4.5')) return MODEL_PRICING['opus-4.5'];
+    if (m.includes('4-1') || m.includes('4.1')) return MODEL_PRICING['opus-4.1'];
+    return MODEL_PRICING['opus-4.0']; // Opus 4.0 and Opus 3
+  }
+  if (m.includes('sonnet')) return MODEL_PRICING.sonnet;
+  if (m.includes('haiku')) {
+    if (m.includes('4-5') || m.includes('4.5')) return MODEL_PRICING['haiku-4.5'];
+    return MODEL_PRICING['haiku-3.5'];
+  }
+  return DEFAULT_PRICING;
+}
+
 function getClaudeDir() {
   return path.join(os.homedir(), '.claude');
 }
@@ -50,10 +87,16 @@ function extractSessionData(entries) {
       const model = entry.message.model || 'unknown';
       if (model === '<synthetic>') continue;
 
-      const inputTokens = (usage.input_tokens || 0)
-        + (usage.cache_creation_input_tokens || 0)
-        + (usage.cache_read_input_tokens || 0);
+      const pricing = getPricing(model);
+      const inputTokens = usage.input_tokens || 0;
+      const cacheCreationTokens = usage.cache_creation_input_tokens || 0;
+      const cacheReadTokens = usage.cache_read_input_tokens || 0;
       const outputTokens = usage.output_tokens || 0;
+      const totalTokens = inputTokens + cacheCreationTokens + cacheReadTokens + outputTokens;
+      const cost = (inputTokens * pricing.input)
+        + (cacheCreationTokens * pricing.cacheWrite)
+        + (cacheReadTokens * pricing.cacheRead)
+        + (outputTokens * pricing.output);
 
       const tools = [];
       if (Array.isArray(entry.message.content)) {
@@ -68,8 +111,11 @@ function extractSessionData(entries) {
         assistantTimestamp: entry.timestamp,
         model,
         inputTokens,
+        cacheCreationTokens,
+        cacheReadTokens,
         outputTokens,
-        totalTokens: inputTokens + outputTokens,
+        totalTokens,
+        cost,
         tools,
       });
     }
@@ -101,7 +147,11 @@ async function parseAllSessions() {
   }
 
   const projectDirs = fs.readdirSync(projectsDir).filter(d => {
-    return fs.statSync(path.join(projectsDir, d)).isDirectory();
+    try {
+      return fs.statSync(path.join(projectsDir, d)).isDirectory();
+    } catch {
+      return false;
+    }
   });
 
   const sessions = [];
@@ -111,7 +161,12 @@ async function parseAllSessions() {
 
   for (const projectDir of projectDirs) {
     const dir = path.join(projectsDir, projectDir);
-    const files = fs.readdirSync(dir).filter(f => f.endsWith('.jsonl'));
+    let files;
+    try {
+      files = fs.readdirSync(dir).filter(f => f.endsWith('.jsonl'));
+    } catch {
+      continue; // Skip directories we can't read
+    }
 
     for (const file of files) {
       const filePath = path.join(dir, file);
@@ -128,12 +183,15 @@ async function parseAllSessions() {
       const queries = extractSessionData(entries);
       if (queries.length === 0) continue;
 
-      let inputTokens = 0, outputTokens = 0;
+      let inputTokens = 0, outputTokens = 0, cacheCreationTokens = 0, cacheReadTokens = 0, cost = 0;
       for (const q of queries) {
         inputTokens += q.inputTokens;
         outputTokens += q.outputTokens;
+        cacheCreationTokens += q.cacheCreationTokens;
+        cacheReadTokens += q.cacheReadTokens;
+        cost += q.cost;
       }
-      const totalTokens = inputTokens + outputTokens;
+      const totalTokens = inputTokens + cacheCreationTokens + cacheReadTokens + outputTokens;
 
       const firstTimestamp = entries.find(e => e.timestamp)?.timestamp;
       const date = firstTimestamp ? firstTimestamp.split('T')[0] : 'unknown';
@@ -152,14 +210,17 @@ async function parseAllSessions() {
       // Collect per-prompt data for "most expensive prompts"
       // Group consecutive queries under the same user prompt
       let currentPrompt = null;
-      let promptInput = 0, promptOutput = 0;
+      let promptInput = 0, promptOutput = 0, promptCacheCreation = 0, promptCacheRead = 0, promptCost = 0;
       const flushPrompt = () => {
-        if (currentPrompt && (promptInput + promptOutput) > 0) {
+        if (currentPrompt && (promptInput + promptOutput + promptCacheCreation + promptCacheRead) > 0) {
           allPrompts.push({
             prompt: currentPrompt.substring(0, 300),
             inputTokens: promptInput,
             outputTokens: promptOutput,
-            totalTokens: promptInput + promptOutput,
+            cacheCreationTokens: promptCacheCreation,
+            cacheReadTokens: promptCacheRead,
+            totalTokens: promptInput + promptOutput + promptCacheCreation + promptCacheRead,
+            cost: promptCost,
             date,
             sessionId,
             model: primaryModel,
@@ -172,9 +233,15 @@ async function parseAllSessions() {
           currentPrompt = q.userPrompt;
           promptInput = 0;
           promptOutput = 0;
+          promptCacheCreation = 0;
+          promptCacheRead = 0;
+          promptCost = 0;
         }
         promptInput += q.inputTokens;
         promptOutput += q.outputTokens;
+        promptCacheCreation += q.cacheCreationTokens;
+        promptCacheRead += q.cacheReadTokens;
+        promptCost += q.cost;
       }
       flushPrompt();
 
@@ -189,17 +256,23 @@ async function parseAllSessions() {
         queries,
         inputTokens,
         outputTokens,
+        cacheCreationTokens,
+        cacheReadTokens,
         totalTokens,
+        cost,
       });
 
       // Daily
       if (date !== 'unknown') {
         if (!dailyMap[date]) {
-          dailyMap[date] = { date, inputTokens: 0, outputTokens: 0, totalTokens: 0, sessions: 0, queries: 0 };
+          dailyMap[date] = { date, inputTokens: 0, outputTokens: 0, cacheCreationTokens: 0, cacheReadTokens: 0, totalTokens: 0, cost: 0, sessions: 0, queries: 0 };
         }
         dailyMap[date].inputTokens += inputTokens;
         dailyMap[date].outputTokens += outputTokens;
+        dailyMap[date].cacheCreationTokens += cacheCreationTokens;
+        dailyMap[date].cacheReadTokens += cacheReadTokens;
         dailyMap[date].totalTokens += totalTokens;
+        dailyMap[date].cost += cost;
         dailyMap[date].sessions += 1;
         dailyMap[date].queries += queries.length;
       }
@@ -208,11 +281,14 @@ async function parseAllSessions() {
       for (const q of queries) {
         if (q.model === '<synthetic>' || q.model === 'unknown') continue;
         if (!modelMap[q.model]) {
-          modelMap[q.model] = { model: q.model, inputTokens: 0, outputTokens: 0, totalTokens: 0, queryCount: 0 };
+          modelMap[q.model] = { model: q.model, inputTokens: 0, outputTokens: 0, cacheCreationTokens: 0, cacheReadTokens: 0, totalTokens: 0, cost: 0, queryCount: 0 };
         }
         modelMap[q.model].inputTokens += q.inputTokens;
         modelMap[q.model].outputTokens += q.outputTokens;
+        modelMap[q.model].cacheCreationTokens += q.cacheCreationTokens;
+        modelMap[q.model].cacheReadTokens += q.cacheReadTokens;
         modelMap[q.model].totalTokens += q.totalTokens;
+        modelMap[q.model].cost += q.cost;
         modelMap[q.model].queryCount += 1;
       }
     }
@@ -305,12 +381,28 @@ async function parseAllSessions() {
   allPrompts.sort((a, b) => b.totalTokens - a.totalTokens);
   const topPrompts = allPrompts.slice(0, 20);
 
+  const totalCacheCreationTokens = sessions.reduce((sum, s) => sum + s.cacheCreationTokens, 0);
+  const totalCacheReadTokens = sessions.reduce((sum, s) => sum + s.cacheReadTokens, 0);
+  const totalCost = sessions.reduce((sum, s) => sum + s.cost, 0);
+  const totalAllInput = sessions.reduce((sum, s) => sum + s.inputTokens + s.cacheCreationTokens + s.cacheReadTokens, 0);
+
+  // What caching saved: cache reads at full input price minus what they actually cost
+  const avgInputPrice = DEFAULT_PRICING.input;
+  const avgCacheReadPrice = DEFAULT_PRICING.cacheRead;
+  const totalSaved = totalCacheReadTokens * (avgInputPrice - avgCacheReadPrice);
+  const cacheHitRate = totalAllInput > 0 ? totalCacheReadTokens / totalAllInput : 0;
+
   const grandTotals = {
     totalSessions: sessions.length,
     totalQueries: sessions.reduce((sum, s) => sum + s.queryCount, 0),
     totalTokens: sessions.reduce((sum, s) => sum + s.totalTokens, 0),
     totalInputTokens: sessions.reduce((sum, s) => sum + s.inputTokens, 0),
     totalOutputTokens: sessions.reduce((sum, s) => sum + s.outputTokens, 0),
+    totalCacheCreationTokens,
+    totalCacheReadTokens,
+    totalCost,
+    totalSaved,
+    cacheHitRate,
     avgTokensPerQuery: 0,
     avgTokensPerSession: 0,
     dateRange: dailyUsage.length > 0
@@ -535,6 +627,20 @@ function generateInsights(sessions, allPrompts, totals) {
         action: 'Keep your CLAUDE.md files concise. Remove sections you rarely need. A smaller starting context compounds into savings across every message in the conversation.',
       });
     }
+  }
+
+  // 11. Cache efficiency
+  if (totals.totalCacheReadTokens > 0) {
+    const saved = totals.totalSaved;
+    const hitRate = (totals.cacheHitRate * 100).toFixed(1);
+    const withoutCaching = totals.totalCost + saved;
+    insights.push({
+      id: 'cache-savings',
+      type: 'info',
+      title: `Caching saved you an estimated $${saved.toFixed(2)}`,
+      description: `Your cache hit rate is ${hitRate}% -- meaning ${hitRate}% of all input tokens were served from cache at 10x lower cost. Without caching, your estimated API-equivalent bill would be $${withoutCaching.toFixed(2)} instead of $${totals.totalCost.toFixed(2)}. Cache reads happen when Claude re-reads parts of the conversation that haven't changed since the last turn.`,
+      action: 'Caching works best in longer conversations where context stays stable. Shorter sessions mean less cache reuse but also less context growth. The sweet spot is medium-length focused sessions on a single task.',
+    });
   }
 
   return insights;
