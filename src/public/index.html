@@ -634,29 +634,7 @@
     </div>
   </div>
 
-  <!-- Projects -->
-  <div class="projects-section animate delay-4">
-    <div class="section-header">
-      <div class="section-icon" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M12 3v18"/><path d="M3 7l9 4 9-4"/></svg>
-      </div>
-      <div class="section-title">Projects</div>
-      <span id="projectsCount" style="font-size:13px;color:var(--text-tertiary);font-weight:600;margin-left:auto"></span>
-    </div>
-    <div class="sessions-card">
-      <table class="sessions-table">
-        <thead>
-          <tr>
-            <th>Project</th>
-            <th style="text-align:right">Total Tokens</th>
-            <th style="text-align:right">Sessions</th>
-            <th style="text-align:right">Queries</th>
-          </tr>
-        </thead>
-        <tbody id="projectsBody"></tbody>
-      </table>
-    </div>
-  </div>
+  <!-- Projects (temporarily hidden - TODO: fix prompt extraction) -->
 
   <!-- Most Expensive Prompts -->
   <div class="top-prompts animate delay-4">
@@ -833,7 +811,7 @@ function render() {
   renderInsights();
   renderDailyChart();
   renderModelChart();
-  renderProjectBreakdown();
+  // renderProjectBreakdown(); // temporarily disabled
   renderTopPrompts();
   renderSessions();
 }
