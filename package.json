@@ -1,6 +1,6 @@
 {
   "name": "claude-spend",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "See where your Claude Code tokens go. One command, zero setup.",
   "main": "src/index.js",
   "bin": {
