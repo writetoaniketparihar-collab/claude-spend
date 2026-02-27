@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Spend - See where your Claude Code usage actually goes</title>
+<meta name="description" content="You hit your Claude Code limit. You don't know why. One command shows you exactly where your usage goes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #FFFFFF;
+    --bg-soft: #F8FAFC;
+    --bg-muted: #F1F5F9;
+
+    --text: #0F172A;
+    --text-sub: #475569;
+    --text-muted: #94A3B8;
+
+    --blue: #3B82F6;
+    --blue-dark: #2563EB;
+    --blue-wash: rgba(59, 130, 246, 0.08);
+    --blue-wash-strong: rgba(59, 130, 246, 0.14);
+
+    --violet: #7C3AED;
+    --violet-wash: rgba(124, 58, 237, 0.08);
+
+    --emerald: #10B981;
+    --emerald-wash: rgba(16, 185, 129, 0.08);
+
+    --orange: #F97316;
+    --orange-wash: rgba(249, 115, 22, 0.08);
+
+    --rose: #F43F5E;
+    --rose-wash: rgba(244, 63, 94, 0.08);
+
+    --border: #E2E8F0;
+    --border-hover: #CBD5E1;
+
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xl: 24px;
+
+    --shadow-xs: 0 1px 2px rgba(15,23,42,0.05);
+    --shadow-sm: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+    --shadow-md: 0 4px 12px rgba(15,23,42,0.07);
+    --shadow-lg: 0 10px 32px rgba(15,23,42,0.08), 0 2px 8px rgba(15,23,42,0.04);
+    --shadow-xl: 0 20px 50px rgba(15,23,42,0.1), 0 4px 12px rgba(15,23,42,0.05);
+
+    --font: 'Manrope', -apple-system, system-ui, sans-serif;
+    --mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+  }
+
+  html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+
+  body {
+    font-family: var(--font);
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: var(--blue); color: #fff; }
+
+  /* ======== NAV ======== */
+  .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 0 2rem;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-brand {
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nav-brand-icon {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, var(--blue), var(--violet));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-sub);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--text); }
+
+  .nav-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--text);
+    color: #fff !important;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    transition: all 0.2s;
+  }
+
+  .nav-cta:hover {
+    background: #1E293B !important;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .nav-cta svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+
+  /* ======== HERO ======== */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 8rem 2rem 5rem;
+    overflow: hidden;
+  }
+
+  /* Mesh gradient */
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+  }
+
+  .hero-bg .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    animation: orbDrift 25s ease-in-out infinite;
+  }
+
+  .orb-1 {
+    width: 600px; height: 600px;
+    background: rgba(59, 130, 246, 0.12);
+    top: -15%; right: -10%;
+    animation-delay: 0s;
+  }
+  .orb-2 {
+    width: 500px; height: 500px;
+    background: rgba(124, 58, 237, 0.08);
+    bottom: -10%; left: -10%;
+    animation-delay: -8s;
+  }
+  .orb-3 {
+    width: 400px; height: 400px;
+    background: rgba(16, 185, 129, 0.07);
+    top: 40%; left: 55%;
+    animation-delay: -16s;
+  }
+
+  @keyframes orbDrift {
+    0%, 100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(25px,-15px) scale(1.04); }
+    66% { transform: translate(-15px,20px) scale(0.96); }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 680px;
+  }
+
+  /* Badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 14px 5px 7px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-sub);
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-xs);
+    opacity: 0; animation: slideUp .6s cubic-bezier(.16,1,.3,1) .1s forwards;
+  }
+
+  .badge-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--emerald);
+    box-shadow: 0 0 0 3px var(--emerald-wash);
+    animation: dotPulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes dotPulse {
+    0%,100% { box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+    50% { box-shadow: 0 0 0 7px rgba(16,185,129,0.04); }
+  }
+
+  .hero h1 {
+    font-weight: 800;
+    font-size: clamp(2.4rem, 5.5vw, 3.8rem);
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+    color: var(--text);
+    margin-bottom: 0.4em;
+    opacity: 0; animation: slideUp .7s cubic-bezier(.16,1,.3,1) .2s forwards;
+  }
+
+  /* Rotating words */
+  .rotate-wrap {
+    height: clamp(1.8rem, 4vw, 2.8rem);
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 1.5rem;
+    opacity: 0; animation: slideUp .7s cubic-bezier(.16,1,.3,1) .35s forwards;
+  }
+
+  .rotate-word {
+    font-weight: 600;
+    font-size: clamp(1.2rem, 3vw, 2rem);
+    position: absolute;
+    width: 100%;
+    left: 0; top: 0;
+    opacity: 0;
+    transform: translateY(100%);
+    transition: opacity .45s cubic-bezier(.16,1,.3,1),
+                transform .45s cubic-bezier(.16,1,.3,1);
+  }
+
+  .rotate-word--blue { color: var(--blue); }
+  .rotate-word--violet { color: var(--violet); }
+  .rotate-word--rose { color: var(--rose); }
+
+  .rotate-word.active { opacity: 1; transform: translateY(0); }
+  .rotate-word.exit { opacity: 0; transform: translateY(-100%); }
+
+  .hero-sub {
+    font-size: clamp(.95rem, 1.6vw, 1.1rem);
+    font-weight: 500;
+    color: var(--text-sub);
+    max-width: 480px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.7;
+    opacity: 0; animation: slideUp .7s cubic-bezier(.16,1,.3,1) .5s forwards;
+  }
+
+  /* Hero actions */
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+    opacity: 0; animation: slideUp .7s cubic-bezier(.16,1,.3,1) .65s forwards;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font);
+    font-weight: 700;
+    font-size: .88rem;
+    padding: 12px 22px;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    transition: all .2s ease;
+    text-decoration: none;
+    line-height: 1.4;
+  }
+
+  .btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--blue) 0%, var(--violet) 100%);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(59,130,246,0.3);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59,130,246,0.35);
+  }
+
+  .btn-outline {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-outline:hover {
+    background: var(--bg-soft);
+    border-color: var(--border-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Command box */
+  .hero-cmd {
+    opacity: 0; animation: slideUp .7s cubic-bezier(.16,1,.3,1) .8s forwards;
+  }
+
+  .cmd-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px 10px 20px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all .2s ease;
+    user-select: none;
+  }
+
+  .cmd-box:hover {
+    border-color: var(--border-hover);
+    background: var(--bg-muted);
+  }
+
+  .cmd-box code {
+    font-family: var(--mono);
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -.01em;
+  }
+
+  .cmd-copy {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px; height: 30px;
+    border-radius: 7px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    transition: all .2s;
+  }
+
+  .cmd-copy:hover {
+    color: var(--blue);
+    border-color: var(--blue);
+    background: var(--blue-wash);
+  }
+
+  .cmd-copy svg { width: 14px; height: 14px; }
+
+  /* Scroll cue */
+  .scroll-cue {
+    position: absolute;
+    bottom: 2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    opacity: 0;
+    animation: fadeIn .5s ease 1.8s forwards;
+  }
+
+  .scroll-cue span {
+    font-size: .6rem;
+    font-weight: 700;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .scroll-cue svg {
+    width: 16px; height: 16px;
+    color: var(--text-muted);
+    animation: bounce 2s ease-in-out infinite;
+  }
+
+  @keyframes bounce {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(5px); }
+  }
+
+  /* ======== SHARED SECTION ======== */
+  .section {
+    padding: 5.5rem 2rem;
+  }
+
+  .section--soft { background: var(--bg-soft); }
+
+  .section-inner {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .section-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: .75rem;
+  }
+
+  .section-eyebrow--blue { color: var(--blue); }
+  .section-eyebrow--violet { color: var(--violet); }
+  .section-eyebrow--emerald { color: var(--emerald); }
+  .section-eyebrow--orange { color: var(--orange); }
+
+  .section-eyebrow::before {
+    content: '';
+    width: 20px; height: 2.5px;
+    border-radius: 2px;
+    background: currentColor;
+  }
+
+  .section-title {
+    font-weight: 800;
+    font-size: clamp(1.65rem, 3.2vw, 2.35rem);
+    letter-spacing: -.03em;
+    line-height: 1.15;
+    color: var(--text);
+    margin-bottom: .65rem;
+  }
+
+  .section-desc {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-sub);
+    max-width: 520px;
+    line-height: 1.7;
+    margin-bottom: 2.75rem;
+  }
+
+  /* ======== HOW IT WORKS ======== */
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    counter-reset: step;
+  }
+
+  .step-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 2.25rem 2rem 2rem;
+    position: relative;
+    transition: all .3s cubic-bezier(.16,1,.3,1);
+    counter-increment: step;
+  }
+
+  .step-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    border-color: transparent;
+  }
+
+  .step-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: .95rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .step-num--blue { background: var(--blue-wash-strong); color: var(--blue); }
+  .step-num--violet { background: var(--violet-wash); color: var(--violet); }
+  .step-num--emerald { background: var(--emerald-wash); color: var(--emerald); }
+
+  .step-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--text);
+    margin-bottom: .4rem;
+    letter-spacing: -.01em;
+  }
+
+  .step-desc {
+    font-size: .88rem;
+    font-weight: 500;
+    color: var(--text-sub);
+    line-height: 1.65;
+  }
+
+  .step-desc code {
+    font-family: var(--mono);
+    font-size: .78rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--bg-muted);
+    color: var(--text);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .step-note {
+    margin-top: .75rem;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .step-note svg {
+    width: 14px; height: 14px;
+    color: var(--emerald);
+  }
+
+  /* (preview section removed - replaced by screenshot slider) */
+
+  /* ======== FEATURES ======== */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .feature-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem 1.75rem;
+    transition: all .3s cubic-bezier(.16,1,.3,1);
+  }
+
+  .feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: transparent;
+  }
+
+  .feature-icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+  }
+
+  .feature-icon svg {
+    width: 20px; height: 20px;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+  }
+
+  .fi-blue { background: var(--blue-wash); }
+  .fi-blue svg { stroke: var(--blue); }
+  .fi-violet { background: var(--violet-wash); }
+  .fi-violet svg { stroke: var(--violet); }
+  .fi-orange { background: var(--orange-wash); }
+  .fi-orange svg { stroke: var(--orange); }
+
+  .feature-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: .35rem;
+    letter-spacing: -.01em;
+  }
+
+  .feature-desc {
+    font-size: .85rem;
+    font-weight: 500;
+    color: var(--text-sub);
+    line-height: 1.65;
+  }
+
+  /* ======== SCREENSHOT SLIDER ======== */
+  .screenshot-slider {
+    position: relative;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .screenshot-track {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 24px;
+    padding: 0 0 1.5rem;
+    scrollbar-width: none;
+  }
+
+  .screenshot-track::-webkit-scrollbar { display: none; }
+
+  .screenshot-slide {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+    background: var(--bg);
+    line-height: 0;
+  }
+
+  .screenshot-slide img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* Dots */
+  .screenshot-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: .5rem;
+  }
+
+  .screenshot-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: all .3s ease;
+  }
+
+  .screenshot-dot.active {
+    background: var(--blue);
+    width: 24px;
+    border-radius: 4px;
+  }
+
+  /* Arrow buttons */
+  .screenshot-arrow {
+    position: absolute;
+    top: calc(50% - 1.5rem);
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+    transition: all .2s ease;
+    color: var(--text-sub);
+  }
+
+  .screenshot-arrow:hover {
+    background: var(--bg-soft);
+    border-color: var(--border-hover);
+    box-shadow: var(--shadow-lg);
+    color: var(--text);
+  }
+
+  .screenshot-arrow svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .screenshot-arrow--prev { left: -20px; }
+  .screenshot-arrow--next { right: -20px; }
+
+  @media (max-width: 960px) {
+    .screenshot-arrow--prev { left: 8px; }
+    .screenshot-arrow--next { right: 8px; }
+  }
+
+  @media (max-width: 480px) {
+    .screenshot-arrow { display: none; }
+  }
+
+  /* ======== TESTIMONIALS ======== */
+  .testimonials-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .testimonial-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .testimonial-img-wrap {
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    background: var(--bg);
+    transition: all .3s cubic-bezier(.16,1,.3,1);
+    box-shadow: var(--shadow-xs);
+  }
+
+  .testimonial-img-wrap:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: transparent;
+  }
+
+  .testimonial-img-wrap--featured {
+    border-color: rgba(59,130,246,0.15);
+  }
+
+  .testimonial-img-wrap--featured:hover {
+    border-color: rgba(59,130,246,0.25);
+  }
+
+  .testimonial-img-wrap img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  @media (max-width: 768px) {
+    .testimonial-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ======== STORY ======== */
+  .story-card {
+    max-width: 560px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .story-avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue), var(--violet));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    color: #fff;
+    font-weight: 800;
+    font-size: 1rem;
+  }
+
+  .story-text {
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--text-sub);
+    line-height: 1.8;
+  }
+
+  .story-text strong {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  /* ======== TRUST ======== */
+  .trust-row {
+    display: flex;
+    justify-content: center;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+  }
+
+  .trust-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--text-sub);
+  }
+
+  .trust-item svg {
+    width: 16px; height: 16px;
+    color: var(--emerald);
+    flex-shrink: 0;
+  }
+
+  /* ======== CTA ======== */
+  .cta-section {
+    padding: 5rem 2rem 3rem;
+    text-align: center;
+  }
+
+  .cta-inner {
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  .cta-title {
+    font-weight: 800;
+    font-size: clamp(1.65rem, 3.2vw, 2.35rem);
+    letter-spacing: -.03em;
+    margin-bottom: .5rem;
+  }
+
+  .cta-desc {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-sub);
+    margin-bottom: 2rem;
+    line-height: 1.7;
+  }
+
+  .cta-cmd-wrap {
+    margin-bottom: 2rem;
+  }
+
+  .cta-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.75rem;
+  }
+
+  .cta-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--text-sub);
+    text-decoration: none;
+    transition: color .2s;
+  }
+
+  .cta-link:hover { color: var(--blue); }
+
+  .cta-link svg { width: 16px; height: 16px; }
+
+  /* ======== FOOTER ======== */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding: 1.75rem 2rem;
+    text-align: center;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+
+  .footer a {
+    color: var(--text-sub);
+    text-decoration: none;
+    transition: color .2s;
+  }
+
+  .footer a:hover { color: var(--blue); }
+
+  /* ======== ANIMATIONS ======== */
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity .7s cubic-bezier(.16,1,.3,1),
+                transform .7s cubic-bezier(.16,1,.3,1);
+  }
+
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .rd1 { transition-delay: .06s; }
+  .rd2 { transition-delay: .12s; }
+  .rd3 { transition-delay: .18s; }
+
+  /* ======== RESPONSIVE ======== */
+  @media (max-width: 768px) {
+    .steps-grid, .features-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .nav-links { display: none; }
+    .section { padding: 4rem 1.5rem; }
+    .trust-row { gap: 1.25rem; }
+  }
+
+  @media (max-width: 480px) {
+    .hero { padding: 7rem 1.25rem 4rem; }
+    .hero-actions { flex-direction: column; width: 100%; }
+    .btn { width: 100%; justify-content: center; }
+    .scroll-cue { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top Banner -->
+<div style="position:fixed;top:0;left:0;right:0;z-index:200;background:#0F172A;padding:8px 2rem;text-align:center;font-size:.8rem;font-weight:600;color:rgba(255,255,255,0.9);letter-spacing:-0.01em;">
+  200+ users and counting. <a href="https://www.linkedin.com/posts/writetoaniketparihar_i-keep-hitting-the-claude-code-usage-limit-activity-7431248823735279617-rRZO" target="_blank" rel="noopener" style="color:#60A5FA;font-weight:700;text-decoration:none;margin-left:4px;">Read the story &rarr;</a>
+</div>
+
+<!-- Nav -->
+<nav class="nav" style="top:36px;">
+  <div class="nav-brand">
+    <div class="nav-brand-icon">CS</div>
+    claude-spend
+  </div>
+  <ul class="nav-links">
+    <li><a href="#how-it-works">How It Works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li>
+      <a href="https://github.com/writetoaniketparihar-collab/claude-spend" target="_blank" rel="noopener" class="nav-cta">
+        <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        GitHub
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-bg" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <div class="hero-content">
+    <div class="badge">
+      <span class="badge-dot"></span>
+      Open Source &middot; Free Forever
+    </div>
+
+    <h1>You hit your Claude Code limit.</h1>
+
+    <div class="rotate-wrap" aria-live="polite">
+      <span class="rotate-word rotate-word--blue active">You don't know why.</span>
+      <span class="rotate-word rotate-word--violet">Again.</span>
+      <span class="rotate-word rotate-word--rose">Every single day.</span>
+    </div>
+
+    <p class="hero-sub">
+      Type one terminal command. Get a full breakdown of your usage in the browser.
+    </p>
+
+    <div class="hero-actions">
+      <div class="cmd-box" onclick="copyCmd(this)">
+        <code>npx claude-spend</code>
+        <div class="cmd-copy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </div>
+      </div>
+      <a href="https://github.com/writetoaniketparihar-collab/claude-spend" target="_blank" rel="noopener" class="btn btn-outline">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+  </div>
+
+  <div class="scroll-cue">
+    <span>Learn more</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+  </div>
+</section>
+
+<!-- Dashboard Preview -->
+<section class="section" id="dashboard-preview">
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center; margin-bottom: 3rem;">
+      <div class="section-eyebrow section-eyebrow--violet" style="justify-content:center;">Dashboard Preview</div>
+      <h2 class="section-title" style="text-align:center;">Everything Claude Code<br>doesn't tell you.</h2>
+    </div>
+
+    <div class="screenshot-slider reveal">
+      <button class="screenshot-arrow screenshot-arrow--prev" onclick="slideScreenshot(-1)" aria-label="Previous screenshot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="screenshot-arrow screenshot-arrow--next" onclick="slideScreenshot(1)" aria-label="Next screenshot">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+
+      <div class="screenshot-track" id="screenshotTrack">
+        <div class="screenshot-slide">
+          <img src="screenshots-dashboard/01-overview.png" alt="Dashboard overview with total usage stats and insights" loading="lazy">
+        </div>
+        <div class="screenshot-slide">
+          <img src="screenshots-dashboard/02-insights.png" alt="Personalized insights about your usage patterns" loading="lazy">
+        </div>
+        <div class="screenshot-slide">
+          <img src="screenshots-dashboard/03-charts.png" alt="Daily token chart and model breakdown" loading="lazy">
+        </div>
+        <div class="screenshot-slide">
+          <img src="screenshots-dashboard/05-sessions.png" alt="All sessions table with search and filters" loading="lazy">
+        </div>
+      </div>
+
+      <div class="screenshot-dots" id="screenshotDots">
+        <button class="screenshot-dot active" onclick="goToSlide(0)"></button>
+        <button class="screenshot-dot" onclick="goToSlide(1)"></button>
+        <button class="screenshot-dot" onclick="goToSlide(2)"></button>
+        <button class="screenshot-dot" onclick="goToSlide(3)"></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works -->
+<section class="section section--soft" id="how-it-works">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-eyebrow section-eyebrow--blue">How It Works</div>
+      <h2 class="section-title">Three steps. Thirty seconds.</h2>
+      <p class="section-desc">No install. No sign-up. Your data never leaves your machine.</p>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step-card reveal rd1">
+        <div class="step-num step-num--blue">1</div>
+        <div class="step-title">Open your terminal</div>
+        <div class="step-desc">
+          On Mac: press <code>Cmd + Space</code>, type "Terminal", hit Enter.<br>
+          On Windows: press <code>Win + R</code>, type "cmd", hit Enter.
+        </div>
+      </div>
+
+      <div class="step-card reveal rd2">
+        <div class="step-num step-num--violet">2</div>
+        <div class="step-title">Paste this command and press Enter</div>
+        <div class="step-desc">
+          <code>npx claude-spend</code><br><br>
+          That's it. It downloads temporarily, reads your local Claude Code data, and starts a mini dashboard.
+        </div>
+        <div class="step-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Nothing is sent to the internet
+        </div>
+      </div>
+
+      <div class="step-card reveal rd3">
+        <div class="step-num step-num--emerald">3</div>
+        <div class="step-title">Your dashboard opens automatically</div>
+        <div class="step-desc">
+          A new browser tab opens with your personal usage dashboard. See exactly which conversations, prompts, and days used the most.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="section" id="features">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-eyebrow section-eyebrow--emerald">What You See</div>
+      <h2 class="section-title">The answers you already want.</h2>
+      <p class="section-desc">Every question you've had about your Claude Code usage, answered in one dashboard.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card reveal rd1">
+        <div class="feature-icon fi-blue">
+          <svg viewBox="0 0 24 24"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        </div>
+        <div class="feature-title">Usage breakdown</div>
+        <div class="feature-desc">Every conversation ranked by how much it consumed. See the full picture in seconds.</div>
+      </div>
+
+      <div class="feature-card reveal rd2">
+        <div class="feature-icon fi-orange">
+          <svg viewBox="0 0 24 24"><path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26z"/></svg>
+        </div>
+        <div class="feature-title">Expensive prompts</div>
+        <div class="feature-desc">Your top 20 costliest queries, ranked. Find out what's burning through your limit.</div>
+      </div>
+
+      <div class="feature-card reveal rd3">
+        <div class="feature-icon fi-violet">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <div class="feature-title">Daily patterns</div>
+        <div class="feature-desc">See which days you burn through it fastest. Spot patterns and pace your work.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Testimonials -->
+<section class="section section--soft">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-eyebrow section-eyebrow--orange" style="justify-content:center; display:flex;">What people are saying</div>
+      <h2 class="section-title" style="text-align:center;">Loved by the r/ClaudeAI community.</h2>
+      <p class="section-desc" style="text-align:center; margin-left:auto; margin-right:auto;">Real comments from the Reddit post that started it all.</p>
+    </div>
+
+    <div class="testimonials-grid">
+      <!-- Featured: Mod stickied TL;DR -->
+      <div class="testimonial-img-wrap testimonial-img-wrap--featured reveal">
+        <img src="screenshots/reddit-mod.png" alt="ClaudeAI mod bot stickied comment: The community is giving OP a massive high-five for building this. The biggest eye-opener is that ~99% of your token usage is from Claude re-reading the entire conversation history with every single prompt.">
+      </div>
+
+      <!-- Row: Coffee + Khalimero -->
+      <div class="testimonial-row">
+        <div class="testimonial-img-wrap reveal rd1">
+          <img src="screenshots/reddit-coffee.png" alt="Coffee_And_Growth: Fix it and a well-written prompt cost similar tokens, but one gives you garbage and the other gives you results. Same spend, wildly different ROI.">
+        </div>
+        <div class="testimonial-img-wrap reveal rd2">
+          <img src="screenshots/reddit-khalimero.png" alt="KHALIMER0: Incredible work, thanks! This is an amazing insight.">
+        </div>
+      </div>
+
+      <!-- theTraveler_2 -->
+      <div class="testimonial-img-wrap reveal rd3" style="max-width: 500px;">
+        <img src="screenshots/reddit-traveler.png" alt="theTraveler_2: Thanks for sharing, that is quite useful. Much appreciated.">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Story + Trust -->
+<section class="section section--soft">
+  <div class="section-inner">
+    <div class="story-card reveal">
+      <div class="story-avatar">PM</div>
+      <p class="story-text">
+        Built by a PM who kept hitting the limit and had no idea why. Runs entirely on your machine, reads the files Claude Code already stores locally, <strong>sends nothing anywhere.</strong> Open source, always.
+      </p>
+    </div>
+
+    <div style="margin-top: 3rem;">
+      <div class="trust-row reveal">
+        <div class="trust-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+          100% local
+        </div>
+        <div class="trust-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+          Zero config
+        </div>
+        <div class="trust-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+          No data sent
+        </div>
+        <div class="trust-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+          Open source
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-inner reveal">
+    <h2 class="cta-title">Try it now</h2>
+    <p class="cta-desc">If you use Claude Code, you already have the data. Open a terminal, paste the command, done.</p>
+
+    <div class="cta-cmd-wrap">
+      <div class="cmd-box" onclick="copyCmd(this)" style="cursor:pointer">
+        <code>npx claude-spend</code>
+        <div class="cmd-copy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-links">
+      <a class="cta-link" href="https://github.com/writetoaniketparihar-collab/claude-spend" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        GitHub
+      </a>
+      <a class="cta-link" href="https://www.npmjs.com/package/claude-spend" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 7.334v8h6.666v1.332H12v-1.332h12v-8H0zm6.666 6.664H5.334v-4H3.999v4H1.335V8.667h5.331v5.331zm4 0h-2.666V8.667h2.666v5.331zm12 0h-1.33v-4h-1.336v4h-1.335v-4h-1.33v4h-2.671V8.667h8.002v5.331zM10 10v4h1.336v-4H10z"/></svg>
+        npm
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  Made with love and Claude Code by <a href="https://www.linkedin.com/in/writetoaniketparihar/" target="_blank" rel="noopener">Aniket Parihar</a>
+  <br style="margin-bottom:6px;">
+  <span style="display:inline-block;margin-top:6px;font-size:.72rem;color:#94A3B8;">This tool runs 100% locally and collects no user data, so there is no way to track usage or issues. If something breaks or you have feedback, please write to <a href="mailto:writetoaniketparihar@gmail.com" style="color:#3B82F6;text-decoration:none;font-weight:600;">writetoaniketparihar@gmail.com</a></span>
+</footer>
+
+<script>
+  // Rotating words
+  const words = document.querySelectorAll('.rotate-word');
+  let current = 0;
+
+  setInterval(() => {
+    const prev = current;
+    current = (current + 1) % words.length;
+    words[prev].classList.remove('active');
+    words[prev].classList.add('exit');
+    words[current].classList.remove('exit');
+    words[current].classList.add('active');
+    setTimeout(() => words[prev].classList.remove('exit'), 450);
+  }, 2500);
+
+  // Copy command
+  function copyCmd(el) {
+    navigator.clipboard.writeText('npx claude-spend').then(() => {
+      const codeEl = el.querySelector('code');
+      if (codeEl) {
+        const orig = codeEl.textContent;
+        codeEl.textContent = 'Copied!';
+        codeEl.style.color = 'var(--blue)';
+        setTimeout(() => { codeEl.textContent = orig; codeEl.style.color = ''; }, 1400);
+        return;
+      }
+      // For the primary button
+      const svg = el.querySelector('svg');
+      const origHTML = el.innerHTML;
+      el.textContent = '';
+      if (svg) el.appendChild(svg);
+      el.appendChild(document.createTextNode(' Copied!'));
+      setTimeout(() => { el.innerHTML = origHTML; }, 1400);
+    });
+  }
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+  reveals.forEach(el => observer.observe(el));
+
+  // Screenshot slider
+  const track = document.getElementById('screenshotTrack');
+  const dots = document.querySelectorAll('.screenshot-dot');
+  let currentSlide = 0;
+
+  function updateDots(index) {
+    dots.forEach((d, i) => d.classList.toggle('active', i === index));
+    currentSlide = index;
+  }
+
+  function goToSlide(index) {
+    const slides = track.querySelectorAll('.screenshot-slide');
+    if (index < 0 || index >= slides.length) return;
+    const slideWidth = slides[0].offsetWidth + 24; // width + gap
+    track.scrollTo({ left: index * slideWidth, behavior: 'smooth' });
+    updateDots(index);
+  }
+
+  function slideScreenshot(dir) {
+    const slides = track.querySelectorAll('.screenshot-slide');
+    let next = currentSlide + dir;
+    if (next < 0) next = slides.length - 1;
+    if (next >= slides.length) next = 0;
+    goToSlide(next);
+  }
+
+  // Sync dots on scroll
+  track.addEventListener('scrollend', () => {
+    const slides = track.querySelectorAll('.screenshot-slide');
+    const trackRect = track.getBoundingClientRect();
+    const center = trackRect.left + trackRect.width / 2;
+    let closest = 0;
+    let minDist = Infinity;
+    slides.forEach((s, i) => {
+      const r = s.getBoundingClientRect();
+      const dist = Math.abs(r.left + r.width / 2 - center);
+      if (dist < minDist) { minDist = dist; closest = i; }
+    });
+    updateDots(closest);
+  });
+
+  // Auto-play every 4 seconds
+  let autoplayTimer = setInterval(() => slideScreenshot(1), 4000);
+
+  // Pause on hover, resume on leave
+  const slider = document.querySelector('.screenshot-slider');
+  slider.addEventListener('mouseenter', () => clearInterval(autoplayTimer));
+  slider.addEventListener('mouseleave', () => {
+    autoplayTimer = setInterval(() => slideScreenshot(1), 4000);
+  });
+</script>
+
+</body>
+</html>
