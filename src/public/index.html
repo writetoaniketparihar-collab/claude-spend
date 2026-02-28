@@ -130,10 +130,9 @@
 
   /* ---- STAT CARDS ---- */
   .stats-row {
-    display: grid; grid-template-columns: repeat(5, 1fr);
+    display: grid; grid-template-columns: repeat(4, 1fr);
     gap: 16px; margin-bottom: 32px;
   }
-  @media (max-width: 1024px) { .stats-row { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 780px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
 
   .stat-card {
@@ -158,9 +157,45 @@
   }
   .stat-sub { font-size: 13px; color: var(--text-tertiary); font-weight: 500; }
 
-  /* Project pie chart card */
-  .stat-card.pie-chart-card { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  .stat-card.pie-chart-card canvas { cursor: pointer; }
+  /* Project overview section */
+  .project-overview {
+    display: grid;
+    grid-template-columns: 1fr 3fr;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  @media (max-width: 780px) { .project-overview { grid-template-columns: 1fr; } }
+
+  .project-pie-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 24px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .project-pie-card .stat-label {
+    font-size: 12px; font-weight: 600; color: var(--text-tertiary);
+    text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 16px;
+    align-self: flex-start;
+  }
+  .project-pie-card canvas { cursor: pointer; }
+
+  .project-timeline-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 24px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+  .project-timeline-card h3 {
+    font-size: 12px; font-weight: 600; color: var(--text-tertiary);
+    text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 20px;
+  }
+
   .pie-tooltip {
     position: fixed;
     background: var(--text);
@@ -630,6 +665,18 @@
   <!-- Stats -->
   <div class="stats-row" id="statsRow"></div>
 
+  <!-- Project Overview -->
+  <div class="project-overview animate delay-2">
+    <div class="project-pie-card">
+      <div class="stat-label">By Project</div>
+      <canvas id="projectPieChart"></canvas>
+    </div>
+    <div class="project-timeline-card">
+      <h3>Project Token Usage Over Time</h3>
+      <canvas id="projectTimelineChart"></canvas>
+    </div>
+  </div>
+
   <!-- Insights -->
   <div id="insightsSection" class="insights-section" style="display:none">
     <div class="section-header animate">
@@ -748,6 +795,7 @@
 let DATA = null;
 let currentSort = { key: 'total', dir: 'desc' };
 let searchQuery = '';
+let selectedProject = null;
 
 function fmt(n) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -858,6 +906,7 @@ function render() {
   document.getElementById('app').style.display = 'block';
   renderStats();
   renderProjectPieChart();
+  renderProjectTimelineChart();
   renderInsights();
   renderDailyChart();
   renderModelChart();
@@ -878,7 +927,6 @@ function renderStats() {
   const cards = [
     { label: 'Total Usage', value: fmt(t.totalTokens), sub: `${fmt(t.totalInputTokens)} input + ${fmt(cacheTotal)} cached + ${fmt(t.totalOutputTokens)} output`,
       tip: 'The total number of tokens used across all your conversations. Input = fresh context sent at full price. Cached = context reused from previous turns at 10x lower cost. Output = what Claude wrote back.' },
-    { type: 'pie-chart' },
     { label: 'Conversations', value: fmtFull(t.totalSessions), sub: `Each one used ~${fmt(t.avgTokensPerSession)} tokens on average`,
       tip: 'Each time you start Claude Code and begin chatting, that counts as one conversation. A new conversation starts fresh with no prior context.' },
     { label: 'Messages Sent', value: fmtFull(t.totalQueries), sub: `Each message used ~${fmt(avgTokensPerMsg)} tokens on average`,
@@ -888,12 +936,6 @@ function renderStats() {
   ];
 
   document.getElementById('statsRow').innerHTML = cards.map((c, i) => {
-    if (c.type === 'pie-chart') {
-      return `<div class="stat-card pie-chart-card animate delay-${i + 1}">
-        <div class="stat-label">By Project</div>
-        <canvas id="projectPieChart"></canvas>
-      </div>`;
-    }
     return `<div class="stat-card animate delay-${i + 1}">
       <div class="stat-label has-tooltip">${c.label}<span class="help-icon">?</span><div class="tooltip">${c.tip}</div></div>
       <div class="stat-value">${c.value}</div>
@@ -1085,8 +1127,12 @@ function renderModelChart() {
 
 // Project pie chart with interactive tooltips
 function renderProjectPieChart() {
-  const canvas = document.getElementById('projectPieChart');
-  if (!canvas) return;
+  const oldCanvas = document.getElementById('projectPieChart');
+  if (!oldCanvas) return;
+
+  // Clone canvas to remove all event listeners
+  const canvas = oldCanvas.cloneNode(true);
+  oldCanvas.parentNode.replaceChild(canvas, oldCanvas);
 
   const ctx = canvas.getContext('2d');
   const projects = DATA.projectBreakdown || [];
@@ -1130,12 +1176,21 @@ function renderProjectPieChart() {
 
   // Draw slices
   slices.forEach(slice => {
+    const isSelected = selectedProject === slice.project.project;
+    const isDimmed = selectedProject && !isSelected;
+
     ctx.beginPath();
     ctx.arc(cx, cy, r, slice.startAngle, slice.endAngle);
     ctx.lineTo(cx, cy);
     ctx.closePath();
+
+    if (isDimmed) {
+      ctx.globalAlpha = 0.2;
+    }
     ctx.fillStyle = slice.colors[0];
     ctx.fill();
+    ctx.globalAlpha = 1.0;
+
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = 2;
     ctx.stroke();
@@ -1194,6 +1249,362 @@ function renderProjectPieChart() {
   canvas.addEventListener('mouseleave', () => {
     tooltip.classList.remove('show');
     canvas.style.cursor = 'default';
+  });
+
+  canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left - cx;
+    const y = e.clientY - rect.top - cy;
+    const distance = Math.sqrt(x * x + y * y);
+
+    if (distance <= r) {
+      let mouseAngle = Math.atan2(y, x);
+      if (mouseAngle < -Math.PI / 2) mouseAngle += 2 * Math.PI;
+
+      const clickedSlice = slices.find(s => {
+        let start = s.startAngle;
+        let end = s.endAngle;
+        if (start < -Math.PI / 2) start += 2 * Math.PI;
+        if (end < -Math.PI / 2) end += 2 * Math.PI;
+        return mouseAngle >= start && mouseAngle < end;
+      });
+
+      if (clickedSlice) {
+        // Toggle selection
+        if (selectedProject === clickedSlice.project.project) {
+          selectedProject = null;
+        } else {
+          selectedProject = clickedSlice.project.project;
+        }
+        renderProjectPieChart();
+        renderProjectTimelineChart();
+      }
+    }
+  });
+}
+
+// Project timeline chart
+function renderProjectTimelineChart() {
+  const oldCanvas = document.getElementById('projectTimelineChart');
+  if (!oldCanvas) return;
+
+  // Clone canvas to remove all event listeners
+  const canvas = oldCanvas.cloneNode(true);
+  oldCanvas.parentNode.replaceChild(canvas, oldCanvas);
+
+  const ctx = canvas.getContext('2d');
+  const projects = DATA.projectBreakdown || [];
+  const sessions = DATA.sessions || [];
+
+  if (!projects.length || !sessions.length) return;
+
+  // Use the same project colors as the pie chart
+  const projectColors = [
+    ['#6366F1', '#818CF8'],
+    ['#10B981', '#34D399'],
+    ['#F59E0B', '#FBBF24'],
+    ['#F43F5E', '#FB7185'],
+    ['#8B5CF6', '#A78BFA'],
+    ['#06B6D4', '#22D3EE'],
+    ['#EC4899', '#F472B6'],
+  ];
+
+  // Get date range from totals
+  const dateRange = DATA.totals.dateRange;
+  if (!dateRange) return;
+
+  const startDate = new Date(dateRange.from);
+  const endDate = new Date(dateRange.to);
+  const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+
+  // Determine granularity based on date range
+  let granularity, formatLabel;
+  if (daysDiff < 30) {
+    granularity = 'day';
+    formatLabel = (d) => {
+      const parts = d.split('-');
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return `${months[parseInt(parts[1])-1]} ${parseInt(parts[2])}`;
+    };
+  } else if (daysDiff < 90) {
+    granularity = 'week';
+    formatLabel = (d) => {
+      const parts = d.split('-');
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return `${months[parseInt(parts[1])-1]} ${parseInt(parts[2])}`;
+    };
+  } else {
+    granularity = 'month';
+    formatLabel = (d) => {
+      const parts = d.split('-');
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return months[parseInt(parts[1])-1];
+    };
+  }
+
+  // Build time buckets
+  const buckets = [];
+  let current = new Date(startDate);
+
+  while (current <= endDate) {
+    const key = current.toISOString().split('T')[0];
+    buckets.push({ date: key, data: {} });
+
+    if (granularity === 'day') {
+      current.setDate(current.getDate() + 1);
+    } else if (granularity === 'week') {
+      current.setDate(current.getDate() + 7);
+    } else {
+      current.setMonth(current.getMonth() + 1);
+    }
+  }
+
+  // Aggregate sessions by project and time bucket
+  sessions.forEach(s => {
+    if (!s.date || s.date === 'unknown') return;
+    const sessionDate = new Date(s.date);
+
+    // Find the appropriate bucket
+    let bucketIndex;
+    if (granularity === 'day') {
+      bucketIndex = buckets.findIndex(b => b.date === s.date);
+    } else if (granularity === 'week') {
+      bucketIndex = buckets.findIndex((b, i) => {
+        const bucketDate = new Date(b.date);
+        const nextBucket = buckets[i + 1];
+        const nextDate = nextBucket ? new Date(nextBucket.date) : new Date(endDate.getTime() + 24*60*60*1000);
+        return sessionDate >= bucketDate && sessionDate < nextDate;
+      });
+    } else {
+      bucketIndex = buckets.findIndex((b, i) => {
+        const bucketDate = new Date(b.date);
+        const nextBucket = buckets[i + 1];
+        const nextDate = nextBucket ? new Date(nextBucket.date) : new Date(endDate.getTime() + 24*60*60*1000);
+        return sessionDate >= bucketDate && sessionDate < nextDate;
+      });
+    }
+
+    if (bucketIndex >= 0) {
+      const project = s.project;
+      if (!buckets[bucketIndex].data[project]) {
+        buckets[bucketIndex].data[project] = 0;
+      }
+      buckets[bucketIndex].data[project] += s.totalTokens;
+    }
+  });
+
+  // Setup canvas
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.parentElement.clientWidth - 48;
+  const h = 200;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.scale(dpr, dpr);
+
+  const chartH = h - 40;
+  const chartW = w - 60;
+  const startX = 50;
+  const baseY = chartH + 10;
+
+  // Find max value for scaling
+  const maxTokens = Math.max(...buckets.map(b =>
+    Math.max(...Object.values(b.data), 0)
+  ), 1);
+
+  // Draw grid lines
+  ctx.strokeStyle = '#F1F5F9';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = baseY - (chartH / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(startX, y);
+    ctx.lineTo(startX + chartW, y);
+    ctx.stroke();
+  }
+
+  // Draw Y axis labels
+  ctx.fillStyle = '#94A3B8';
+  ctx.textAlign = 'right';
+  ctx.font = '500 10px Inter, system-ui';
+  for (let i = 0; i <= 4; i++) {
+    const y = baseY - (chartH / 4) * i;
+    const value = (maxTokens / 4) * i;
+    ctx.fillText(fmt(value), startX - 10, y + 3);
+  }
+
+  // Draw lines for each project
+  projects.forEach((proj, projIndex) => {
+    const isSelected = selectedProject === proj.project;
+    const isDimmed = selectedProject && !isSelected;
+
+    const color = projectColors[projIndex % projectColors.length][0];
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    if (isDimmed) {
+      ctx.globalAlpha = 0.15;
+    }
+
+    ctx.beginPath();
+    buckets.forEach((bucket, i) => {
+      const tokens = bucket.data[proj.project] || 0;
+      const x = startX + (i / (buckets.length - 1)) * chartW;
+      const y = baseY - (tokens / maxTokens) * chartH;
+
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    });
+    ctx.stroke();
+
+    // Draw dots only where there's data
+    ctx.fillStyle = color;
+    buckets.forEach((bucket, i) => {
+      const tokens = bucket.data[proj.project] || 0;
+      if (tokens > 0) {
+        const x = startX + (i / (buckets.length - 1)) * chartW;
+        const y = baseY - (tokens / maxTokens) * chartH;
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+
+    ctx.globalAlpha = 1.0;
+  });
+
+  // Draw X axis labels
+  ctx.fillStyle = '#94A3B8';
+  ctx.textAlign = 'center';
+  ctx.font = '500 10px Inter, system-ui';
+  const step = Math.max(1, Math.floor(buckets.length / 7));
+  buckets.forEach((bucket, i) => {
+    if (i % step === 0 || i === buckets.length - 1) {
+      const x = startX + (i / (buckets.length - 1)) * chartW;
+      ctx.fillText(formatLabel(bucket.date), x, baseY + 24);
+    }
+  });
+
+  // Interactive tooltips
+  const tooltip = document.getElementById('pieTooltip');
+
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Find closest bucket
+    let closestBucket = null;
+    let closestDistance = Infinity;
+    let closestIndex = -1;
+
+    buckets.forEach((bucket, i) => {
+      const x = startX + (i / (buckets.length - 1)) * chartW;
+      const distance = Math.abs(mouseX - x);
+      if (distance < closestDistance && distance < 20) {
+        closestDistance = distance;
+        closestBucket = bucket;
+        closestIndex = i;
+      }
+    });
+
+    if (closestBucket && closestIndex >= 0) {
+      // Find which project line is closest to mouse Y
+      let closestProject = null;
+      let closestYDistance = Infinity;
+      let closestColor = null;
+
+      projects.forEach((proj, projIndex) => {
+        const tokens = closestBucket.data[proj.project] || 0;
+        const x = startX + (closestIndex / (buckets.length - 1)) * chartW;
+        const y = baseY - (tokens / maxTokens) * chartH;
+        const yDistance = Math.abs(mouseY - y);
+
+        if (yDistance < closestYDistance && yDistance < 15) {
+          closestYDistance = yDistance;
+          closestProject = proj;
+          closestColor = projectColors[projIndex % projectColors.length][0];
+        }
+      });
+
+      if (closestProject) {
+        const tokens = closestBucket.data[closestProject.project] || 0;
+        tooltip.innerHTML = `
+          <div style="font-weight:700;margin-bottom:4px;color:${closestColor}">${escapeHtml(projectShort(closestProject.project))}</div>
+          <div>${formatLabel(closestBucket.date)}</div>
+          <div style="margin-top:4px">${fmt(tokens)} tokens</div>
+        `;
+        tooltip.classList.add('show');
+        tooltip.style.left = (e.clientX + 12) + 'px';
+        tooltip.style.top = (e.clientY - 12) + 'px';
+        canvas.style.cursor = 'pointer';
+        return;
+      }
+    }
+
+    tooltip.classList.remove('show');
+    canvas.style.cursor = 'default';
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    tooltip.classList.remove('show');
+    canvas.style.cursor = 'default';
+  });
+
+  canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Find closest bucket
+    let closestBucket = null;
+    let closestDistance = Infinity;
+    let closestIndex = -1;
+
+    buckets.forEach((bucket, i) => {
+      const x = startX + (i / (buckets.length - 1)) * chartW;
+      const distance = Math.abs(mouseX - x);
+      if (distance < closestDistance && distance < 20) {
+        closestDistance = distance;
+        closestBucket = bucket;
+        closestIndex = i;
+      }
+    });
+
+    if (closestBucket && closestIndex >= 0) {
+      // Find which project line is closest to mouse Y
+      let closestProject = null;
+      let closestYDistance = Infinity;
+
+      projects.forEach((proj, projIndex) => {
+        const tokens = closestBucket.data[proj.project] || 0;
+        const x = startX + (closestIndex / (buckets.length - 1)) * chartW;
+        const y = baseY - (tokens / maxTokens) * chartH;
+        const yDistance = Math.abs(mouseY - y);
+
+        if (yDistance < closestYDistance && yDistance < 15) {
+          closestYDistance = yDistance;
+          closestProject = proj;
+        }
+      });
+
+      if (closestProject) {
+        // Toggle selection
+        if (selectedProject === closestProject.project) {
+          selectedProject = null;
+        } else {
+          selectedProject = closestProject.project;
+        }
+        renderProjectPieChart();
+        renderProjectTimelineChart();
+      }
+    }
   });
 }
 
@@ -1436,7 +1847,7 @@ function closeDrilldown() {
 }
 
 fetchData();
-window.addEventListener('resize', () => { if (DATA) { renderProjectPieChart(); renderDailyChart(); renderModelChart(); } });
+window.addEventListener('resize', () => { if (DATA) { renderProjectPieChart(); renderProjectTimelineChart(); renderDailyChart(); renderModelChart(); } });
 </script>
 </body>
 </html>
