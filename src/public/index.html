@@ -48,6 +48,24 @@
     --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
   }
 
+  [data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0F1117;
+    --bg-mesh-1: #131525;
+    --bg-mesh-2: #0F1A1A;
+    --white: #1A1D2E;
+    --text: #E2E8F0;
+    --text-secondary: #94A3B8;
+    --text-tertiary: #64748B;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.12);
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+    --shadow-glow: 0 0 40px rgba(99,102,241,0.25);
+  }
+
   body {
     font-family: var(--font);
     background: var(--bg);
@@ -563,6 +581,49 @@
     font-size: 15px; color: var(--text-secondary); font-weight: 500;
     max-width: 600px; margin: 0 auto; line-height: 1.7;
   }
+
+  /* ---- THEME TOGGLE ---- */
+  .theme-toggle {
+    background: var(--white); border: 1px solid var(--border);
+    color: var(--text-secondary); width: 36px; height: 36px;
+    border-radius: 50%; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+  .theme-toggle:hover {
+    border-color: var(--indigo); color: var(--indigo);
+    box-shadow: 0 2px 8px rgba(99,102,241,0.12);
+  }
+  .theme-toggle svg { width: 18px; height: 18px; }
+  .theme-toggle .icon-sun { display: none; }
+  .theme-toggle .icon-moon { display: block; }
+  [data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+  [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+  /* ---- DARK MODE OVERRIDES ---- */
+  [data-theme="dark"] .prompt-row:hover { background: rgba(99,102,241,0.08); }
+  [data-theme="dark"] .proj-row:hover td { background: rgba(99,102,241,0.08); }
+  [data-theme="dark"] .proj-drawer-inner { background: #141627; }
+  [data-theme="dark"] .drawer-prompt-row { background: var(--white); }
+  [data-theme="dark"] .sessions-table th { background: #141627; }
+  [data-theme="dark"] .sessions-table tbody tr:hover td { background: rgba(99,102,241,0.08); }
+  [data-theme="dark"] .drilldown-close:hover { background: rgba(99,102,241,0.15); color: #A5B4FC; }
+  [data-theme="dark"] .query-item:hover { background: rgba(99,102,241,0.1); }
+  [data-theme="dark"] .help-icon { background: rgba(255,255,255,0.1); }
+  [data-theme="dark"] .privacy-notice { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.2); }
+
+  [data-theme="dark"] .model-opus { background: rgba(99,102,241,0.2); color: #A5B4FC; }
+  [data-theme="dark"] .model-sonnet { background: rgba(16,185,129,0.2); color: #6EE7B7; }
+  [data-theme="dark"] .model-haiku { background: rgba(249,115,22,0.2); color: #FDBA74; }
+  [data-theme="dark"] .model-unknown { background: rgba(148,163,184,0.2); color: #CBD5E1; }
+
+  [data-theme="dark"] .insight-card.warning .insight-indicator { background: linear-gradient(135deg, rgba(217,119,6,0.25), rgba(245,158,11,0.2)); }
+  [data-theme="dark"] .insight-card.info .insight-indicator { background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(129,140,248,0.2)); }
+  [data-theme="dark"] .insight-card.neutral .insight-indicator { background: linear-gradient(135deg, rgba(100,116,139,0.25), rgba(148,163,184,0.2)); }
+
+  [data-theme="dark"] .prompt-row:nth-child(1) .prompt-rank { color: white; }
+  [data-theme="dark"] .prompt-row:nth-child(2) .prompt-rank { color: white; }
+  [data-theme="dark"] .prompt-row:nth-child(3) .prompt-rank { color: white; }
 </style>
 </head>
 <body>
@@ -588,6 +649,10 @@
       <h1>Claude Spend</h1>
     </div>
     <div class="header-right">
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
       <span id="dateRange" class="date-range"></span>
       <button class="refresh-btn" onclick="refreshData()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
@@ -696,6 +761,36 @@
 </div>
 
 <script>
+// Theme management
+function initTheme() {
+  const stored = localStorage.getItem('claude-spend-theme');
+  if (stored) {
+    document.documentElement.setAttribute('data-theme', stored);
+  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+}
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = isDark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('claude-spend-theme', next);
+  if (DATA) { renderDailyChart(); renderModelChart(); }
+}
+function isDarkTheme() {
+  return document.documentElement.getAttribute('data-theme') === 'dark';
+}
+function themeColor(varName) {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+}
+initTheme();
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+  if (!localStorage.getItem('claude-spend-theme')) {
+    document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+    if (DATA) { renderDailyChart(); renderModelChart(); }
+  }
+});
+
 let DATA = null;
 let currentSort = { key: 'total', dir: 'desc' };
 let searchQuery = '';
@@ -893,14 +988,16 @@ function renderDailyChart() {
   const startX = 48;
 
   // Grid
+  const gridColor = themeColor('--text-tertiary') || '#94A3B8';
+  const gridLine = isDarkTheme() ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)';
   ctx.font = '500 10px Inter, system-ui';
-  ctx.fillStyle = '#94A3B8';
+  ctx.fillStyle = gridColor;
   ctx.textAlign = 'right';
   for (let i = 0; i <= 4; i++) {
     const val = (maxTotal / 4) * i;
     const y = chartH - (chartH * i / 4) + 8;
     ctx.fillText(fmt(val), startX - 10, y + 3);
-    ctx.strokeStyle = 'rgba(0,0,0,0.04)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = gridLine; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(startX, y); ctx.lineTo(w, y); ctx.stroke();
   }
 
@@ -940,7 +1037,7 @@ function renderDailyChart() {
   });
 
   // X labels
-  ctx.fillStyle = '#94A3B8'; ctx.textAlign = 'center';
+  ctx.fillStyle = gridColor; ctx.textAlign = 'center';
   ctx.font = '500 10px Inter, system-ui';
   const step = Math.max(1, Math.floor(data.length / 7));
   data.forEach((d, i) => {
@@ -1005,15 +1102,15 @@ function renderModelChart() {
     ctx.fill();
 
     // Gap between slices
-    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = themeColor('--white') || '#FFFFFF'; ctx.lineWidth = 2; ctx.stroke();
     angle += sa;
   });
 
-  ctx.fillStyle = '#0F172A'; ctx.textAlign = 'center';
+  ctx.fillStyle = themeColor('--text') || '#0F172A'; ctx.textAlign = 'center';
   ctx.font = '800 17px Inter, system-ui';
   ctx.fillText(fmt(total), cx, cy + 2);
   ctx.font = '500 10px Inter, system-ui';
-  ctx.fillStyle = '#94A3B8';
+  ctx.fillStyle = themeColor('--text-tertiary') || '#94A3B8';
   ctx.fillText('total', cx, cy + 16);
 
   document.getElementById('modelLegend').innerHTML = slices.map(d => {
