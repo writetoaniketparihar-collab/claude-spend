@@ -332,10 +332,11 @@ async function parseAllSessions() {
     let curPrompt = null, curInput = 0, curOutput = 0, curConts = 0;
     let curModels = {}, curTools = {};
     const flushProjectPrompt = () => {
-      if (curPrompt && (curInput + curOutput) > 0) {
+      // Changed: allow flushing even without curPrompt if there are tokens
+      if ((curInput + curOutput) > 0) {
         const topModel = Object.entries(curModels).sort((a, b) => b[1] - a[1])[0]?.[0] || session.model;
         p.allPrompts.push({
-          prompt: curPrompt.substring(0, 300),
+          prompt: (curPrompt || session.firstPrompt || '(automatic tool calls)').substring(0, 300),
           inputTokens: curInput,
           outputTokens: curOutput,
           totalTokens: curInput + curOutput,
