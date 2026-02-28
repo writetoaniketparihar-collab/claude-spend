@@ -130,9 +130,10 @@
 
   /* ---- STAT CARDS ---- */
   .stats-row {
-    display: grid; grid-template-columns: repeat(4, 1fr);
+    display: grid; grid-template-columns: repeat(5, 1fr);
     gap: 16px; margin-bottom: 32px;
   }
+  @media (max-width: 1024px) { .stats-row { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 780px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
 
   .stat-card {
@@ -156,6 +157,27 @@
     color: var(--text);
   }
   .stat-sub { font-size: 13px; color: var(--text-tertiary); font-weight: 500; }
+
+  /* Project pie chart card */
+  .stat-card.pie-chart-card { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .stat-card.pie-chart-card canvas { cursor: pointer; }
+  .pie-tooltip {
+    position: fixed;
+    background: var(--text);
+    color: #F8FAFC;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.6;
+    padding: 12px 16px;
+    border-radius: 10px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    white-space: nowrap;
+  }
+  .pie-tooltip.show { opacity: 1; }
 
   /* Tooltips */
   .has-tooltip {
@@ -572,6 +594,9 @@
   <div class="loading-text">Reading your Claude Code sessions...</div>
 </div>
 
+<!-- Pie chart tooltip -->
+<div id="pieTooltip" class="pie-tooltip"></div>
+
 <div id="app" class="container" style="display:none">
 
   <!-- Privacy notice -->
@@ -634,7 +659,31 @@
     </div>
   </div>
 
-  <!-- Projects (temporarily hidden - TODO: fix prompt extraction) -->
+  <!-- Projects -->
+  <div class="projects-section animate delay-4">
+    <div class="section-header">
+      <div class="section-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2z"/></svg>
+      </div>
+      <div class="section-title">Projects</div>
+    </div>
+    <div class="sessions-toolbar">
+      <span id="projectsCount" class="session-count"></span>
+    </div>
+    <div class="sessions-card">
+      <table class="sessions-table">
+        <thead>
+          <tr>
+            <th>Project</th>
+            <th style="text-align:right">Total tokens</th>
+            <th style="text-align:right">Sessions</th>
+            <th style="text-align:right">Messages</th>
+          </tr>
+        </thead>
+        <tbody id="projectsBody"></tbody>
+      </table>
+    </div>
+  </div>
 
   <!-- Most Expensive Prompts -->
   <div class="top-prompts animate delay-4">
@@ -808,10 +857,11 @@ function render() {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   renderStats();
+  renderProjectPieChart();
   renderInsights();
   renderDailyChart();
   renderModelChart();
-  // renderProjectBreakdown(); // temporarily disabled
+  renderProjectBreakdown();
   renderTopPrompts();
   renderSessions();
 }
@@ -828,6 +878,7 @@ function renderStats() {
   const cards = [
     { label: 'Total Usage', value: fmt(t.totalTokens), sub: `${fmt(t.totalInputTokens)} input + ${fmt(cacheTotal)} cached + ${fmt(t.totalOutputTokens)} output`,
       tip: 'The total number of tokens used across all your conversations. Input = fresh context sent at full price. Cached = context reused from previous turns at 10x lower cost. Output = what Claude wrote back.' },
+    { type: 'pie-chart' },
     { label: 'Conversations', value: fmtFull(t.totalSessions), sub: `Each one used ~${fmt(t.avgTokensPerSession)} tokens on average`,
       tip: 'Each time you start Claude Code and begin chatting, that counts as one conversation. A new conversation starts fresh with no prior context.' },
     { label: 'Messages Sent', value: fmtFull(t.totalQueries), sub: `Each message used ~${fmt(avgTokensPerMsg)} tokens on average`,
@@ -836,12 +887,19 @@ function renderStats() {
       tip: 'The percentage of input tokens that were served from cache instead of being processed fresh. Higher is better -- cached tokens are 10x cheaper and help you stay under rate limits.' },
   ];
 
-  document.getElementById('statsRow').innerHTML = cards.map((c, i) => `
-    <div class="stat-card animate delay-${i + 1}">
+  document.getElementById('statsRow').innerHTML = cards.map((c, i) => {
+    if (c.type === 'pie-chart') {
+      return `<div class="stat-card pie-chart-card animate delay-${i + 1}">
+        <div class="stat-label">By Project</div>
+        <canvas id="projectPieChart"></canvas>
+      </div>`;
+    }
+    return `<div class="stat-card animate delay-${i + 1}">
       <div class="stat-label has-tooltip">${c.label}<span class="help-icon">?</span><div class="tooltip">${c.tip}</div></div>
       <div class="stat-value">${c.value}</div>
       <div class="stat-sub">${c.sub}</div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 // Insights
@@ -1023,6 +1081,120 @@ function renderModelChart() {
       <span><strong>${modelShort(d.model)}</strong> &ndash; ${fmt(d.totalTokens)} (${pct}%)</span>
     </div>`;
   }).join('');
+}
+
+// Project pie chart with interactive tooltips
+function renderProjectPieChart() {
+  const canvas = document.getElementById('projectPieChart');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  const projects = DATA.projectBreakdown || [];
+  if (!projects.length) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  const size = 160;
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  canvas.style.width = size + 'px';
+  canvas.style.height = size + 'px';
+  ctx.scale(dpr, dpr);
+
+  const cx = size / 2, cy = size / 2, r = size / 2 - 8;
+  const total = projects.reduce((s, p) => s + p.totalTokens, 0);
+
+  // Generate colors for projects
+  const projectColors = [
+    ['#6366F1', '#818CF8'],
+    ['#10B981', '#34D399'],
+    ['#F59E0B', '#FBBF24'],
+    ['#F43F5E', '#FB7185'],
+    ['#8B5CF6', '#A78BFA'],
+    ['#06B6D4', '#22D3EE'],
+    ['#EC4899', '#F472B6'],
+  ];
+
+  let angle = -Math.PI / 2;
+  const slices = projects.map((p, i) => {
+    const sa = (p.totalTokens / total) * Math.PI * 2;
+    const colors = projectColors[i % projectColors.length];
+    const slice = {
+      project: p,
+      startAngle: angle,
+      endAngle: angle + sa,
+      colors,
+    };
+    angle += sa;
+    return slice;
+  });
+
+  // Draw slices
+  slices.forEach(slice => {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, slice.startAngle, slice.endAngle);
+    ctx.lineTo(cx, cy);
+    ctx.closePath();
+    ctx.fillStyle = slice.colors[0];
+    ctx.fill();
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+
+  // Center text
+  ctx.fillStyle = '#0F172A';
+  ctx.textAlign = 'center';
+  ctx.font = '700 14px Inter, system-ui';
+  ctx.fillText(projects.length, cx, cy);
+  ctx.font = '500 10px Inter, system-ui';
+  ctx.fillStyle = '#94A3B8';
+  ctx.fillText('projects', cx, cy + 14);
+
+  // Interactive tooltips
+  const tooltip = document.getElementById('pieTooltip');
+
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left - cx;
+    const y = e.clientY - rect.top - cy;
+    const distance = Math.sqrt(x * x + y * y);
+
+    if (distance <= r) {
+      let mouseAngle = Math.atan2(y, x);
+      if (mouseAngle < -Math.PI / 2) mouseAngle += 2 * Math.PI;
+
+      const hoveredSlice = slices.find(s => {
+        let start = s.startAngle;
+        let end = s.endAngle;
+        if (start < -Math.PI / 2) start += 2 * Math.PI;
+        if (end < -Math.PI / 2) end += 2 * Math.PI;
+        return mouseAngle >= start && mouseAngle < end;
+      });
+
+      if (hoveredSlice) {
+        const p = hoveredSlice.project;
+        const pct = ((p.totalTokens / total) * 100).toFixed(1);
+        tooltip.innerHTML = `
+          <div style="font-weight:700;margin-bottom:4px">${escapeHtml(projectShort(p.project))}</div>
+          <div>${fmt(p.totalTokens)} tokens (${pct}%)</div>
+          <div style="opacity:0.8;font-size:12px;margin-top:2px">${p.sessionCount} sessions · ${p.queryCount} messages</div>
+        `;
+        tooltip.classList.add('show');
+        tooltip.style.left = (e.clientX + 12) + 'px';
+        tooltip.style.top = (e.clientY - 12) + 'px';
+        canvas.style.cursor = 'pointer';
+        return;
+      }
+    }
+
+    tooltip.classList.remove('show');
+    canvas.style.cursor = 'default';
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    tooltip.classList.remove('show');
+    canvas.style.cursor = 'default';
+  });
 }
 
 // Project accordion
@@ -1264,7 +1436,7 @@ function closeDrilldown() {
 }
 
 fetchData();
-window.addEventListener('resize', () => { if (DATA) { renderDailyChart(); renderModelChart(); } });
+window.addEventListener('resize', () => { if (DATA) { renderProjectPieChart(); renderDailyChart(); renderModelChart(); } });
 </script>
 </body>
 </html>
