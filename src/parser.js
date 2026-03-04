@@ -164,18 +164,49 @@ async function parseAllSessions() {
   const modelMap = {};
   const allPrompts = []; // for "most expensive prompts" across all sessions
 
+  // Build list of files to parse: top-level *.jsonl (main sessions) + <sessionSubdir>/subagents/*.jsonl (subagent sessions)
+  const filesToParse = [];
   for (const projectDir of projectDirs) {
     const dir = path.join(projectsDir, projectDir);
-    let files;
+    let entries;
     try {
-      files = fs.readdirSync(dir).filter(f => f.endsWith('.jsonl'));
+      entries = fs.readdirSync(dir);
     } catch {
       continue; // Skip directories we can't read
     }
+    for (const name of entries) {
+      const fullPath = path.join(dir, name);
+      let stat;
+      try {
+        stat = fs.statSync(fullPath);
+      } catch {
+        continue;
+      }
+      if (stat.isFile() && name.endsWith('.jsonl')) {
+        filesToParse.push({ filePath: fullPath, projectDir, isSubagent: false, parentSessionId: null });
+      } else if (stat.isDirectory()) {
+        const subagentsDir = path.join(fullPath, 'subagents');
+        if (!fs.existsSync(subagentsDir)) continue;
+        let subagentFiles;
+        try {
+          subagentFiles = fs.readdirSync(subagentsDir).filter(f => f.endsWith('.jsonl'));
+        } catch {
+          continue;
+        }
+        for (const subFile of subagentFiles) {
+          filesToParse.push({
+            filePath: path.join(subagentsDir, subFile),
+            projectDir,
+            isSubagent: true,
+            parentSessionId: name,
+          });
+        }
+      }
+    }
+  }
 
-    for (const file of files) {
-      const filePath = path.join(dir, file);
-      const sessionId = path.basename(file, '.jsonl');
+  for (const { filePath, projectDir, isSubagent, parentSessionId } of filesToParse) {
+    const sessionId = path.basename(filePath, '.jsonl');
 
       let entries;
       try {
@@ -210,7 +241,7 @@ async function parseAllSessions() {
 
       const firstPrompt = sessionFirstPrompt[sessionId]
         || queries.find(q => q.userPrompt)?.userPrompt
-        || '(no prompt)';
+        || (isSubagent ? '(subagent)' : '(no prompt)');
 
       // Collect per-prompt data for "most expensive prompts"
       // Group consecutive queries under the same user prompt
@@ -265,6 +296,8 @@ async function parseAllSessions() {
         cacheReadTokens,
         totalTokens,
         cost,
+        isSubagent: isSubagent,
+        ...(parentSessionId != null && { parentSessionId }),
       });
 
       // Daily
@@ -296,7 +329,6 @@ async function parseAllSessions() {
         modelMap[q.model].cost += q.cost;
         modelMap[q.model].queryCount += 1;
       }
-    }
   }
 
   sessions.sort((a, b) => b.totalTokens - a.totalTokens);
@@ -310,6 +342,7 @@ async function parseAllSessions() {
         project: proj,
         inputTokens: 0, outputTokens: 0, totalTokens: 0,
         sessionCount: 0, queryCount: 0,
+        cost: 0,
         modelMap: {},
         allPrompts: [],
       };
@@ -320,6 +353,7 @@ async function parseAllSessions() {
     p.totalTokens += session.totalTokens;
     p.sessionCount += 1;
     p.queryCount += session.queryCount;
+    p.cost += session.cost;
 
     for (const q of session.queries) {
       if (q.model === '<synthetic>' || q.model === 'unknown') continue;
@@ -376,6 +410,7 @@ async function parseAllSessions() {
     totalTokens: p.totalTokens,
     sessionCount: p.sessionCount,
     queryCount: p.queryCount,
+    cost: p.cost,
     modelBreakdown: Object.values(p.modelMap).sort((a, b) => b.totalTokens - a.totalTokens),
     topPrompts: (p.allPrompts || []).sort((a, b) => b.totalTokens - a.totalTokens).slice(0, 10),
   })).sort((a, b) => b.totalTokens - a.totalTokens);

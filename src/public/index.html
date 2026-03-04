@@ -523,6 +523,16 @@
   .model-sonnet { background: #ECFDF5; color: #047857; }
   .model-haiku { background: #FFF7ED; color: #C2410C; }
   .model-unknown { background: #F1F5F9; color: #475569; }
+  .subagent-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 10px;
+    background: #F1F5F9;
+    color: #64748b;
+  }
   .model-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
   .model-opus .model-dot { background: #4F46E5; }
   .model-sonnet .model-dot { background: #10B981; }
@@ -805,7 +815,33 @@
     </div>
   </div>
 
-  <!-- Projects (temporarily hidden - TODO: fix prompt extraction) -->
+  <!-- Projects -->
+  <div class="projects-section animate delay-4">
+    <div class="section-header">
+      <div class="section-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <div class="section-title">Usage by project</div>
+    </div>
+    <div class="sessions-toolbar" style="margin-bottom:12px">
+      <span id="projectsCount" class="session-count"></span>
+      <span id="projectsSummary" style="color:var(--text-tertiary);font-size:13px;font-weight:500;margin-left:8px"></span>
+    </div>
+    <div class="sessions-card">
+      <table class="sessions-table">
+        <thead>
+          <tr>
+            <th>Project</th>
+            <th style="text-align:right">Tokens</th>
+            <th style="text-align:right">Sessions</th>
+            <th style="text-align:right">Queries</th>
+            <th style="text-align:right">Cost</th>
+          </tr>
+        </thead>
+        <tbody id="projectsBody"></tbody>
+      </table>
+    </div>
+  </div>
 
   <!-- Most Expensive Prompts -->
   <div class="top-prompts animate delay-4">
@@ -1023,7 +1059,7 @@ function render() {
   renderInsights();
   renderDailyChart();
   renderModelChart();
-  // renderProjectBreakdown(); // temporarily disabled
+  renderProjectBreakdown();
   renderTopPrompts();
   renderSessions();
 }
@@ -1296,10 +1332,16 @@ function buildDrawerContent(p) {
 // Project breakdown
 function renderProjectBreakdown() {
   const projects = DATA.projectBreakdown;
-  if (!projects || !projects.length) return;
-
   const countEl = document.getElementById('projectsCount');
-  countEl.textContent = projects.length + ' project' + (projects.length === 1 ? '' : 's');
+  const summaryEl = document.getElementById('projectsSummary');
+  if (!countEl) return;
+  countEl.textContent = (projects && projects.length) ? projects.length + ' project' + (projects.length === 1 ? '' : 's') : '0 projects';
+  const t = DATA.totals || {};
+  summaryEl.textContent = t.totalTokens != null ? 'Total: ' + fmt(t.totalTokens) + ' tokens \u00B7 $' + (t.totalCost != null ? t.totalCost.toFixed(2) : '0.00') + ' est. cost' : '';
+  if (!projects || !projects.length) {
+    if (document.getElementById('projectsBody')) document.getElementById('projectsBody').innerHTML = '';
+    return;
+  }
 
   const maxTokens = projects[0].totalTokens;
   const chevron = '<svg class="proj-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l4 4-4 4"/></svg>';
@@ -1332,11 +1374,12 @@ function renderProjectBreakdown() {
       '</div><div><div>' + fmt(p.totalTokens) + '</div><div style="font-size:11px;font-weight:500;color:var(--text-tertiary);margin-top:1px">' + fmt(p.inputTokens) + ' in\u00a0\u00b7\u00a0' + fmt(p.outputTokens) + ' out</div></div></div></td>',
       '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.sessionCount + '</td>',
       '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.queryCount + '</td>',
+      '<td class="token-num" style="vertical-align:top;padding-top:12px">$' + (p.cost != null ? p.cost : 0).toFixed(2) + '</td>',
       '</tr>',
     ].join('');
     const drawerRow = [
       '<tr class="proj-drawer" id="proj-drawer-' + i + '">',
-      '<td colspan="4"><div class="proj-drawer-inner"><div class="proj-drawer-content">',
+      '<td colspan="5"><div class="proj-drawer-inner"><div class="proj-drawer-content">',
       buildDrawerContent(p),
       '</div></div></td></tr>',
     ].join('');
@@ -1410,7 +1453,7 @@ function renderSessions() {
         <span class="project-tag" title="${escapeHtml(projectShort(s.project))}">${escapeHtml(projectShort(s.project))}</span>
       </td>
       <td><div class="prompt-preview" title="${escapeHtml(s.firstPrompt)}">${escapeHtml(s.firstPrompt)}</div></td>
-      <td><span class="model-badge ${modelClass(s.model)}"><span class="model-dot"></span>${modelShort(s.model)}</span></td>
+      <td><span class="model-badge ${modelClass(s.model)}"><span class="model-dot"></span>${modelShort(s.model)}</span>${s.isSubagent ? '<span class="subagent-badge" title="Subagent session">Subagent</span>' : ''}</td>
       <td class="token-num">${s.queryCount}</td>
       <td class="token-num" style="font-weight:700">${fmt(s.totalTokens)}</td>
       <td class="token-num">${fmt(s.inputTokens)}</td>
@@ -1670,7 +1713,7 @@ function openDrilldown(sessionId) {
 
   document.getElementById('drilldownTitle').textContent = session.firstPrompt.substring(0, 140);
   document.getElementById('drilldownMeta').textContent =
-    `${formatDate(session.date)} \u00B7 ${modelShort(session.model)} \u00B7 ${session.queryCount} messages \u00B7 ${fmt(session.totalTokens)} tokens`;
+    `${formatDate(session.date)} \u00B7 ${modelShort(session.model)}${session.isSubagent ? ' \u00B7 Subagent' : ''} \u00B7 ${session.queryCount} messages \u00B7 ${fmt(session.totalTokens)} tokens`;
 
   const grouped = groupSessionQueries(session.queries);
 
