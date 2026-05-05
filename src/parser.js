@@ -7,9 +7,10 @@ const readline = require('readline');
 // Note: These are API-equivalent estimates. Claude Code subscription pricing differs.
 // Cache write = 1.25x base input (5-min TTL). Cache read = 0.1x base input.
 const MODEL_PRICING = {
-  // Opus 4.5, 4.6: $5/MTok in, $25/MTok out
+  // Opus 4.5, 4.6, 4.7: $5/MTok in, $25/MTok out
   'opus-4.5': { input: 5 / 1e6, output: 25 / 1e6, cacheWrite: 6.25 / 1e6, cacheRead: 0.50 / 1e6 },
   'opus-4.6': { input: 5 / 1e6, output: 25 / 1e6, cacheWrite: 6.25 / 1e6, cacheRead: 0.50 / 1e6 },
+  'opus-4.7': { input: 5 / 1e6, output: 25 / 1e6, cacheWrite: 6.25 / 1e6, cacheRead: 0.50 / 1e6 },
   // Opus 4.0, 4.1: $15/MTok in, $75/MTok out
   'opus-4.0': { input: 15 / 1e6, output: 75 / 1e6, cacheWrite: 18.75 / 1e6, cacheRead: 1.50 / 1e6 },
   'opus-4.1': { input: 15 / 1e6, output: 75 / 1e6, cacheWrite: 18.75 / 1e6, cacheRead: 1.50 / 1e6 },
@@ -26,7 +27,8 @@ function getPricing(model) {
   if (!model) return DEFAULT_PRICING;
   const m = model.toLowerCase();
   if (m.includes('opus')) {
-    // Opus 4.5/4.6 are cheaper than Opus 4.0/4.1
+    // Opus 4.5/4.6/4.7 are cheaper than Opus 4.0/4.1
+    if (m.includes('4-7') || m.includes('4.7')) return MODEL_PRICING['opus-4.7'];
     if (m.includes('4-6') || m.includes('4.6')) return MODEL_PRICING['opus-4.6'];
     if (m.includes('4-5') || m.includes('4.5')) return MODEL_PRICING['opus-4.5'];
     if (m.includes('4-1') || m.includes('4.1')) return MODEL_PRICING['opus-4.1'];
