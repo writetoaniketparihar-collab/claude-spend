@@ -5,20 +5,21 @@ const readline = require('readline');
 
 // Anthropic API pricing per token (from platform.claude.com/docs/en/about-claude/pricing)
 // Note: These are API-equivalent estimates. Claude Code subscription pricing differs.
-// Cache write = 1.25x base input (5-min TTL). Cache read = 0.1x base input.
+// Cache writes have two tiers: 5-min TTL (1.25x base input) and 1-hour TTL (2x base input).
+// Cache read = 0.1x base input.
 const MODEL_PRICING = {
-  // Opus 4.5, 4.6: $5/MTok in, $25/MTok out
-  'opus-4.5': { input: 5 / 1e6, output: 25 / 1e6, cacheWrite: 6.25 / 1e6, cacheRead: 0.50 / 1e6 },
-  'opus-4.6': { input: 5 / 1e6, output: 25 / 1e6, cacheWrite: 6.25 / 1e6, cacheRead: 0.50 / 1e6 },
-  // Opus 4.0, 4.1: $15/MTok in, $75/MTok out
-  'opus-4.0': { input: 15 / 1e6, output: 75 / 1e6, cacheWrite: 18.75 / 1e6, cacheRead: 1.50 / 1e6 },
-  'opus-4.1': { input: 15 / 1e6, output: 75 / 1e6, cacheWrite: 18.75 / 1e6, cacheRead: 1.50 / 1e6 },
-  // Sonnet 3.7, 4, 4.5, 4.6: $3/MTok in, $15/MTok out
-  sonnet: { input: 3 / 1e6, output: 15 / 1e6, cacheWrite: 3.75 / 1e6, cacheRead: 0.30 / 1e6 },
-  // Haiku 4.5: $1/MTok in, $5/MTok out
-  'haiku-4.5': { input: 1 / 1e6, output: 5 / 1e6, cacheWrite: 1.25 / 1e6, cacheRead: 0.10 / 1e6 },
-  // Haiku 3.5: $0.80/MTok in, $4/MTok out
-  'haiku-3.5': { input: 0.80 / 1e6, output: 4 / 1e6, cacheWrite: 1.00 / 1e6, cacheRead: 0.08 / 1e6 },
+  // Opus 4.5, 4.6: $5/MTok in, $25/MTok out; 5m cache $6.25, 1h cache $10
+  'opus-4.5': { input: 5 / 1e6, output: 25 / 1e6, cacheWrite: 6.25 / 1e6, cacheWrite1h: 10 / 1e6, cacheRead: 0.50 / 1e6 },
+  'opus-4.6': { input: 5 / 1e6, output: 25 / 1e6, cacheWrite: 6.25 / 1e6, cacheWrite1h: 10 / 1e6, cacheRead: 0.50 / 1e6 },
+  // Opus 4.0, 4.1: $15/MTok in, $75/MTok out; 5m cache $18.75, 1h cache $30
+  'opus-4.0': { input: 15 / 1e6, output: 75 / 1e6, cacheWrite: 18.75 / 1e6, cacheWrite1h: 30 / 1e6, cacheRead: 1.50 / 1e6 },
+  'opus-4.1': { input: 15 / 1e6, output: 75 / 1e6, cacheWrite: 18.75 / 1e6, cacheWrite1h: 30 / 1e6, cacheRead: 1.50 / 1e6 },
+  // Sonnet 3.7, 4, 4.5, 4.6: $3/MTok in, $15/MTok out; 5m cache $3.75, 1h cache $6
+  sonnet: { input: 3 / 1e6, output: 15 / 1e6, cacheWrite: 3.75 / 1e6, cacheWrite1h: 6 / 1e6, cacheRead: 0.30 / 1e6 },
+  // Haiku 4.5: $1/MTok in, $5/MTok out; 5m cache $1.25, 1h cache $2
+  'haiku-4.5': { input: 1 / 1e6, output: 5 / 1e6, cacheWrite: 1.25 / 1e6, cacheWrite1h: 2 / 1e6, cacheRead: 0.10 / 1e6 },
+  // Haiku 3.5: $0.80/MTok in, $4/MTok out; 5m cache $1.00, 1h cache $1.6
+  'haiku-3.5': { input: 0.80 / 1e6, output: 4 / 1e6, cacheWrite: 1.00 / 1e6, cacheWrite1h: 1.6 / 1e6, cacheRead: 0.08 / 1e6 },
 };
 const DEFAULT_PRICING = MODEL_PRICING.sonnet;
 
@@ -93,8 +94,17 @@ function extractSessionData(entries) {
       const cacheReadTokens = usage.cache_read_input_tokens || 0;
       const outputTokens = usage.output_tokens || 0;
       const totalTokens = inputTokens + cacheCreationTokens + cacheReadTokens + outputTokens;
+      // Split cache_creation by TTL when the breakdown is present (post-2025 Q4 API).
+      // Fallback: only the rolled-up legacy field exists -> treat all as 5-minute writes.
+      const cc = usage.cache_creation || {};
+      const has5m = cc.ephemeral_5m_input_tokens !== undefined;
+      const has1h = cc.ephemeral_1h_input_tokens !== undefined;
+      const cw5m = has5m ? cc.ephemeral_5m_input_tokens : (has1h ? 0 : cacheCreationTokens);
+      const cw1h = has1h ? cc.ephemeral_1h_input_tokens : 0;
+      const cw1hRate = pricing.cacheWrite1h ?? pricing.cacheWrite;
       const cost = (inputTokens * pricing.input)
-        + (cacheCreationTokens * pricing.cacheWrite)
+        + (cw5m * pricing.cacheWrite)
+        + (cw1h * cw1hRate)
         + (cacheReadTokens * pricing.cacheRead)
         + (outputTokens * pricing.output);
 
@@ -164,17 +174,42 @@ async function parseAllSessions() {
   const modelMap = {};
   const allPrompts = []; // for "most expensive prompts" across all sessions
 
+  // Recursively walk the project dir so subagent transcripts at
+  // `<project>/<session-id>/subagents/agent-*.jsonl` are picked up too.
+  // Without this, sessions that use the Task tool / subagents undercount
+  // their token usage by ~30%, since subagent transcripts live one level
+  // deeper than the readdirSync default scan.
+  function findJsonlRecursive(rootDir) {
+    const found = [];
+    const stack = [rootDir];
+    while (stack.length) {
+      const cur = stack.pop();
+      let entries;
+      try {
+        entries = fs.readdirSync(cur, { withFileTypes: true });
+      } catch {
+        continue;
+      }
+      for (const ent of entries) {
+        const full = path.join(cur, ent.name);
+        if (ent.isDirectory()) stack.push(full);
+        else if (ent.isFile() && ent.name.endsWith('.jsonl')) found.push(full);
+      }
+    }
+    return found;
+  }
+
   for (const projectDir of projectDirs) {
     const dir = path.join(projectsDir, projectDir);
     let files;
     try {
-      files = fs.readdirSync(dir).filter(f => f.endsWith('.jsonl'));
+      files = findJsonlRecursive(dir);
     } catch {
       continue; // Skip directories we can't read
     }
 
     for (const file of files) {
-      const filePath = path.join(dir, file);
+      const filePath = file; // findJsonlRecursive returns absolute paths
       const sessionId = path.basename(file, '.jsonl');
 
       let entries;
