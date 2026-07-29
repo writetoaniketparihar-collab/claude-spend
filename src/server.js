@@ -3,8 +3,36 @@ const path = require('path');
 function createServer() {
   const app = express();
 
-  // Cache parsed data (reparse on demand via refresh endpoint)
-  let cachedData = null;
+  // Cache parsed data per date range (reparse on demand via refresh endpoint)
+  const cache = new Map();
+
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+  // Validate/normalize ?from= and ?to=. Returns { from, to } or { invalid }.
+  function parseRange(query) {
+    const from = query.from ? String(query.from).trim() : null;
+    const to = query.to ? String(query.to).trim() : null;
+
+    for (const [name, val] of [['from', from], ['to', to]]) {
+      if (val === null || val === '') continue;
+      if (!DATE_RE.test(val)) {
+        return { invalid: `Invalid "${name}" date "${val}". Expected format YYYY-MM-DD.` };
+      }
+      const d = new Date(val + 'T00:00:00');
+      if (isNaN(d.getTime())) {
+        return { invalid: `Invalid "${name}" date "${val}". Not a real calendar date.` };
+      }
+    }
+    if (from && to && from > to) {
+      return { invalid: `Start date (${from}) is after end date (${to}).` };
+    }
+    return { from: from || null, to: to || null };
+  }
+
+  const cacheKey = (from, to) => `${from || ''}..${to || ''}`;
+
+  // Full date bounds of all available data, for initializing the date pickers.
+  let boundsCache = null;
 
   function friendlyError(err) {
     const msg = err.message || String(err);
@@ -14,21 +42,48 @@ function createServer() {
   }
 
   app.get('/api/data', async (req, res) => {
+    const range = parseRange(req.query);
+    if (range.invalid) {
+      return res.status(400).json({ error: range.invalid, code: 'BAD_RANGE' });
+    }
     try {
-      if (!cachedData) {
-        cachedData = await require('./parser').parseAllSessions();
+      const key = cacheKey(range.from, range.to);
+      if (!cache.has(key)) {
+        cache.set(key, await require('./parser').parseAllSessions(range));
       }
-      res.json(cachedData);
+      res.json(cache.get(key));
     } catch (err) {
       res.status(500).json(friendlyError(err));
     }
   });
 
   app.get('/api/refresh', async (req, res) => {
+    const range = parseRange(req.query);
+    if (range.invalid) {
+      return res.status(400).json({ error: range.invalid, code: 'BAD_RANGE' });
+    }
     try {
       delete require.cache[require.resolve('./parser')];
-      cachedData = await require('./parser').parseAllSessions();
-      res.json({ ok: true, sessions: cachedData.sessions.length });
+      // Session files may have changed on disk, so every cached range is stale.
+      cache.clear();
+      boundsCache = null;
+      const data = await require('./parser').parseAllSessions(range);
+      cache.set(cacheKey(range.from, range.to), data);
+      res.json({ ok: true, sessions: data.sessions.length });
+    } catch (err) {
+      res.status(500).json(friendlyError(err));
+    }
+  });
+
+  // Always computed unfiltered, and cached separately from range queries.
+  app.get('/api/bounds', async (req, res) => {
+    try {
+      if (!boundsCache) {
+        const all = cache.get(cacheKey(null, null))
+          || await require('./parser').parseAllSessions({});
+        boundsCache = all.totals?.dateRange || null;
+      }
+      res.json({ bounds: boundsCache });
     } catch (err) {
       res.status(500).json(friendlyError(err));
     }

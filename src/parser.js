@@ -124,7 +124,33 @@ function extractSessionData(entries) {
   return queries;
 }
 
-async function parseAllSessions() {
+// Date of a query, as YYYY-MM-DD in local time. Falls back to the user
+// timestamp when the assistant one is missing.
+function queryDate(q) {
+  const ts = q.assistantTimestamp || q.userTimestamp;
+  if (!ts) return null;
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return null;
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+// Keep only queries whose date falls within [from, to] (inclusive). Bounds are
+// optional YYYY-MM-DD strings; queries with no usable timestamp are dropped
+// only when a bound is actually set.
+function filterQueriesByDate(queries, from, to) {
+  if (!from && !to) return queries;
+  return queries.filter(q => {
+    const d = queryDate(q);
+    if (!d) return false;
+    if (from && d < from) return false;
+    if (to && d > to) return false;
+    return true;
+  });
+}
+
+async function parseAllSessions(options = {}) {
+  const { from = null, to = null } = options;
   const claudeDir = getClaudeDir();
   const projectsDir = path.join(claudeDir, 'projects');
   const warnings = [];
@@ -185,7 +211,7 @@ async function parseAllSessions() {
       }
       if (entries.length === 0) continue;
 
-      const queries = extractSessionData(entries);
+      const queries = filterQueriesByDate(extractSessionData(entries), from, to);
       if (queries.length === 0) continue;
 
       let inputTokens = 0, outputTokens = 0, cacheCreationTokens = 0, cacheReadTokens = 0, cost = 0;
@@ -198,8 +224,12 @@ async function parseAllSessions() {
       }
       const totalTokens = inputTokens + cacheCreationTokens + cacheReadTokens + outputTokens;
 
-      const firstTimestamp = entries.find(e => e.timestamp)?.timestamp;
-      const date = firstTimestamp ? firstTimestamp.split('T')[0] : 'unknown';
+      // Derive the session date from the queries that survived filtering, so a
+      // date range never attributes a session to a day outside that range.
+      const firstTimestamp = queries[0].userTimestamp
+        || queries[0].assistantTimestamp
+        || entries.find(e => e.timestamp)?.timestamp;
+      const date = queryDate(queries[0]) || 'unknown';
 
       // Primary model
       const modelCounts = {};
@@ -424,6 +454,13 @@ async function parseAllSessions() {
   // Generate insights
   const insights = generateInsights(sessions, allPrompts, grandTotals);
 
+  if ((from || to) && sessions.length === 0) {
+    warnings.push({
+      type: 'empty-range',
+      message: `No Claude Code activity found between ${from || 'the beginning'} and ${to || 'today'}. Try widening the date range.`,
+    });
+  }
+
   return {
     sessions,
     dailyUsage,
@@ -433,6 +470,7 @@ async function parseAllSessions() {
     totals: grandTotals,
     insights,
     warnings,
+    filter: { from, to },
   };
 }
 

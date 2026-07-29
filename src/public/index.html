@@ -128,6 +128,33 @@
   }
   .refresh-btn svg { width: 14px; height: 14px; }
 
+  /* ---- DATE RANGE PICKER ---- */
+  .range-picker { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .range-select, .range-date {
+    background: var(--white); border: 1px solid var(--border);
+    color: var(--text-secondary); padding: 6px 12px; border-radius: 20px;
+    font-size: 13px; font-weight: 500; font-family: var(--font);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .range-select:hover, .range-date:hover,
+  .range-select:focus, .range-date:focus {
+    border-color: var(--indigo); color: var(--indigo); outline: none;
+  }
+  .custom-range { display: none; align-items: center; gap: 6px; }
+  .custom-range.visible { display: flex; }
+  .range-sep { color: var(--text-tertiary); font-size: 12px; }
+  .range-apply {
+    background: var(--indigo); border: 1px solid var(--indigo); color: #fff;
+    padding: 6px 14px; border-radius: 20px; cursor: pointer;
+    font-size: 13px; font-weight: 600; font-family: var(--font);
+    transition: all 0.2s;
+  }
+  .range-apply:hover { filter: brightness(1.08); box-shadow: 0 2px 8px rgba(99,102,241,0.25); }
+  .range-error {
+    color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca;
+    padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
+  }
+
   /* ---- STAT CARDS ---- */
   .stats-row {
     display: grid; grid-template-columns: repeat(4, 1fr);
@@ -700,6 +727,22 @@
       <h1>Claude Spend</h1>
     </div>
     <div class="header-right">
+      <div class="range-picker">
+        <select id="rangePreset" class="range-select" onchange="onPresetChange()" aria-label="Date range preset">
+          <option value="all">All time</option>
+          <option value="7">Last 7 days</option>
+          <option value="30">Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="month">This month</option>
+          <option value="custom">Custom&hellip;</option>
+        </select>
+        <span id="customRange" class="custom-range">
+          <input type="date" id="fromDate" class="range-date" aria-label="Start date">
+          <span class="range-sep">to</span>
+          <input type="date" id="toDate" class="range-date" aria-label="End date">
+          <button class="range-apply" onclick="applyCustomRange()">Apply</button>
+        </span>
+      </div>
       <span id="dateRange" class="date-range"></span>
       <button class="refresh-btn" onclick="generateShareCard()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
@@ -958,12 +1001,113 @@ function formatDate(d) {
   return `${months[parseInt(parts[1])-1]} ${parseInt(parts[2])}`;
 }
 
+// Currently applied date range. null bounds mean "unbounded".
+let RANGE = { from: null, to: null };
+
+function rangeQuery() {
+  const p = new URLSearchParams();
+  if (RANGE.from) p.set('from', RANGE.from);
+  if (RANGE.to) p.set('to', RANGE.to);
+  const s = p.toString();
+  return s ? '?' + s : '';
+}
+
+function ymd(date) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function showRangeError(msg) {
+  let el = document.getElementById('rangeError');
+  if (!msg) { if (el) el.remove(); return; }
+  if (!el) {
+    el = document.createElement('span');
+    el.id = 'rangeError';
+    el.className = 'range-error';
+    document.querySelector('.range-picker').appendChild(el);
+  }
+  el.textContent = msg;
+}
+
+function onPresetChange() {
+  const preset = document.getElementById('rangePreset').value;
+  const custom = document.getElementById('customRange');
+  custom.classList.toggle('visible', preset === 'custom');
+  showRangeError('');
+
+  if (preset === 'custom') return; // wait for Apply
+
+  const today = new Date();
+  if (preset === 'all') {
+    RANGE = { from: null, to: null };
+  } else if (preset === 'month') {
+    RANGE = { from: ymd(new Date(today.getFullYear(), today.getMonth(), 1)), to: ymd(today) };
+  } else {
+    const days = parseInt(preset, 10);
+    const start = new Date(today);
+    start.setDate(start.getDate() - (days - 1));
+    RANGE = { from: ymd(start), to: ymd(today) };
+  }
+  reloadWithRange();
+}
+
+function applyCustomRange() {
+  const from = document.getElementById('fromDate').value || null;
+  const to = document.getElementById('toDate').value || null;
+  if (!from && !to) { showRangeError('Pick at least one date.'); return; }
+  if (from && to && from > to) { showRangeError('Start date is after end date.'); return; }
+  showRangeError('');
+  RANGE = { from, to };
+  reloadWithRange();
+}
+
+async function reloadWithRange() {
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  const errEl = document.getElementById('error-display');
+  if (errEl) errEl.remove();
+  await fetchData();
+}
+
+// Seed the custom date inputs with the full span of available data.
+async function initBounds() {
+  try {
+    const res = await fetch('/api/bounds');
+    const json = await res.json();
+    if (json.bounds) {
+      const { from, to } = json.bounds;
+      const f = document.getElementById('fromDate');
+      const t = document.getElementById('toDate');
+      f.min = from; f.max = to; f.value = from;
+      t.min = from; t.max = to; t.value = to;
+    }
+  } catch {
+    // Non-fatal: the pickers still work without min/max hints
+  }
+}
+
 async function fetchData() {
   try {
-    const res = await fetch('/api/data');
+    const res = await fetch('/api/data' + rangeQuery());
     const json = await res.json();
     if (!res.ok || json.error) {
+      // A rejected date range is recoverable — keep the dashboard and picker
+      // visible so the user can correct it inline.
+      if (json.code === 'BAD_RANGE' && DATA) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        showRangeError(json.error);
+        return;
+      }
       showError(json.error || `Server returned ${res.status}`);
+      return;
+    }
+    // An empty result from a date filter is a valid outcome, not an error:
+    // render normally so the warning banner explains it and the range stays editable.
+    if (json.totals && Array.isArray(json.sessions) && json.sessions.length === 0
+        && (RANGE.from || RANGE.to)) {
+      DATA = json;
+      render();
       return;
     }
     if (!json.totals || !json.sessions) {
@@ -1011,7 +1155,8 @@ async function refreshData() {
   document.getElementById('app').style.display = 'none';
   const errEl = document.getElementById('error-display');
   if (errEl) errEl.remove();
-  try { await fetch('/api/refresh'); } catch {}
+  // Pass the active range so the reparse repopulates the cache for what's on screen.
+  try { await fetch('/api/refresh' + rangeQuery()); } catch {}
   await fetchData();
 }
 
@@ -1031,7 +1176,12 @@ function render() {
 // Stats
 function renderStats() {
   const t = DATA.totals;
-  const range = t.dateRange ? `${formatDate(t.dateRange.from)} - ${formatDate(t.dateRange.to)}` : '';
+  let range = t.dateRange ? `${formatDate(t.dateRange.from)} - ${formatDate(t.dateRange.to)}` : '';
+  if (RANGE.from || RANGE.to) {
+    // Show the requested window, so a filter with no activity still reads clearly.
+    const req = `${RANGE.from ? formatDate(RANGE.from) : 'start'} - ${RANGE.to ? formatDate(RANGE.to) : 'today'}`;
+    range = range ? `${range} (filtered)` : `${req} — no activity`;
+  }
   document.getElementById('dateRange').textContent = range;
 
   const avgTokensPerMsg = t.totalQueries > 0 ? Math.round(t.totalTokens / t.totalQueries) : 0;
@@ -1847,6 +1997,7 @@ function closeShareCard() {
   document.getElementById('shareOverlay').classList.remove('open');
 }
 
+initBounds();
 fetchData();
 window.addEventListener('resize', () => { if (DATA) { renderDailyChart(); renderModelChart(); } });
 </script>
