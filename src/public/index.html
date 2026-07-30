@@ -1078,8 +1078,12 @@ async function initBounds() {
       const { from, to } = json.bounds;
       const f = document.getElementById('fromDate');
       const t = document.getElementById('toDate');
-      f.min = from; f.max = to; f.value = from;
-      t.min = from; t.max = to; t.value = to;
+      // Cap at today, not at the last day with activity: a stale or
+      // not-yet-active upper bound must never make today unselectable.
+      const max = ymd(new Date());
+      const upper = to > max ? to : max;
+      f.min = from; f.max = upper; f.value = from;
+      t.min = from; t.max = upper; t.value = to;
     }
   } catch {
     // Non-fatal: the pickers still work without min/max hints

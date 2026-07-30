@@ -32,7 +32,17 @@ function createServer() {
   const cacheKey = (from, to) => `${from || ''}..${to || ''}`;
 
   // Full date bounds of all available data, for initializing the date pickers.
+  // Tagged with the local day it was computed on: today's activity extends the
+  // upper bound, so a value cached yesterday is stale even if the files on disk
+  // have not changed.
   let boundsCache = null;
+  let boundsDay = null;
+
+  const localDay = () => {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  };
 
   function friendlyError(err) {
     const msg = err.message || String(err);
@@ -67,6 +77,7 @@ function createServer() {
       // Session files may have changed on disk, so every cached range is stale.
       cache.clear();
       boundsCache = null;
+      boundsDay = null;
       const data = await require('./parser').parseAllSessions(range);
       cache.set(cacheKey(range.from, range.to), data);
       res.json({ ok: true, sessions: data.sessions.length });
@@ -78,10 +89,13 @@ function createServer() {
   // Always computed unfiltered, and cached separately from range queries.
   app.get('/api/bounds', async (req, res) => {
     try {
-      if (!boundsCache) {
-        const all = cache.get(cacheKey(null, null))
-          || await require('./parser').parseAllSessions({});
+      const today = localDay();
+      if (!boundsCache || boundsDay !== today) {
+        // Reparse rather than reusing the unfiltered cache entry, which is only
+        // invalidated by /api/refresh and could itself predate today.
+        const all = await require('./parser').parseAllSessions({});
         boundsCache = all.totals?.dateRange || null;
+        boundsDay = today;
       }
       res.json({ bounds: boundsCache });
     } catch (err) {
